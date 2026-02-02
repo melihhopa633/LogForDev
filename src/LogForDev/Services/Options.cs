@@ -14,8 +14,13 @@ public class ClickHouseOptions
     public string? Username { get; set; }
     public string? Password { get; set; }
 
-    public string ConnectionString => 
-        string.IsNullOrEmpty(Username) 
+    public string ConnectionString =>
+        string.IsNullOrEmpty(Username)
             ? $"Host={Host};Port={Port};Database={Database}"
             : $"Host={Host};Port={Port};Database={Database};Username={Username};Password={Password}";
+
+    public string DefaultConnectionString =>
+        string.IsNullOrEmpty(Username)
+            ? $"Host={Host};Port={Port};Database=default"
+            : $"Host={Host};Port={Port};Database=default;Username={Username};Password={Password}";
 }

@@ -13,6 +13,8 @@ services:
       - ClickHouse__Host=clickhouse
       - ClickHouse__Port=8123
       - ClickHouse__Database=logfordev
+      - ClickHouse__Username=admin
+      - ClickHouse__Password=admin
       - LogForDev__ApiKey=${API_KEY:-change-me-in-production}
       - LogForDev__RetentionDays=30
     depends_on:
@@ -32,6 +34,8 @@ services:
       - ./docker/clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
       - CLICKHOUSE_DB=logfordev
+      - CLICKHOUSE_USER=admin
+      - CLICKHOUSE_PASSWORD=admin
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
