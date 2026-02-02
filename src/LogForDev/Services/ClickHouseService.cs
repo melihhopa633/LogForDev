@@ -28,12 +28,68 @@ public class ClickHouseService : IClickHouseService
     {
         try
         {
+            // Connect to default DB first to create our database
+            await using var defaultConn = new ClickHouseConnection(_options.DefaultConnectionString);
+            await defaultConn.OpenAsync();
+
+            await using var createDbCmd = defaultConn.CreateCommand();
+            createDbCmd.CommandText = $"CREATE DATABASE IF NOT EXISTS {_options.Database}";
+            await createDbCmd.ExecuteNonQueryAsync();
+
+            _logger.LogInformation("Database '{Database}' ensured on {Host}:{Port}", _options.Database, _options.Host, _options.Port);
+
+            // Now connect to our database and create the table
             await using var connection = await GetConnectionAsync();
-            _logger.LogInformation("ClickHouse connection established to {Host}:{Port}", _options.Host, _options.Port);
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText = $@"
+                CREATE TABLE IF NOT EXISTS logs (
+                    id UUID DEFAULT generateUUIDv4(),
+                    timestamp DateTime64(3) DEFAULT now64(3),
+                    level Enum8('Trace'=0, 'Debug'=1, 'Info'=2, 'Warning'=3, 'Error'=4, 'Fatal'=5),
+                    app_name LowCardinality(String),
+                    message String,
+                    metadata String DEFAULT '{{}}'  ,
+                    trace_id String DEFAULT '',
+                    span_id String DEFAULT '',
+                    host LowCardinality(String) DEFAULT '',
+                    environment LowCardinality(String) DEFAULT 'production',
+                    created_at DateTime DEFAULT now()
+                )
+                ENGINE = MergeTree()
+                PARTITION BY toYYYYMM(timestamp)
+                ORDER BY (app_name, level, timestamp)
+                TTL created_at + INTERVAL 30 DAY
+                SETTINGS index_granularity = 8192";
+            await cmd.ExecuteNonQueryAsync();
+
+            // Create app_logs table for internal application logs
+            await using var appLogsCmd = connection.CreateCommand();
+            appLogsCmd.CommandText = $@"
+                CREATE TABLE IF NOT EXISTS app_logs (
+                    id UUID DEFAULT generateUUIDv4(),
+                    timestamp DateTime64(3) DEFAULT now64(3),
+                    level LowCardinality(String),
+                    category LowCardinality(String),
+                    message String,
+                    exception String DEFAULT '',
+                    request_method LowCardinality(String) DEFAULT '',
+                    request_path String DEFAULT '',
+                    status_code UInt16 DEFAULT 0,
+                    duration_ms Float64 DEFAULT 0,
+                    created_at DateTime DEFAULT now()
+                )
+                ENGINE = MergeTree()
+                PARTITION BY toYYYYMM(timestamp)
+                ORDER BY (level, timestamp)
+                TTL created_at + INTERVAL 30 DAY
+                SETTINGS index_granularity = 8192";
+            await appLogsCmd.ExecuteNonQueryAsync();
+
+            _logger.LogInformation("ClickHouse initialized successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to connect to ClickHouse");
+            _logger.LogError(ex, "Failed to initialize ClickHouse");
             throw;
         }
     }
@@ -60,12 +116,12 @@ public class ClickHouseService : IClickHouseService
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         await using var reader = await command.ExecuteReaderAsync();
-        
+
         while (await reader.ReadAsync())
         {
             results.Add(mapper(reader));
         }
-        
+
         return results;
     }
 }
