@@ -4,229 +4,156 @@
     var apps = ViewBag.Apps as List<string> ?? new List<string>();
 }
 
-<div class="dashboard">
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <div class="stat-info">
-                <div class="stat-value" id="totalLogs">@stats.TotalLogs.ToString("N0")</div>
-                <div class="stat-label">Total Logs (24h)</div>
-            </div>
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="rounded-lg border border-border bg-card p-6">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-muted-foreground">Total Logs (24h)</p>
+            <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </div>
-        <div class="stat-card error">
-            <div class="stat-icon">🔴</div>
-            <div class="stat-info">
-                <div class="stat-value" id="errorCount">@stats.ErrorCount.ToString("N0")</div>
-                <div class="stat-label">Errors</div>
-            </div>
-        </div>
-        <div class="stat-card warning">
-            <div class="stat-icon">🟡</div>
-            <div class="stat-info">
-                <div class="stat-value" id="warningCount">@stats.WarningCount.ToString("N0")</div>
-                <div class="stat-label">Warnings</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">⚡</div>
-            <div class="stat-info">
-                <div class="stat-value" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</div>
-                <div class="stat-label">Logs/min</div>
-            </div>
+        <div class="mt-2">
+            <p class="text-3xl font-bold" id="totalLogs">@stats.TotalLogs.ToString("N0")</p>
         </div>
     </div>
-
-    <!-- Filters -->
-    <div class="filters-panel">
-        <div class="filter-row">
-            <div class="filter-group">
-                <label>Level</label>
-                <select id="levelFilter">
-                    <option value="">All Levels</option>
-                    <option value="Trace">Trace</option>
-                    <option value="Debug">Debug</option>
-                    <option value="Info">Info</option>
-                    <option value="Warning">Warning</option>
-                    <option value="Error">Error</option>
-                    <option value="Fatal">Fatal</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>App</label>
-                <select id="appFilter">
-                    <option value="">All Apps</option>
-                    @foreach (var app in apps)
-                    {
-                        <option value="@app">@app</option>
-                    }
-                </select>
-            </div>
-            <div class="filter-group search-group">
-                <label>Search</label>
-                <input type="text" id="searchFilter" placeholder="Search messages..." />
-            </div>
-            <div class="filter-group">
-                <label>&nbsp;</label>
-                <button id="refreshBtn" class="btn btn-primary">🔄 Refresh</button>
-            </div>
-            <div class="filter-group">
-                <label>&nbsp;</label>
-                <button id="liveToggle" class="btn btn-live">● LIVE</button>
-            </div>
+    <div class="rounded-lg border border-border bg-card p-6">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-muted-foreground">Errors</p>
+            <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="mt-2">
+            <p class="text-3xl font-bold text-red-500" id="errorCount">@stats.ErrorCount.ToString("N0")</p>
         </div>
     </div>
+    <div class="rounded-lg border border-border bg-card p-6">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-muted-foreground">Warnings</p>
+            <svg class="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="mt-2">
+            <p class="text-3xl font-bold text-yellow-500" id="warningCount">@stats.WarningCount.ToString("N0")</p>
+        </div>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-6">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-muted-foreground">Logs/min</p>
+            <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="mt-2">
+            <p class="text-3xl font-bold" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</p>
+        </div>
+    </div>
+</div>
 
-    <!-- Logs Table -->
-    <div class="logs-container">
-        <table class="logs-table">
+<!-- Filters -->
+<div class="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
+    <div class="flex flex-col md:flex-row gap-3 items-end">
+        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">Level</label>
+            <select id="levelFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
+                <option value="">All Levels</option>
+                <option value="Trace">Trace</option>
+                <option value="Debug">Debug</option>
+                <option value="Info">Info</option>
+                <option value="Warning">Warning</option>
+                <option value="Error">Error</option>
+                <option value="Fatal">Fatal</option>
+            </select>
+        </div>
+        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">App</label>
+            <select id="appFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
+                <option value="">All Apps</option>
+                @foreach (var app in apps)
+                {
+                    <option value="@app">@app</option>
+                }
+            </select>
+        </div>
+        <div class="flex flex-col gap-1.5 flex-1 w-full md:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">Search</label>
+            <input type="text" id="searchFilter" placeholder="Search messages..." class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full" />
+        </div>
+        <button id="refreshBtn" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap">
+            Refresh
+        </button>
+        <button id="liveToggle" class="h-9 rounded-md border border-green-500 px-4 text-sm font-medium text-green-500 hover:bg-green-500/10 transition-colors whitespace-nowrap">
+            LIVE
+        </button>
+    </div>
+    <!-- Time Range -->
+    <div class="flex flex-col md:flex-row gap-3 items-end border-t border-border pt-3">
+        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">From</label>
+            <input type="datetime-local" id="fromFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+        </div>
+        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">To</label>
+            <input type="datetime-local" id="toFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+        </div>
+        <div class="flex gap-1.5">
+            <button onclick="setTimeRange(1)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">1h</button>
+            <button onclick="setTimeRange(6)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">6h</button>
+            <button onclick="setTimeRange(24)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">24h</button>
+            <button onclick="setTimeRange(168)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">7d</button>
+            <button onclick="setTimeRange(0)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">All</button>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="rounded-lg border border-border overflow-hidden mb-6">
+    <div class="overflow-x-auto scrollbar-thin">
+        <table class="w-full text-sm">
             <thead>
-                <tr>
-                    <th width="160">Timestamp</th>
-                    <th width="80">Level</th>
-                    <th width="120">App</th>
-                    <th>Message</th>
-                    <th width="100">Actions</th>
+                <tr class="border-b border-border bg-muted/50">
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[160px]">Timestamp</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[90px]">Level</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[130px]">App</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground">Message</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[80px]">Actions</th>
                 </tr>
             </thead>
             <tbody id="logsBody">
                 <tr>
-                    <td colspan="5" class="loading">Loading logs...</td>
+                    <td colspan="5" class="h-24 text-center text-muted-foreground">Loading logs...</td>
                 </tr>
             </tbody>
         </table>
     </div>
+</div>
 
-    <!-- Pagination -->
-    <div class="pagination">
-        <button id="prevPage" class="btn" disabled>← Previous</button>
-        <span id="pageInfo">Page 1</span>
-        <button id="nextPage" class="btn">Next →</button>
-    </div>
+<!-- Pagination -->
+<div class="flex items-center justify-center gap-4">
+    <button id="prevPage" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        Previous
+    </button>
+    <span id="pageInfo" class="text-sm text-muted-foreground">Page 1</span>
+    <button id="nextPage" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-secondary transition-colors">
+        Next
+    </button>
 </div>
 
 <!-- Log Detail Modal -->
-<div id="logModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Log Details</h3>
-            <button class="modal-close">&times;</button>
+<div id="logModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="fixed inset-0 bg-black/80" onclick="closeModal()"></div>
+    <div class="relative z-50 w-full max-w-2xl max-h-[85vh] overflow-auto rounded-lg border border-border bg-background p-6 shadow-lg mx-4 scrollbar-thin">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Log Details</h3>
+            <button onclick="closeModal()" class="rounded-sm opacity-70 hover:opacity-100 transition-opacity">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
-        <div class="modal-body" id="logDetails">
-        </div>
+        <div id="logDetails" class="space-y-3"></div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        const API_KEY = '@(ViewBag.ApiKey ?? "change-me")'; // In real app, handle this securely
         let currentPage = 1;
+        let totalPages = 1;
+        let totalCount = 0;
         let isLive = false;
         let liveInterval = null;
-
-        async function loadLogs() {
-            const level = document.getElementById('levelFilter').value;
-            const app = document.getElementById('appFilter').value;
-            const search = document.getElementById('searchFilter').value;
-
-            let url = `/api/logs?page=${currentPage}&pageSize=50&apiKey=${API_KEY}`;
-            if (level) url += `&level=${level}`;
-            if (app) url += `&appName=${encodeURIComponent(app)}`;
-            if (search) url += `&search=${encodeURIComponent(search)}`;
-
-            try {
-                const response = await fetch(url);
-                const logs = await response.json();
-                renderLogs(logs);
-            } catch (error) {
-                console.error('Failed to load logs:', error);
-            }
-        }
-
-        function renderLogs(logs) {
-            const tbody = document.getElementById('logsBody');
-            
-            if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No logs found</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = logs.map(log => `
-                <tr class="log-row level-${log.level.toLowerCase()}">
-                    <td class="timestamp">${formatDate(log.timestamp)}</td>
-                    <td><span class="level-badge ${log.level.toLowerCase()}">${log.level}</span></td>
-                    <td class="app-name">${escapeHtml(log.appName)}</td>
-                    <td class="message">${escapeHtml(truncate(log.message, 100))}</td>
-                    <td><button class="btn btn-small" onclick="showDetail('${log.id}', ${JSON.stringify(log).replace(/'/g, "\\'")})">View</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function showDetail(id, log) {
-            const modal = document.getElementById('logModal');
-            const details = document.getElementById('logDetails');
-            
-            details.innerHTML = `
-                <div class="detail-row">
-                    <label>ID:</label>
-                    <span>${log.id}</span>
-                </div>
-                <div class="detail-row">
-                    <label>Timestamp:</label>
-                    <span>${formatDate(log.timestamp)}</span>
-                </div>
-                <div class="detail-row">
-                    <label>Level:</label>
-                    <span class="level-badge ${log.level.toLowerCase()}">${log.level}</span>
-                </div>
-                <div class="detail-row">
-                    <label>App:</label>
-                    <span>${escapeHtml(log.appName)}</span>
-                </div>
-                <div class="detail-row">
-                    <label>Host:</label>
-                    <span>${escapeHtml(log.host || '-')}</span>
-                </div>
-                <div class="detail-row">
-                    <label>Environment:</label>
-                    <span>${escapeHtml(log.environment || '-')}</span>
-                </div>
-                <div class="detail-row">
-                    <label>Trace ID:</label>
-                    <span>${escapeHtml(log.traceId || '-')}</span>
-                </div>
-                <div class="detail-row full">
-                    <label>Message:</label>
-                    <pre>${escapeHtml(log.message)}</pre>
-                </div>
-                <div class="detail-row full">
-                    <label>Metadata:</label>
-                    <pre>${log.metadata ? JSON.stringify(JSON.parse(log.metadata), null, 2) : '-'}</pre>
-                </div>
-            `;
-            
-            modal.classList.add('show');
-        }
-
-        function toggleLive() {
-            isLive = !isLive;
-            const btn = document.getElementById('liveToggle');
-            
-            if (isLive) {
-                btn.classList.add('active');
-                btn.textContent = '● LIVE';
-                liveInterval = setInterval(loadLogs, 2000);
-            } else {
-                btn.classList.remove('active');
-                btn.textContent = '○ LIVE';
-                clearInterval(liveInterval);
-            }
-        }
-
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleString();
-        }
 
         function escapeHtml(text) {
             if (!text) return '';
@@ -240,47 +167,204 @@
             return str.length > len ? str.substring(0, len) + '...' : str;
         }
 
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleString();
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        function levelBadgeClasses(level) {
+            const base = 'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold uppercase';
+            switch (level.toLowerCase()) {
+                case 'trace':  return base + ' bg-zinc-700/50 text-zinc-400';
+                case 'debug':  return base + ' bg-blue-500/20 text-blue-400';
+                case 'info':   return base + ' bg-green-500/20 text-green-400';
+                case 'warning':return base + ' bg-yellow-500/20 text-yellow-400';
+                case 'error':  return base + ' bg-red-500/20 text-red-400';
+                case 'fatal':  return base + ' bg-red-600 text-white';
+                default:       return base + ' bg-zinc-700/50 text-zinc-400';
+            }
+        }
+
+        function setTimeRange(hours) {
+            const fromEl = document.getElementById('fromFilter');
+            const toEl = document.getElementById('toFilter');
+            if (hours === 0) {
+                fromEl.value = '';
+                toEl.value = '';
+            } else {
+                const now = new Date();
+                const from = new Date(now.getTime() - hours * 60 * 60 * 1000);
+                toEl.value = toLocalISOString(now);
+                fromEl.value = toLocalISOString(from);
+            }
+            currentPage = 1;
+            loadLogs();
+        }
+
+        function toLocalISOString(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        async function loadLogs() {
+            const level = document.getElementById('levelFilter').value;
+            const app = document.getElementById('appFilter').value;
+            const search = document.getElementById('searchFilter').value;
+            const from = document.getElementById('fromFilter').value;
+            const to = document.getElementById('toFilter').value;
+
+            let url = `/api/logs?page=${currentPage}&pageSize=50`;
+            if (level) url += `&level=${level}`;
+            if (app) url += `&appName=${encodeURIComponent(app)}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (from) url += `&from=${encodeURIComponent(new Date(from).toISOString())}`;
+            if (to) url += `&to=${encodeURIComponent(new Date(to).toISOString())}`;
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                totalCount = result.totalCount;
+                totalPages = result.totalPages;
+                renderLogs(result.data);
+                updatePageInfo();
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsBody');
+
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="h-24 text-center text-muted-foreground">No logs found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => `
+                <tr class="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td class="px-4 py-2.5 font-mono text-xs text-muted-foreground">${formatDate(log.timestamp)}</td>
+                    <td class="px-4 py-2.5"><span class="${levelBadgeClasses(log.level)}">${log.level}</span></td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400">${escapeHtml(log.appName)}</td>
+                    <td class="px-4 py-2.5 text-sm max-w-[400px] truncate">${escapeHtml(truncate(log.message, 100))}</td>
+                    <td class="px-4 py-2.5">
+                        <button onclick='showDetail(${JSON.stringify(log).replace(/'/g, "&#39;")})' class="h-7 rounded-md border border-border bg-background px-2.5 text-xs font-medium hover:bg-secondary transition-colors">
+                            View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showDetail(log) {
+            const modal = document.getElementById('logModal');
+            const details = document.getElementById('logDetails');
+
+            let metadataHtml = '-';
+            try {
+                if (log.metadata) {
+                    const parsed = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
+                    metadataHtml = `<pre class="rounded-md bg-muted p-3 font-mono text-xs overflow-x-auto">${JSON.stringify(parsed, null, 2)}</pre>`;
+                }
+            } catch { metadataHtml = `<pre class="rounded-md bg-muted p-3 font-mono text-xs">${escapeHtml(log.metadata)}</pre>`; }
+
+            details.innerHTML = `
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">ID</span>
+                    <span class="font-mono text-xs break-all">${log.id}</span>
+                </div>
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">Timestamp</span>
+                    <span>${formatDate(log.timestamp)}</span>
+                </div>
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">Level</span>
+                    <span class="${levelBadgeClasses(log.level)}">${log.level}</span>
+                </div>
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">App</span>
+                    <span class="text-purple-400 font-mono text-xs">${escapeHtml(log.appName)}</span>
+                </div>
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">Host</span>
+                    <span>${escapeHtml(log.host || '-')}</span>
+                </div>
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">Environment</span>
+                    <span>${escapeHtml(log.environment || '-')}</span>
+                </div>
+                <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                    <span class="text-muted-foreground font-medium">Trace ID</span>
+                    <span class="font-mono text-xs">${escapeHtml(log.traceId || '-')}</span>
+                </div>
+                <div class="border-t border-border pt-3 space-y-2">
+                    <p class="text-sm font-medium text-muted-foreground">Message</p>
+                    <pre class="rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-words">${escapeHtml(log.message)}</pre>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-muted-foreground">Metadata</p>
+                    ${metadataHtml}
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('logModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleLive() {
+            isLive = !isLive;
+            const btn = document.getElementById('liveToggle');
+
+            if (isLive) {
+                btn.classList.add('bg-green-500', 'text-black', 'border-green-500', 'animate-pulse-live');
+                btn.classList.remove('text-green-500', 'hover:bg-green-500/10');
+                btn.textContent = 'LIVE';
+                liveInterval = setInterval(loadLogs, 2000);
+            } else {
+                btn.classList.remove('bg-green-500', 'text-black', 'border-green-500', 'animate-pulse-live');
+                btn.classList.add('text-green-500', 'hover:bg-green-500/10');
+                btn.textContent = 'LIVE';
+                clearInterval(liveInterval);
+            }
+        }
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages} (${totalCount.toLocaleString()} logs)`;
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+
         // Event listeners
         document.getElementById('refreshBtn').addEventListener('click', loadLogs);
         document.getElementById('liveToggle').addEventListener('click', toggleLive);
         document.getElementById('levelFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
         document.getElementById('appFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
         document.getElementById('searchFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
-        
+        document.getElementById('fromFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('toFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+
         document.getElementById('prevPage').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                loadLogs();
-                updatePageInfo();
-            }
+            if (currentPage > 1) { currentPage--; loadLogs(); updatePageInfo(); }
         });
-        
         document.getElementById('nextPage').addEventListener('click', () => {
-            currentPage++;
-            loadLogs();
-            updatePageInfo();
+            currentPage++; loadLogs(); updatePageInfo();
         });
 
-        document.querySelector('.modal-close').addEventListener('click', () => {
-            document.getElementById('logModal').classList.remove('show');
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
         });
-
-        function updatePageInfo() {
-            document.getElementById('pageInfo').textContent = `Page ${currentPage}`;
-            document.getElementById('prevPage').disabled = currentPage === 1;
-        }
-
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
 
         // Initial load
         loadLogs();

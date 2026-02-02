@@ -1,46 +1,63 @@
 @{
-    ViewData["Title"] = "API Documentation";
+    ViewData["Title"] = "Documentation";
 }
 
-<div class="docs-container">
-    <div class="docs-sidebar">
-        <h3>Contents</h3>
-        <ul>
-            <li><a href="#getting-started">Getting Started</a></li>
-            <li><a href="#authentication">Authentication</a></li>
-            <li><a href="#send-log">Send a Log</a></li>
-            <li><a href="#send-batch">Send Batch Logs</a></li>
-            <li><a href="#query-logs">Query Logs</a></li>
-            <li><a href="#log-levels">Log Levels</a></li>
-            <li><a href="#examples">Examples</a></li>
-        </ul>
-    </div>
+<div class="flex flex-col lg:flex-row gap-8">
+    <!-- Sidebar -->
+    <aside class="lg:w-56 flex-shrink-0">
+        <div class="lg:sticky lg:top-20 space-y-1">
+            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contents</p>
+            <a href="#quick-start" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Quick Start</a>
+            <a href="#authentication" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Authentication</a>
+            <a href="#send-log" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Send a Log</a>
+            <a href="#send-batch" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Send Batch Logs</a>
+            <a href="#query-logs" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Query Logs</a>
+            <a href="#log-levels" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Log Levels</a>
+            <a href="#configuration" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Configuration</a>
+            <a href="#examples" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Client Examples</a>
+        </div>
+    </aside>
 
-    <div class="docs-content">
-        <h1>API Documentation</h1>
-        <p class="intro">LogForDev provides a simple REST API to send and query logs from any application.</p>
+    <!-- Content -->
+    <div class="flex-1 max-w-3xl space-y-12">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">API Documentation</h1>
+            <p class="mt-2 text-lg text-muted-foreground">LogForDev provides a simple REST API to send and query logs from any application.</p>
+        </div>
 
-        <section id="getting-started">
-            <h2>Getting Started</h2>
-            <p>Base URL: <code>http://your-server:5000</code></p>
-            <p>All API endpoints require authentication via API key.</p>
+        <!-- Quick Start -->
+        <section id="quick-start" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Quick Start</h2>
+            <p class="text-sm text-muted-foreground">Base URL: <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">http://your-server:5000</code></p>
+            <p class="text-sm text-muted-foreground">All API endpoints require authentication via API key.</p>
+            <p class="text-sm text-muted-foreground">Send your first log with a single curl command:</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "level": "info",
+    "message": "Hello LogForDev!",
+    "appName": "my-app"
+  }'</code></pre>
         </section>
 
-        <section id="authentication">
-            <h2>Authentication</h2>
-            <p>Include your API key in the request header:</p>
-            <pre><code>X-API-Key: your-api-key</code></pre>
+        <!-- Authentication -->
+        <section id="authentication" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Authentication</h2>
+            <p class="text-sm text-muted-foreground">Include your API key in the request header:</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">X-API-Key: your-api-key</code></pre>
+            <p class="text-sm text-muted-foreground">The API key is configured via the <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground border border-border">LOGFORDEV__APIKEY</code> environment variable or in <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground border border-border">appsettings.json</code>.</p>
         </section>
 
-        <section id="send-log">
-            <h2>Send a Log</h2>
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/logs</span>
+        <!-- Send a Log -->
+        <section id="send-log" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Send a Log</h2>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center rounded-md bg-blue-500 px-2.5 py-0.5 text-xs font-semibold text-black">POST</span>
+                <code class="font-mono text-sm text-muted-foreground">/api/logs</code>
             </div>
-
-            <h4>Request Body</h4>
-            <pre><code>{
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Request Body</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
   "level": "info",
   "message": "User logged in successfully",
   "appName": "auth-service",
@@ -51,33 +68,22 @@
   "traceId": "abc-123",
   "environment": "production"
 }</code></pre>
-
-            <h4>Response</h4>
-            <pre><code>{
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Response</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
   "success": true,
   "id": "550e8400-e29b-41d4-a716-446655440000"
 }</code></pre>
-
-            <h4>cURL Example</h4>
-            <pre><code>curl -X POST http://localhost:5000/api/logs \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "level": "info",
-    "message": "Hello LogForDev!",
-    "appName": "my-app"
-  }'</code></pre>
         </section>
 
-        <section id="send-batch">
-            <h2>Send Batch Logs</h2>
-            <div class="endpoint">
-                <span class="method post">POST</span>
-                <span class="path">/api/logs/batch</span>
+        <!-- Send Batch -->
+        <section id="send-batch" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Send Batch Logs</h2>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center rounded-md bg-blue-500 px-2.5 py-0.5 text-xs font-semibold text-black">POST</span>
+                <code class="font-mono text-sm text-muted-foreground">/api/logs/batch</code>
             </div>
-
-            <h4>Request Body</h4>
-            <pre><code>{
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Request Body</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
   "logs": [
     {
       "level": "info",
@@ -96,123 +102,187 @@
     }
   ]
 }</code></pre>
-
-            <h4>Response</h4>
-            <pre><code>{
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Response</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
   "success": true,
   "count": 3
 }</code></pre>
         </section>
 
-        <section id="query-logs">
-            <h2>Query Logs</h2>
-            <div class="endpoint">
-                <span class="method get">GET</span>
-                <span class="path">/api/logs</span>
+        <!-- Query Logs -->
+        <section id="query-logs" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Query Logs</h2>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center rounded-md bg-green-500 px-2.5 py-0.5 text-xs font-semibold text-black">GET</span>
+                <code class="font-mono text-sm text-muted-foreground">/api/logs</code>
+            </div>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Query Parameters</p>
+            <div class="rounded-lg border border-border overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Parameter</th>
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Type</th>
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">level</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Filter by log level (Trace, Debug, Info, Warning, Error, Fatal)</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">appName</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Filter by application name</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Search in message content</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">from</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">datetime</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Start date filter (ISO 8601)</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">to</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">datetime</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">End date filter (ISO 8601)</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">page</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">integer</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Page number (default: 1)</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">pageSize</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">integer</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Results per page (default: 50)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Example</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">GET /api/logs?level=Error&appName=payment-service&page=1&pageSize=20</code></pre>
+        </section>
+
+        <!-- Log Levels -->
+        <section id="log-levels" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Log Levels</h2>
+            <div class="rounded-lg border border-border overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Level</th>
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Value</th>
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-zinc-700/50 px-2 py-0.5 text-xs font-semibold text-zinc-400">Trace</span></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">0</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Most detailed information, typically only enabled during development</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-400">Debug</span></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">1</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Detailed information useful for debugging</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-green-500/20 px-2 py-0.5 text-xs font-semibold text-green-400">Info</span></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">2</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">General operational information</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-yellow-500/20 px-2 py-0.5 text-xs font-semibold text-yellow-400">Warning</span></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">3</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Warning events that might need attention</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-400">Error</span></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">4</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Error events that might still allow the application to continue</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">Fatal</span></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">5</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Critical errors that cause the application to crash</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Configuration -->
+        <section id="configuration" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Configuration</h2>
+            <p class="text-sm text-muted-foreground">LogForDev can be configured via environment variables or <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground border border-border">appsettings.json</code>.</p>
+
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Environment Variables</p>
+            <div class="rounded-lg border border-border overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Variable</th>
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Description</th>
+                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">CLICKHOUSE__HOST</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">ClickHouse server host</td>
+                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">localhost</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">CLICKHOUSE__PORT</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">ClickHouse HTTP port</td>
+                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">8123</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">CLICKHOUSE__DATABASE</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Database name</td>
+                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">logfordev</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">LOGFORDEV__APIKEY</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">API key for authentication</td>
+                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">change-me-in-production</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">LOGFORDEV__RETENTIONDAYS</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Log retention period in days</td>
+                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">30</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <h4>Query Parameters</h4>
-            <table class="params-table">
-                <thead>
-                    <tr>
-                        <th>Parameter</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>level</code></td>
-                        <td>string</td>
-                        <td>Filter by log level (Trace, Debug, Info, Warning, Error, Fatal)</td>
-                    </tr>
-                    <tr>
-                        <td><code>appName</code></td>
-                        <td>string</td>
-                        <td>Filter by application name</td>
-                    </tr>
-                    <tr>
-                        <td><code>search</code></td>
-                        <td>string</td>
-                        <td>Search in message content</td>
-                    </tr>
-                    <tr>
-                        <td><code>from</code></td>
-                        <td>datetime</td>
-                        <td>Start date filter (ISO 8601)</td>
-                    </tr>
-                    <tr>
-                        <td><code>to</code></td>
-                        <td>datetime</td>
-                        <td>End date filter (ISO 8601)</td>
-                    </tr>
-                    <tr>
-                        <td><code>page</code></td>
-                        <td>integer</td>
-                        <td>Page number (default: 1)</td>
-                    </tr>
-                    <tr>
-                        <td><code>pageSize</code></td>
-                        <td>integer</td>
-                        <td>Results per page (default: 50)</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h4>Example</h4>
-            <pre><code>GET /api/logs?level=Error&appName=payment-service&page=1&pageSize=20</code></pre>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">appsettings.json</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
+  "ClickHouse": {
+    "Host": "localhost",
+    "Port": 8123,
+    "Database": "logfordev"
+  },
+  "LogForDev": {
+    "ApiKey": "change-me-in-production",
+    "RetentionDays": 30
+  }
+}</code></pre>
         </section>
 
-        <section id="log-levels">
-            <h2>Log Levels</h2>
-            <table class="params-table">
-                <thead>
-                    <tr>
-                        <th>Level</th>
-                        <th>Value</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="level-badge trace">Trace</span></td>
-                        <td>0</td>
-                        <td>Most detailed information, typically only enabled during development</td>
-                    </tr>
-                    <tr>
-                        <td><span class="level-badge debug">Debug</span></td>
-                        <td>1</td>
-                        <td>Detailed information useful for debugging</td>
-                    </tr>
-                    <tr>
-                        <td><span class="level-badge info">Info</span></td>
-                        <td>2</td>
-                        <td>General operational information</td>
-                    </tr>
-                    <tr>
-                        <td><span class="level-badge warning">Warning</span></td>
-                        <td>3</td>
-                        <td>Warning events that might need attention</td>
-                    </tr>
-                    <tr>
-                        <td><span class="level-badge error">Error</span></td>
-                        <td>4</td>
-                        <td>Error events that might still allow the application to continue</td>
-                    </tr>
-                    <tr>
-                        <td><span class="level-badge fatal">Fatal</span></td>
-                        <td>5</td>
-                        <td>Critical errors that cause the application to crash</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+        <!-- Client Examples -->
+        <section id="examples" class="space-y-6">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Client Examples</h2>
 
-        <section id="examples">
-            <h2>Client Examples</h2>
-
-            <h3>.NET / C#</h3>
-            <pre><code>using var client = new HttpClient();
+            <div class="space-y-4">
+                <h3 class="text-base font-semibold">.NET / C#</h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">using var client = new HttpClient();
 client.DefaultRequestHeaders.Add("X-API-Key", "your-api-key");
 
 var log = new {
@@ -223,9 +293,11 @@ var log = new {
 };
 
 await client.PostAsJsonAsync("http://localhost:5000/api/logs", log);</code></pre>
+            </div>
 
-            <h3>Python</h3>
-            <pre><code>import requests
+            <div class="space-y-4">
+                <h3 class="text-base font-semibold">Python</h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">import requests
 
 response = requests.post(
     "http://localhost:5000/api/logs",
@@ -237,9 +309,11 @@ response = requests.post(
         "metadata": {"connection_string": "***", "retry_count": 3}
     }
 )</code></pre>
+            </div>
 
-            <h3>Node.js</h3>
-            <pre><code>const response = await fetch("http://localhost:5000/api/logs", {
+            <div class="space-y-4">
+                <h3 class="text-base font-semibold">Node.js</h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">const response = await fetch("http://localhost:5000/api/logs", {
     method: "POST",
     headers: {
         "Content-Type": "application/json",
@@ -252,9 +326,11 @@ response = requests.post(
         metadata: { connectionString: "***", retryCount: 3 }
     })
 });</code></pre>
+            </div>
 
-            <h3>Java</h3>
-            <pre><code>HttpClient client = HttpClient.newHttpClient();
+            <div class="space-y-4">
+                <h3 class="text-base font-semibold">Java</h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">HttpClient client = HttpClient.newHttpClient();
 String json = """
     {
         "level": "error",
@@ -271,9 +347,11 @@ HttpRequest request = HttpRequest.newBuilder()
     .build();
 
 client.send(request, HttpResponse.BodyHandlers.ofString());</code></pre>
+            </div>
 
-            <h3>Go</h3>
-            <pre><code>payload := map[string]interface{}{
+            <div class="space-y-4">
+                <h3 class="text-base font-semibold">Go</h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">payload := map[string]interface{}{
     "level":   "error",
     "message": "Database connection failed",
     "appName": "order-service",
@@ -286,9 +364,11 @@ req.Header.Set("X-API-Key", "your-api-key")
 
 client := &http.Client{}
 resp, _ := client.Do(req)</code></pre>
+            </div>
 
-            <h3>PHP</h3>
-            <pre><code>$ch = curl_init("http://localhost:5000/api/logs");
+            <div class="space-y-4">
+                <h3 class="text-base font-semibold">PHP</h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">$ch = curl_init("http://localhost:5000/api/logs");
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Content-Type: application/json",
@@ -302,6 +382,22 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 curl_close($ch);</code></pre>
+            </div>
         </section>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Smooth scroll for sidebar links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+}
