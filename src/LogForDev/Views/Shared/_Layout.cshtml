@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LogForDev</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a class="nav-brand" href="/">
+                <span class="logo">📋</span> LogForDev
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">Dashboard</a>
+                <a href="/Home/Docs" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Docs" ? "active" : "")">API Docs</a>
+                <a href="https://github.com/melihhopa633/LogForDev" target="_blank" class="nav-link">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>LogForDev - Open Source Logging System</p>
+            <p>Made with ❤️ by <a href="https://github.com/melihhopa633">Melih Hopa</a></p>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,307 @@
+@{
+    ViewData["Title"] = "API Documentation";
+}
+
+<div class="docs-container">
+    <div class="docs-sidebar">
+        <h3>Contents</h3>
+        <ul>
+            <li><a href="#getting-started">Getting Started</a></li>
+            <li><a href="#authentication">Authentication</a></li>
+            <li><a href="#send-log">Send a Log</a></li>
+            <li><a href="#send-batch">Send Batch Logs</a></li>
+            <li><a href="#query-logs">Query Logs</a></li>
+            <li><a href="#log-levels">Log Levels</a></li>
+            <li><a href="#examples">Examples</a></li>
+        </ul>
+    </div>
+
+    <div class="docs-content">
+        <h1>API Documentation</h1>
+        <p class="intro">LogForDev provides a simple REST API to send and query logs from any application.</p>
+
+        <section id="getting-started">
+            <h2>Getting Started</h2>
+            <p>Base URL: <code>http://your-server:5000</code></p>
+            <p>All API endpoints require authentication via API key.</p>
+        </section>
+
+        <section id="authentication">
+            <h2>Authentication</h2>
+            <p>Include your API key in the request header:</p>
+            <pre><code>X-API-Key: your-api-key</code></pre>
+        </section>
+
+        <section id="send-log">
+            <h2>Send a Log</h2>
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <span class="path">/api/logs</span>
+            </div>
+
+            <h4>Request Body</h4>
+            <pre><code>{
+  "level": "info",
+  "message": "User logged in successfully",
+  "appName": "auth-service",
+  "metadata": {
+    "userId": 123,
+    "ip": "192.168.1.1"
+  },
+  "traceId": "abc-123",
+  "environment": "production"
+}</code></pre>
+
+            <h4>Response</h4>
+            <pre><code>{
+  "success": true,
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}</code></pre>
+
+            <h4>cURL Example</h4>
+            <pre><code>curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "level": "info",
+    "message": "Hello LogForDev!",
+    "appName": "my-app"
+  }'</code></pre>
+        </section>
+
+        <section id="send-batch">
+            <h2>Send Batch Logs</h2>
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <span class="path">/api/logs/batch</span>
+            </div>
+
+            <h4>Request Body</h4>
+            <pre><code>{
+  "logs": [
+    {
+      "level": "info",
+      "message": "Request started",
+      "appName": "api-gateway"
+    },
+    {
+      "level": "debug",
+      "message": "Processing payment",
+      "appName": "payment-service"
+    },
+    {
+      "level": "info",
+      "message": "Request completed",
+      "appName": "api-gateway"
+    }
+  ]
+}</code></pre>
+
+            <h4>Response</h4>
+            <pre><code>{
+  "success": true,
+  "count": 3
+}</code></pre>
+        </section>
+
+        <section id="query-logs">
+            <h2>Query Logs</h2>
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <span class="path">/api/logs</span>
+            </div>
+
+            <h4>Query Parameters</h4>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>level</code></td>
+                        <td>string</td>
+                        <td>Filter by log level (Trace, Debug, Info, Warning, Error, Fatal)</td>
+                    </tr>
+                    <tr>
+                        <td><code>appName</code></td>
+                        <td>string</td>
+                        <td>Filter by application name</td>
+                    </tr>
+                    <tr>
+                        <td><code>search</code></td>
+                        <td>string</td>
+                        <td>Search in message content</td>
+                    </tr>
+                    <tr>
+                        <td><code>from</code></td>
+                        <td>datetime</td>
+                        <td>Start date filter (ISO 8601)</td>
+                    </tr>
+                    <tr>
+                        <td><code>to</code></td>
+                        <td>datetime</td>
+                        <td>End date filter (ISO 8601)</td>
+                    </tr>
+                    <tr>
+                        <td><code>page</code></td>
+                        <td>integer</td>
+                        <td>Page number (default: 1)</td>
+                    </tr>
+                    <tr>
+                        <td><code>pageSize</code></td>
+                        <td>integer</td>
+                        <td>Results per page (default: 50)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Example</h4>
+            <pre><code>GET /api/logs?level=Error&appName=payment-service&page=1&pageSize=20</code></pre>
+        </section>
+
+        <section id="log-levels">
+            <h2>Log Levels</h2>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Value</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="level-badge trace">Trace</span></td>
+                        <td>0</td>
+                        <td>Most detailed information, typically only enabled during development</td>
+                    </tr>
+                    <tr>
+                        <td><span class="level-badge debug">Debug</span></td>
+                        <td>1</td>
+                        <td>Detailed information useful for debugging</td>
+                    </tr>
+                    <tr>
+                        <td><span class="level-badge info">Info</span></td>
+                        <td>2</td>
+                        <td>General operational information</td>
+                    </tr>
+                    <tr>
+                        <td><span class="level-badge warning">Warning</span></td>
+                        <td>3</td>
+                        <td>Warning events that might need attention</td>
+                    </tr>
+                    <tr>
+                        <td><span class="level-badge error">Error</span></td>
+                        <td>4</td>
+                        <td>Error events that might still allow the application to continue</td>
+                    </tr>
+                    <tr>
+                        <td><span class="level-badge fatal">Fatal</span></td>
+                        <td>5</td>
+                        <td>Critical errors that cause the application to crash</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="examples">
+            <h2>Client Examples</h2>
+
+            <h3>.NET / C#</h3>
+            <pre><code>using var client = new HttpClient();
+client.DefaultRequestHeaders.Add("X-API-Key", "your-api-key");
+
+var log = new {
+    level = "error",
+    message = "Database connection failed",
+    appName = "order-service",
+    metadata = new { connectionString = "***", retryCount = 3 }
+};
+
+await client.PostAsJsonAsync("http://localhost:5000/api/logs", log);</code></pre>
+
+            <h3>Python</h3>
+            <pre><code>import requests
+
+response = requests.post(
+    "http://localhost:5000/api/logs",
+    headers={"X-API-Key": "your-api-key"},
+    json={
+        "level": "error",
+        "message": "Database connection failed",
+        "appName": "order-service",
+        "metadata": {"connection_string": "***", "retry_count": 3}
+    }
+)</code></pre>
+
+            <h3>Node.js</h3>
+            <pre><code>const response = await fetch("http://localhost:5000/api/logs", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": "your-api-key"
+    },
+    body: JSON.stringify({
+        level: "error",
+        message: "Database connection failed",
+        appName: "order-service",
+        metadata: { connectionString: "***", retryCount: 3 }
+    })
+});</code></pre>
+
+            <h3>Java</h3>
+            <pre><code>HttpClient client = HttpClient.newHttpClient();
+String json = """
+    {
+        "level": "error",
+        "message": "Database connection failed",
+        "appName": "order-service"
+    }
+    """;
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:5000/api/logs"))
+    .header("Content-Type", "application/json")
+    .header("X-API-Key", "your-api-key")
+    .POST(HttpRequest.BodyPublishers.ofString(json))
+    .build();
+
+client.send(request, HttpResponse.BodyHandlers.ofString());</code></pre>
+
+            <h3>Go</h3>
+            <pre><code>payload := map[string]interface{}{
+    "level":   "error",
+    "message": "Database connection failed",
+    "appName": "order-service",
+}
+
+jsonData, _ := json.Marshal(payload)
+req, _ := http.NewRequest("POST", "http://localhost:5000/api/logs", bytes.NewBuffer(jsonData))
+req.Header.Set("Content-Type", "application/json")
+req.Header.Set("X-API-Key", "your-api-key")
+
+client := &http.Client{}
+resp, _ := client.Do(req)</code></pre>
+
+            <h3>PHP</h3>
+            <pre><code>$ch = curl_init("http://localhost:5000/api/logs");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Content-Type: application/json",
+    "X-API-Key: your-api-key"
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    "level" => "error",
+    "message" => "Database connection failed",
+    "appName" => "order-service"
+]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+curl_close($ch);</code></pre>
+        </section>
+    </div>
+</div>

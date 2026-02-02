@@ -1,0 +1,288 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var stats = ViewBag.Stats as LogStats ?? new LogStats();
+    var apps = ViewBag.Apps as List<string> ?? new List<string>();
+}
+
+<div class="dashboard">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+                <div class="stat-value" id="totalLogs">@stats.TotalLogs.ToString("N0")</div>
+                <div class="stat-label">Total Logs (24h)</div>
+            </div>
+        </div>
+        <div class="stat-card error">
+            <div class="stat-icon">🔴</div>
+            <div class="stat-info">
+                <div class="stat-value" id="errorCount">@stats.ErrorCount.ToString("N0")</div>
+                <div class="stat-label">Errors</div>
+            </div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-icon">🟡</div>
+            <div class="stat-info">
+                <div class="stat-value" id="warningCount">@stats.WarningCount.ToString("N0")</div>
+                <div class="stat-label">Warnings</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-info">
+                <div class="stat-value" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</div>
+                <div class="stat-label">Logs/min</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-panel">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Level</label>
+                <select id="levelFilter">
+                    <option value="">All Levels</option>
+                    <option value="Trace">Trace</option>
+                    <option value="Debug">Debug</option>
+                    <option value="Info">Info</option>
+                    <option value="Warning">Warning</option>
+                    <option value="Error">Error</option>
+                    <option value="Fatal">Fatal</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>App</label>
+                <select id="appFilter">
+                    <option value="">All Apps</option>
+                    @foreach (var app in apps)
+                    {
+                        <option value="@app">@app</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group search-group">
+                <label>Search</label>
+                <input type="text" id="searchFilter" placeholder="Search messages..." />
+            </div>
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button id="refreshBtn" class="btn btn-primary">🔄 Refresh</button>
+            </div>
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button id="liveToggle" class="btn btn-live">● LIVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="logs-container">
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th width="160">Timestamp</th>
+                    <th width="80">Level</th>
+                    <th width="120">App</th>
+                    <th>Message</th>
+                    <th width="100">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="logsBody">
+                <tr>
+                    <td colspan="5" class="loading">Loading logs...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <button id="prevPage" class="btn" disabled>← Previous</button>
+        <span id="pageInfo">Page 1</span>
+        <button id="nextPage" class="btn">Next →</button>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+<div id="logModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Log Details</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body" id="logDetails">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_KEY = '@(ViewBag.ApiKey ?? "change-me")'; // In real app, handle this securely
+        let currentPage = 1;
+        let isLive = false;
+        let liveInterval = null;
+
+        async function loadLogs() {
+            const level = document.getElementById('levelFilter').value;
+            const app = document.getElementById('appFilter').value;
+            const search = document.getElementById('searchFilter').value;
+
+            let url = `/api/logs?page=${currentPage}&pageSize=50&apiKey=${API_KEY}`;
+            if (level) url += `&level=${level}`;
+            if (app) url += `&appName=${encodeURIComponent(app)}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            try {
+                const response = await fetch(url);
+                const logs = await response.json();
+                renderLogs(logs);
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsBody');
+            
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No logs found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => `
+                <tr class="log-row level-${log.level.toLowerCase()}">
+                    <td class="timestamp">${formatDate(log.timestamp)}</td>
+                    <td><span class="level-badge ${log.level.toLowerCase()}">${log.level}</span></td>
+                    <td class="app-name">${escapeHtml(log.appName)}</td>
+                    <td class="message">${escapeHtml(truncate(log.message, 100))}</td>
+                    <td><button class="btn btn-small" onclick="showDetail('${log.id}', ${JSON.stringify(log).replace(/'/g, "\\'")})">View</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function showDetail(id, log) {
+            const modal = document.getElementById('logModal');
+            const details = document.getElementById('logDetails');
+            
+            details.innerHTML = `
+                <div class="detail-row">
+                    <label>ID:</label>
+                    <span>${log.id}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Timestamp:</label>
+                    <span>${formatDate(log.timestamp)}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Level:</label>
+                    <span class="level-badge ${log.level.toLowerCase()}">${log.level}</span>
+                </div>
+                <div class="detail-row">
+                    <label>App:</label>
+                    <span>${escapeHtml(log.appName)}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Host:</label>
+                    <span>${escapeHtml(log.host || '-')}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Environment:</label>
+                    <span>${escapeHtml(log.environment || '-')}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Trace ID:</label>
+                    <span>${escapeHtml(log.traceId || '-')}</span>
+                </div>
+                <div class="detail-row full">
+                    <label>Message:</label>
+                    <pre>${escapeHtml(log.message)}</pre>
+                </div>
+                <div class="detail-row full">
+                    <label>Metadata:</label>
+                    <pre>${log.metadata ? JSON.stringify(JSON.parse(log.metadata), null, 2) : '-'}</pre>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        function toggleLive() {
+            isLive = !isLive;
+            const btn = document.getElementById('liveToggle');
+            
+            if (isLive) {
+                btn.classList.add('active');
+                btn.textContent = '● LIVE';
+                liveInterval = setInterval(loadLogs, 2000);
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = '○ LIVE';
+                clearInterval(liveInterval);
+            }
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function truncate(str, len) {
+            if (!str) return '';
+            return str.length > len ? str.substring(0, len) + '...' : str;
+        }
+
+        // Event listeners
+        document.getElementById('refreshBtn').addEventListener('click', loadLogs);
+        document.getElementById('liveToggle').addEventListener('click', toggleLive);
+        document.getElementById('levelFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('appFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('searchFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
+        
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadLogs();
+                updatePageInfo();
+            }
+        });
+        
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++;
+            loadLogs();
+            updatePageInfo();
+        });
+
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            document.getElementById('logModal').classList.remove('show');
+        });
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = `Page ${currentPage}`;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Initial load
+        loadLogs();
+    </script>
+}
