@@ -7,7 +7,7 @@ public interface ILogService
 {
     Task<Guid> InsertLogAsync(LogEntry log);
     Task<int> InsertBatchAsync(IEnumerable<LogEntry> logs);
-    Task<List<LogEntry>> GetLogsAsync(LogQueryParams query);
+    Task<PagedResult<LogEntry>> GetLogsAsync(LogQueryParams query);
     Task<LogStats> GetStatsAsync();
     Task<List<string>> GetAppNamesAsync();
 }
@@ -63,34 +63,40 @@ public class LogService : ILogService
         return logList.Count;
     }
 
-    public async Task<List<LogEntry>> GetLogsAsync(LogQueryParams query)
+    public async Task<PagedResult<LogEntry>> GetLogsAsync(LogQueryParams query)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("SELECT id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment FROM logs WHERE 1=1");
+        var where = new StringBuilder("WHERE 1=1");
 
         if (query.Level.HasValue)
-            sb.AppendLine($"AND level = '{query.Level.Value}'");
-        
+            where.AppendLine($" AND level = '{query.Level.Value}'");
+
         if (!string.IsNullOrEmpty(query.AppName))
-            sb.AppendLine($"AND app_name = '{EscapeString(query.AppName)}'");
-        
+            where.AppendLine($" AND app_name = '{EscapeString(query.AppName)}'");
+
         if (!string.IsNullOrEmpty(query.Search))
-            sb.AppendLine($"AND message ILIKE '%{EscapeString(query.Search)}%'");
-        
+            where.AppendLine($" AND message ILIKE '%{EscapeString(query.Search)}%'");
+
         if (query.From.HasValue)
-            sb.AppendLine($"AND timestamp >= '{query.From.Value:yyyy-MM-dd HH:mm:ss}'");
-        
+            where.AppendLine($" AND timestamp >= '{query.From.Value:yyyy-MM-dd HH:mm:ss}'");
+
         if (query.To.HasValue)
-            sb.AppendLine($"AND timestamp <= '{query.To.Value:yyyy-MM-dd HH:mm:ss}'");
+            where.AppendLine($" AND timestamp <= '{query.To.Value:yyyy-MM-dd HH:mm:ss}'");
 
-        sb.AppendLine("ORDER BY timestamp DESC");
-        sb.AppendLine($"LIMIT {query.PageSize} OFFSET {(query.Page - 1) * query.PageSize}");
+        var whereClause = where.ToString();
 
-        return await _clickHouse.QueryAsync(sb.ToString(), reader => new LogEntry
+        // Count query
+        var countSql = $"SELECT count() FROM logs {whereClause}";
+        var countResult = await _clickHouse.QueryAsync(countSql, r => Convert.ToInt64(r.GetValue(0)));
+        var totalCount = countResult.FirstOrDefault();
+
+        // Data query
+        var dataSql = $"SELECT id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment FROM logs {whereClause} ORDER BY timestamp DESC LIMIT {query.PageSize} OFFSET {(query.Page - 1) * query.PageSize}";
+
+        var data = await _clickHouse.QueryAsync(dataSql, reader => new LogEntry
         {
             Id = reader.GetGuid(0),
             Timestamp = reader.GetDateTime(1),
-            Level = Enum.Parse<LogLevel>(reader.GetString(2), true),
+            Level = Enum.Parse<Models.LogLevel>(reader.GetString(2), true),
             AppName = reader.GetString(3),
             Message = reader.GetString(4),
             Metadata = reader.IsDBNull(5) ? null : reader.GetString(5),
@@ -99,25 +105,33 @@ public class LogService : ILogService
             Host = reader.IsDBNull(8) ? null : reader.GetString(8),
             Environment = reader.GetString(9)
         });
+
+        return new PagedResult<LogEntry>
+        {
+            Data = data,
+            TotalCount = totalCount,
+            Page = query.Page,
+            PageSize = query.PageSize
+        };
     }
 
     public async Task<LogStats> GetStatsAsync()
     {
         // Total logs in last 24 hours
         var totalSql = "SELECT count() FROM logs WHERE timestamp > now() - INTERVAL 24 HOUR";
-        var totalLogs = await _clickHouse.QueryAsync(totalSql, r => r.GetInt64(0));
+        var totalLogs = await _clickHouse.QueryAsync(totalSql, r => Convert.ToInt64(r.GetValue(0)));
 
         // Error count
         var errorSql = "SELECT count() FROM logs WHERE timestamp > now() - INTERVAL 24 HOUR AND level = 'Error'";
-        var errorCount = await _clickHouse.QueryAsync(errorSql, r => r.GetInt64(0));
+        var errorCount = await _clickHouse.QueryAsync(errorSql, r => Convert.ToInt64(r.GetValue(0)));
 
         // Warning count
         var warningSql = "SELECT count() FROM logs WHERE timestamp > now() - INTERVAL 24 HOUR AND level = 'Warning'";
-        var warningCount = await _clickHouse.QueryAsync(warningSql, r => r.GetInt64(0));
+        var warningCount = await _clickHouse.QueryAsync(warningSql, r => Convert.ToInt64(r.GetValue(0)));
 
         // Logs per minute (last hour)
         var rpmSql = "SELECT count() / 60.0 FROM logs WHERE timestamp > now() - INTERVAL 1 HOUR";
-        var logsPerMinute = await _clickHouse.QueryAsync(rpmSql, r => r.GetDouble(0));
+        var logsPerMinute = await _clickHouse.QueryAsync(rpmSql, r => Convert.ToDouble(r.GetValue(0)));
 
         // Top apps
         var topAppsSql = @"
@@ -130,8 +144,8 @@ public class LogService : ILogService
         var topApps = await _clickHouse.QueryAsync(topAppsSql, r => new AppStats
         {
             AppName = r.GetString(0),
-            LogCount = r.GetInt64(1),
-            ErrorCount = r.GetInt64(2)
+            LogCount = Convert.ToInt64(r.GetValue(1)),
+            ErrorCount = Convert.ToInt64(r.GetValue(2))
         });
 
         return new LogStats

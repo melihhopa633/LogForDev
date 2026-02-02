@@ -100,6 +100,24 @@ public class LogQueryParams
     public int PageSize { get; set; } = 50;
 }
 
+public class PagedResult<T>
+{
+    [JsonPropertyName("data")]
+    public List<T> Data { get; set; } = new();
+
+    [JsonPropertyName("totalCount")]
+    public long TotalCount { get; set; }
+
+    [JsonPropertyName("page")]
+    public int Page { get; set; }
+
+    [JsonPropertyName("pageSize")]
+    public int PageSize { get; set; }
+
+    [JsonPropertyName("totalPages")]
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+}
+
 public class LogStats
 {
     public long TotalLogs { get; set; }
@@ -114,4 +132,28 @@ public class AppStats
     public string AppName { get; set; } = string.Empty;
     public long LogCount { get; set; }
     public long ErrorCount { get; set; }
+}
+
+public class AppLogEntry
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public string Level { get; set; } = "Information";
+    public string Category { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string? Exception { get; set; }
+    public string? RequestMethod { get; set; }
+    public string? RequestPath { get; set; }
+    public int StatusCode { get; set; }
+    public double DurationMs { get; set; }
+}
+
+public class AppLogQueryParams
+{
+    public string? Level { get; set; }
+    public string? Search { get; set; }
+    public DateTime? From { get; set; }
+    public DateTime? To { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
 }
