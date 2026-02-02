@@ -1,4 +1,5 @@
 using LogForDev.Services;
+using LogForDev.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,14 @@ builder.Services.Configure<LogForDevOptions>(builder.Configuration.GetSection("L
 builder.Services.Configure<ClickHouseOptions>(builder.Configuration.GetSection("ClickHouse"));
 builder.Services.AddSingleton<IClickHouseService, ClickHouseService>();
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddSingleton<LogBufferService>();
+builder.Services.AddSingleton<ILogBufferService>(sp => sp.GetRequiredService<LogBufferService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LogBufferService>());
+
+// Internal app logging
+builder.Services.AddSingleton<AppLogService>();
+builder.Services.AddSingleton<IAppLogService>(sp => sp.GetRequiredService<AppLogService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<AppLogService>());
 
 var app = builder.Build();
 
@@ -30,6 +39,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(

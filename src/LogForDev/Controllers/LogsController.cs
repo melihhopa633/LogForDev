@@ -10,15 +10,18 @@ namespace LogForDev.Controllers;
 public class LogsController : ControllerBase
 {
     private readonly ILogService _logService;
+    private readonly ILogBufferService _buffer;
     private readonly LogForDevOptions _options;
     private readonly ILogger<LogsController> _logger;
 
     public LogsController(
-        ILogService logService, 
+        ILogService logService,
+        ILogBufferService buffer,
         IOptions<LogForDevOptions> options,
         ILogger<LogsController> logger)
     {
         _logService = logService;
+        _buffer = buffer;
         _options = options.Value;
         _logger = logger;
     }
@@ -27,7 +30,7 @@ public class LogsController : ControllerBase
     /// Send a single log entry
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<LogResponse>> PostLog([FromBody] LogEntryRequest request)
+    public ActionResult<LogResponse> PostLog([FromBody] LogEntryRequest request)
     {
         if (!ValidateApiKey())
             return Unauthorized(new LogResponse { Success = false, Error = "Invalid API key" });
@@ -35,18 +38,17 @@ public class LogsController : ControllerBase
         try
         {
             var logEntry = request.ToLogEntry();
-            
-            // Get client IP as host if not provided
+
             if (string.IsNullOrEmpty(logEntry.Host))
                 logEntry.Host = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-            var id = await _logService.InsertLogAsync(logEntry);
-            
-            return Ok(new LogResponse { Success = true, Id = id });
+            _buffer.Enqueue(logEntry);
+
+            return Ok(new LogResponse { Success = true, Id = logEntry.Id });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to insert log");
+            _logger.LogError(ex, "Failed to enqueue log");
             return StatusCode(500, new LogResponse { Success = false, Error = "Internal server error" });
         }
     }
@@ -55,7 +57,7 @@ public class LogsController : ControllerBase
     /// Send multiple log entries at once
     /// </summary>
     [HttpPost("batch")]
-    public async Task<ActionResult<LogResponse>> PostBatch([FromBody] BatchLogRequest request)
+    public ActionResult<LogResponse> PostBatch([FromBody] BatchLogRequest request)
     {
         if (!ValidateApiKey())
             return Unauthorized(new LogResponse { Success = false, Error = "Invalid API key" });
@@ -63,21 +65,21 @@ public class LogsController : ControllerBase
         try
         {
             var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            var logEntries = request.Logs.Select(r => 
+            var logEntries = request.Logs.Select(r =>
             {
                 var entry = r.ToLogEntry();
                 if (string.IsNullOrEmpty(entry.Host))
                     entry.Host = clientIp;
                 return entry;
-            });
+            }).ToList();
 
-            var count = await _logService.InsertBatchAsync(logEntries);
-            
-            return Ok(new LogResponse { Success = true, Count = count });
+            _buffer.EnqueueBatch(logEntries);
+
+            return Ok(new LogResponse { Success = true, Count = logEntries.Count });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to insert batch logs");
+            _logger.LogError(ex, "Failed to enqueue batch logs");
             return StatusCode(500, new LogResponse { Success = false, Error = "Internal server error" });
         }
     }
@@ -86,15 +88,15 @@ public class LogsController : ControllerBase
     /// Query logs with filters
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<List<LogEntry>>> GetLogs([FromQuery] LogQueryParams query)
+    public async Task<ActionResult<PagedResult<LogEntry>>> GetLogs([FromQuery] LogQueryParams query)
     {
         if (!ValidateApiKey())
             return Unauthorized();
 
         try
         {
-            var logs = await _logService.GetLogsAsync(query);
-            return Ok(logs);
+            var result = await _logService.GetLogsAsync(query);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -145,15 +147,32 @@ public class LogsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Query internal application logs
+    /// </summary>
+    [HttpGet("app")]
+    public async Task<ActionResult<PagedResult<AppLogEntry>>> GetAppLogs([FromQuery] AppLogQueryParams query)
+    {
+        try
+        {
+            var appLogService = HttpContext.RequestServices.GetRequiredService<IAppLogService>();
+            var result = await appLogService.GetLogsAsync(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to query app logs");
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
     private bool ValidateApiKey()
     {
-        // Check header
         if (Request.Headers.TryGetValue("X-API-Key", out var apiKey))
         {
             return apiKey == _options.ApiKey;
         }
-        
-        // Check query parameter (for testing)
+
         if (Request.Query.TryGetValue("apiKey", out var queryApiKey))
         {
             return queryApiKey == _options.ApiKey;
