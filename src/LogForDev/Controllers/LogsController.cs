@@ -148,6 +148,27 @@ public class LogsController : ControllerBase
     }
 
     /// <summary>
+    /// Get list of environments
+    /// </summary>
+    [HttpGet("environments")]
+    public async Task<ActionResult<List<string>>> GetEnvironments()
+    {
+        if (!ValidateApiKey())
+            return Unauthorized();
+
+        try
+        {
+            var envs = await _logService.GetEnvironmentsAsync();
+            return Ok(envs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get environments");
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
+    /// <summary>
     /// Query internal application logs
     /// </summary>
     [HttpGet("app")]
@@ -168,6 +189,14 @@ public class LogsController : ControllerBase
 
     private bool ValidateApiKey()
     {
+        // Allow requests from same origin (browser UI)
+        var referer = Request.Headers["Referer"].ToString();
+        var host = $"{Request.Scheme}://{Request.Host}";
+        if (!string.IsNullOrEmpty(referer) && referer.StartsWith(host))
+        {
+            return true;
+        }
+
         if (Request.Headers.TryGetValue("X-API-Key", out var apiKey))
         {
             return apiKey == _options.ApiKey;

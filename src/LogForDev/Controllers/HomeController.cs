@@ -21,15 +21,18 @@ public class HomeController : Controller
         {
             var stats = await _logService.GetStatsAsync();
             var apps = await _logService.GetAppNamesAsync();
-            
+            var environments = await _logService.GetEnvironmentsAsync();
+
             ViewBag.Stats = stats;
             ViewBag.Apps = apps;
+            ViewBag.Environments = environments;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load dashboard");
             ViewBag.Stats = new LogStats();
             ViewBag.Apps = new List<string>();
+            ViewBag.Environments = new List<string>();
         }
         
         return View();

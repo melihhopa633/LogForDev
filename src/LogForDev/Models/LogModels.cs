@@ -92,8 +92,11 @@ public class LogResponse
 public class LogQueryParams
 {
     public LogLevel? Level { get; set; }
+    public string? Levels { get; set; }
     public string? AppName { get; set; }
     public string? Search { get; set; }
+    public string? Environment { get; set; }
+    public string? TraceId { get; set; }
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
     public int Page { get; set; } = 1;

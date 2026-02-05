@@ -2,64 +2,98 @@
     ViewData["Title"] = "Dashboard";
     var stats = ViewBag.Stats as LogStats ?? new LogStats();
     var apps = ViewBag.Apps as List<string> ?? new List<string>();
+    var environments = ViewBag.Environments as List<string> ?? new List<string>();
 }
 
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed top-16 right-4 z-[100] space-y-2"></div>
+
 <!-- Stats Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="rounded-lg border border-border bg-card p-6">
-        <div class="flex items-center justify-between">
-            <p class="text-sm font-medium text-muted-foreground">Total Logs (24h)</p>
-            <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="group rounded-xl border border-border bg-card p-5 hover:border-primary/40 transition-all duration-300">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Logs (24h)</p>
+            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
         </div>
-        <div class="mt-2">
-            <p class="text-3xl font-bold" id="totalLogs">@stats.TotalLogs.ToString("N0")</p>
-        </div>
+        <p class="text-2xl lg:text-3xl font-bold tracking-tight" id="totalLogs">@stats.TotalLogs.ToString("N0")</p>
     </div>
-    <div class="rounded-lg border border-border bg-card p-6">
-        <div class="flex items-center justify-between">
-            <p class="text-sm font-medium text-muted-foreground">Errors</p>
-            <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <div class="group rounded-xl border border-border bg-card p-5 hover:border-red-500/40 transition-all duration-300">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Errors</p>
+            <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
         </div>
-        <div class="mt-2">
-            <p class="text-3xl font-bold text-red-500" id="errorCount">@stats.ErrorCount.ToString("N0")</p>
-        </div>
+        <p class="text-2xl lg:text-3xl font-bold text-red-500 tracking-tight" id="errorCount">@stats.ErrorCount.ToString("N0")</p>
     </div>
-    <div class="rounded-lg border border-border bg-card p-6">
-        <div class="flex items-center justify-between">
-            <p class="text-sm font-medium text-muted-foreground">Warnings</p>
-            <svg class="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <div class="group rounded-xl border border-border bg-card p-5 hover:border-yellow-500/40 transition-all duration-300">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Warnings</p>
+            <div class="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
         </div>
-        <div class="mt-2">
-            <p class="text-3xl font-bold text-yellow-500" id="warningCount">@stats.WarningCount.ToString("N0")</p>
-        </div>
+        <p class="text-2xl lg:text-3xl font-bold text-yellow-500 tracking-tight" id="warningCount">@stats.WarningCount.ToString("N0")</p>
     </div>
-    <div class="rounded-lg border border-border bg-card p-6">
-        <div class="flex items-center justify-between">
-            <p class="text-sm font-medium text-muted-foreground">Logs/min</p>
-            <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <div class="group rounded-xl border border-border bg-card p-5 hover:border-emerald-500/40 transition-all duration-300">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Logs/min</p>
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
         </div>
-        <div class="mt-2">
-            <p class="text-3xl font-bold" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</p>
-        </div>
+        <p class="text-2xl lg:text-3xl font-bold text-emerald-500 tracking-tight" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</p>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
-    <div class="flex flex-col md:flex-row gap-3 items-end">
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+<div class="rounded-xl border border-border bg-card p-4 mb-6">
+    <!-- Row 1: Primary Filters -->
+    <div class="flex flex-col lg:flex-row gap-3 items-end">
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
             <label class="text-xs font-medium text-muted-foreground">Level</label>
-            <select id="levelFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
-                <option value="">All Levels</option>
-                <option value="Trace">Trace</option>
-                <option value="Debug">Debug</option>
-                <option value="Info">Info</option>
-                <option value="Warning">Warning</option>
-                <option value="Error">Error</option>
-                <option value="Fatal">Fatal</option>
-            </select>
+            <div class="relative">
+                <button id="levelDropdownBtn" type="button"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[160px] flex items-center justify-between gap-2 w-full lg:w-auto">
+                    <span id="levelDropdownLabel">All Levels</span>
+                    <svg class="w-3.5 h-3.5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div id="levelDropdown" class="hidden absolute top-full left-0 mt-1 w-56 rounded-lg border border-border bg-background shadow-xl z-50 py-1.5">
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check rounded" value="" onchange="toggleAllLevels(this)" checked>
+                        <span>All Levels</span>
+                    </label>
+                    <div class="h-px bg-border my-1"></div>
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check" value="Trace">
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-zinc-700/50 text-zinc-400">TRACE</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check" value="Debug">
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-blue-500/20 text-blue-400">DEBUG</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check" value="Info">
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-green-500/20 text-green-400">INFO</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check" value="Warning">
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-yellow-500/20 text-yellow-400">WARNING</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check" value="Error">
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-red-500/20 text-red-400">ERROR</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input type="checkbox" class="level-check" value="Fatal">
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-red-600 text-white">FATAL</span>
+                    </label>
+                </div>
+            </div>
         </div>
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
             <label class="text-xs font-medium text-muted-foreground">App</label>
             <select id="appFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
                 <option value="">All Apps</option>
@@ -69,53 +103,118 @@
                 }
             </select>
         </div>
-        <div class="flex flex-col gap-1.5 flex-1 w-full md:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Search</label>
-            <input type="text" id="searchFilter" placeholder="Search messages..." class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full" />
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">Environment</label>
+            <select id="envFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
+                <option value="">All Environments</option>
+                @foreach (var env in environments)
+                {
+                    <option value="@env">@env</option>
+                }
+            </select>
         </div>
-        <button id="refreshBtn" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap">
-            Refresh
-        </button>
-        <button id="liveToggle" class="h-9 rounded-md border border-green-500 px-4 text-sm font-medium text-green-500 hover:bg-green-500/10 transition-colors whitespace-nowrap">
-            LIVE
-        </button>
+        <div class="flex flex-col gap-1.5 flex-1 w-full lg:w-auto">
+            <label class="text-xs font-medium text-muted-foreground">Search</label>
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="searchFilter" placeholder="Search messages..."
+                    class="h-9 rounded-md border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full" />
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button id="refreshBtn" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
+                <svg id="refreshIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                Refresh
+            </button>
+            <button id="liveToggle" class="h-9 rounded-md border border-green-500 px-4 text-sm font-medium text-green-500 hover:bg-green-500/10 transition-colors whitespace-nowrap flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                    <span id="liveDot" class="absolute inline-flex h-full w-full rounded-full opacity-0 bg-green-400"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                LIVE
+            </button>
+        </div>
     </div>
-    <!-- Time Range -->
-    <div class="flex flex-col md:flex-row gap-3 items-end border-t border-border pt-3">
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+
+    <!-- Row 2: Time Range + TraceId -->
+    <div class="flex flex-col lg:flex-row gap-3 items-end border-t border-border pt-3 mt-3">
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
             <label class="text-xs font-medium text-muted-foreground">From</label>
             <input type="datetime-local" id="fromFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
         </div>
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
             <label class="text-xs font-medium text-muted-foreground">To</label>
             <input type="datetime-local" id="toFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
         </div>
-        <div class="flex gap-1.5">
-            <button onclick="setTimeRange(1)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">1h</button>
-            <button onclick="setTimeRange(6)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">6h</button>
-            <button onclick="setTimeRange(24)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">24h</button>
-            <button onclick="setTimeRange(168)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">7d</button>
-            <button onclick="setTimeRange(0)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">All</button>
+        <div class="flex gap-1" id="timeRangeButtons">
+            <button onclick="setTimeRange(1)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="1">1h</button>
+            <button onclick="setTimeRange(6)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="6">6h</button>
+            <button onclick="setTimeRange(24)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="24">24h</button>
+            <button onclick="setTimeRange(168)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="168">7d</button>
+            <button onclick="setTimeRange(0)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors active-time-range" data-hours="0">All</button>
         </div>
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto lg:ml-auto">
+            <label class="text-xs font-medium text-muted-foreground">Trace ID</label>
+            <input type="text" id="traceIdFilter" placeholder="Filter by trace ID..."
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full lg:w-[220px] font-mono text-xs" />
+        </div>
+        <button id="clearFilters" class="h-9 rounded-md border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
+            Clear All
+        </button>
+    </div>
+
+    <!-- Active Filter Tags -->
+    <div id="activeFilters" class="hidden flex-wrap gap-1.5 pt-3 mt-3 border-t border-border"></div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div id="bulkActionsBar" class="hidden rounded-xl border border-primary/50 bg-primary/10 p-3 mb-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+        <span class="text-sm font-medium"><span id="selectedCount">0</span> logs selected</span>
+        <button onclick="selectAllOnPage()" class="text-xs text-primary hover:underline">Select all on page</button>
+        <button onclick="clearSelection()" class="text-xs text-muted-foreground hover:text-foreground">Clear selection</button>
+    </div>
+    <div class="flex items-center gap-2">
+        <button onclick="copySelectedAsJson()" class="h-8 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Copy JSON
+        </button>
+        <button onclick="copySelectedAsCsv()" class="h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Copy CSV
+        </button>
+        <button onclick="downloadSelectedAsJson()" class="h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Download
+        </button>
     </div>
 </div>
 
 <!-- Logs Table -->
-<div class="rounded-lg border border-border overflow-hidden mb-6">
+<div class="rounded-xl border border-border overflow-hidden mb-4">
     <div class="overflow-x-auto scrollbar-thin">
         <table class="w-full text-sm">
             <thead>
-                <tr class="border-b border-border bg-muted/50">
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[160px]">Timestamp</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[90px]">Level</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[130px]">App</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground">Message</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[80px]">Actions</th>
+                <tr class="border-b border-border bg-muted/30">
+                    <th class="h-10 px-3 text-center w-[40px]">
+                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="rounded border-input">
+                    </th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[170px]">Timestamp</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[90px]">Level</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[120px]">App</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[100px]">Environment</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">Message</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[50px]"></th>
                 </tr>
             </thead>
             <tbody id="logsBody">
                 <tr>
-                    <td colspan="5" class="h-24 text-center text-muted-foreground">Loading logs...</td>
+                    <td colspan="6" class="h-32 text-center">
+                        <div class="flex flex-col items-center gap-2 text-muted-foreground">
+                            <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            <span class="text-sm">Loading logs...</span>
+                        </div>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -123,23 +222,40 @@
 </div>
 
 <!-- Pagination -->
-<div class="flex items-center justify-center gap-4">
-    <button id="prevPage" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-        Previous
-    </button>
-    <span id="pageInfo" class="text-sm text-muted-foreground">Page 1</span>
-    <button id="nextPage" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-secondary transition-colors">
-        Next
-    </button>
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
+    <div class="flex items-center gap-2">
+        <span class="text-xs text-muted-foreground">Rows per page</span>
+        <select id="pageSizeSelect" class="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[65px]">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+        </select>
+        <span id="pageInfo" class="text-xs text-muted-foreground ml-2">Page 1 of 1</span>
+    </div>
+    <div class="flex items-center gap-1" id="paginationControls">
+        <button id="firstPage" class="h-8 w-8 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center" disabled title="First page">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg>
+        </button>
+        <button id="prevPage" class="h-8 w-8 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center" disabled title="Previous page">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div id="pageNumbers" class="flex items-center gap-1"></div>
+        <button id="nextPage" class="h-8 w-8 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center" title="Next page">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <button id="lastPage" class="h-8 w-8 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center" title="Last page">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+        </button>
+    </div>
 </div>
 
 <!-- Log Detail Modal -->
 <div id="logModal" class="fixed inset-0 z-50 hidden items-center justify-center">
-    <div class="fixed inset-0 bg-black/80" onclick="closeModal()"></div>
-    <div class="relative z-50 w-full max-w-2xl max-h-[85vh] overflow-auto rounded-lg border border-border bg-background p-6 shadow-lg mx-4 scrollbar-thin">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="relative z-50 w-full max-w-2xl max-h-[85vh] overflow-auto rounded-xl border border-border bg-background p-6 shadow-2xl mx-4 scrollbar-thin">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">Log Details</h3>
-            <button onclick="closeModal()" class="rounded-sm opacity-70 hover:opacity-100 transition-opacity">
+            <button onclick="closeModal()" class="rounded-md p-1 opacity-70 hover:opacity-100 hover:bg-secondary transition-all">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
@@ -148,13 +264,35 @@
 </div>
 
 @section Scripts {
+    <style>
+        .active-time-range {
+            background-color: rgb(37 99 235 / 0.15) !important;
+            border-color: rgb(37 99 235 / 0.5) !important;
+            color: rgb(96 165 250) !important;
+        }
+        .log-row { cursor: pointer; }
+        .log-row:nth-child(4n+1), .log-row:nth-child(4n+2) { background-color: rgba(39, 39, 42, 0.15); }
+        .log-row:hover { background-color: rgba(39, 39, 42, 0.4) !important; }
+        .expand-row { display: none; }
+        .expand-row.open { display: table-row; }
+        .expand-row td { padding: 0 !important; }
+        .expand-content { animation: slideDown 0.2s ease-out; }
+        @@keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+        .page-btn { min-width: 2rem; }
+        .page-btn.active { background-color: rgb(37 99 235) !important; color: white !important; border-color: rgb(37 99 235) !important; }
+        .refresh-spin { animation: spin 0.7s linear infinite; }
+        @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
     <script>
         let currentPage = 1;
         let totalPages = 1;
         let totalCount = 0;
+        let pageSize = 50;
         let isLive = false;
         let liveInterval = null;
+        let expandedRow = null;
 
+        // --- Utility ---
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -168,7 +306,18 @@
         }
 
         function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleString();
+            const d = new Date(dateStr);
+            return d.toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function relativeTime(dateStr) {
+            const now = new Date();
+            const d = new Date(dateStr);
+            const diff = Math.floor((now - d) / 1000);
+            if (diff < 60) return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
         }
 
         function debounce(func, wait) {
@@ -179,19 +328,102 @@
             };
         }
 
-        function levelBadgeClasses(level) {
-            const base = 'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold uppercase';
-            switch (level.toLowerCase()) {
-                case 'trace':  return base + ' bg-zinc-700/50 text-zinc-400';
-                case 'debug':  return base + ' bg-blue-500/20 text-blue-400';
-                case 'info':   return base + ' bg-green-500/20 text-green-400';
-                case 'warning':return base + ' bg-yellow-500/20 text-yellow-400';
-                case 'error':  return base + ' bg-red-500/20 text-red-400';
-                case 'fatal':  return base + ' bg-red-600 text-white';
-                default:       return base + ' bg-zinc-700/50 text-zinc-400';
+        // --- Toast ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const colors = {
+                info: 'border-primary/50 bg-primary/10 text-blue-300',
+                error: 'border-red-500/50 bg-red-500/10 text-red-300',
+                success: 'border-green-500/50 bg-green-500/10 text-green-300'
+            };
+            const toast = document.createElement('div');
+            toast.className = `rounded-lg border px-4 py-3 text-sm shadow-lg ${colors[type] || colors.info} transition-all duration-300 transform translate-x-0`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Level Badges ---
+        const levelNames = ['Trace', 'Debug', 'Info', 'Warning', 'Error', 'Fatal'];
+        function levelBadge(level) {
+            // Convert numeric level to string if needed
+            const levelStr = typeof level === 'number' ? (levelNames[level] || 'Unknown') : level;
+            const map = {
+                trace:   'bg-zinc-700/50 text-zinc-400',
+                debug:   'bg-blue-500/20 text-blue-400',
+                info:    'bg-green-500/20 text-green-400',
+                warning: 'bg-yellow-500/20 text-yellow-400',
+                error:   'bg-red-500/20 text-red-400',
+                fatal:   'bg-red-600 text-white',
+            };
+            const cls = map[levelStr.toLowerCase()] || 'bg-zinc-700/50 text-zinc-400';
+            return `<span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold uppercase ${cls}">${levelStr}</span>`;
+        }
+
+        function envBadge(env) {
+            if (!env) return '<span class="text-muted-foreground text-xs">-</span>';
+            const map = {
+                production: 'bg-red-500/10 text-red-400 border-red-500/20',
+                staging: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+                development: 'bg-green-500/10 text-green-400 border-green-500/20',
+                dev: 'bg-green-500/10 text-green-400 border-green-500/20',
+            };
+            const cls = map[env.toLowerCase()] || 'bg-zinc-700/30 text-zinc-400 border-zinc-600/30';
+            return `<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium border ${cls}">${escapeHtml(env)}</span>`;
+        }
+
+        // --- Level Multi-Select ---
+        function getSelectedLevels() {
+            const checks = document.querySelectorAll('.level-check[value]:not([value=""])');
+            const selected = [...checks].filter(c => c.checked).map(c => c.value);
+            return selected;
+        }
+
+        function toggleAllLevels(el) {
+            const checks = document.querySelectorAll('.level-check[value]:not([value=""])');
+            checks.forEach(c => c.checked = false);
+            updateLevelLabel();
+            currentPage = 1;
+            loadLogs();
+        }
+
+        function updateLevelLabel() {
+            const selected = getSelectedLevels();
+            const allCheck = document.querySelector('.level-check[value=""]');
+            const label = document.getElementById('levelDropdownLabel');
+            if (selected.length === 0) {
+                allCheck.checked = true;
+                label.textContent = 'All Levels';
+            } else {
+                allCheck.checked = false;
+                label.textContent = selected.length === 1 ? selected[0] : `${selected.length} levels`;
             }
         }
 
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('levelDropdown');
+            const btn = document.getElementById('levelDropdownBtn');
+            if (btn.contains(e.target)) {
+                dropdown.classList.toggle('hidden');
+            } else if (!dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.querySelectorAll('.level-check[value]:not([value=""])').forEach(el => {
+            el.addEventListener('change', () => {
+                document.querySelector('.level-check[value=""]').checked = false;
+                updateLevelLabel();
+                currentPage = 1;
+                loadLogs();
+            });
+        });
+
+        // --- Time Range ---
         function setTimeRange(hours) {
             const fromEl = document.getElementById('fromFilter');
             const toEl = document.getElementById('toFilter');
@@ -204,6 +436,11 @@
                 toEl.value = toLocalISOString(now);
                 fromEl.value = toLocalISOString(from);
             }
+            // highlight active button
+            document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+            const activeBtn = document.querySelector(`.time-range-btn[data-hours="${hours}"]`);
+            if (activeBtn) activeBtn.classList.add('active-time-range');
+
             currentPage = 1;
             loadLogs();
         }
@@ -213,66 +450,235 @@
             return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
         }
 
-        async function loadLogs() {
-            const level = document.getElementById('levelFilter').value;
+        // --- Active Filter Tags ---
+        function updateActiveFilters() {
+            const container = document.getElementById('activeFilters');
+            const tags = [];
+            const levels = getSelectedLevels();
+            if (levels.length > 0) tags.push({ label: `Level: ${levels.join(', ')}`, clear: () => { document.querySelectorAll('.level-check').forEach(c => { c.checked = c.value === ''; }); updateLevelLabel(); }});
             const app = document.getElementById('appFilter').value;
+            if (app) tags.push({ label: `App: ${app}`, clear: () => { document.getElementById('appFilter').value = ''; }});
+            const env = document.getElementById('envFilter').value;
+            if (env) tags.push({ label: `Env: ${env}`, clear: () => { document.getElementById('envFilter').value = ''; }});
             const search = document.getElementById('searchFilter').value;
+            if (search) tags.push({ label: `Search: "${search}"`, clear: () => { document.getElementById('searchFilter').value = ''; }});
+            const traceId = document.getElementById('traceIdFilter').value;
+            if (traceId) tags.push({ label: `Trace: ${traceId.substring(0,12)}...`, clear: () => { document.getElementById('traceIdFilter').value = ''; }});
+
+            if (tags.length === 0) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                return;
+            }
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            container.innerHTML = tags.map((t, i) => `
+                <span class="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/20 px-2 py-1 text-xs text-blue-300">
+                    ${escapeHtml(t.label)}
+                    <button onclick="clearFilterTag(${i})" class="hover:text-white transition-colors ml-0.5">&times;</button>
+                </span>
+            `).join('');
+            // Store clear functions
+            container._tags = tags;
+        }
+
+        function clearFilterTag(index) {
+            const container = document.getElementById('activeFilters');
+            if (container._tags && container._tags[index]) {
+                container._tags[index].clear();
+                currentPage = 1;
+                loadLogs();
+            }
+        }
+
+        // --- Load Logs ---
+        async function loadLogs() {
+            const levels = getSelectedLevels();
+            const app = document.getElementById('appFilter').value;
+            const env = document.getElementById('envFilter').value;
+            const search = document.getElementById('searchFilter').value;
+            const traceId = document.getElementById('traceIdFilter').value;
             const from = document.getElementById('fromFilter').value;
             const to = document.getElementById('toFilter').value;
 
-            let url = `/api/logs?page=${currentPage}&pageSize=50`;
-            if (level) url += `&level=${level}`;
+            let url = `/api/logs?page=${currentPage}&pageSize=${pageSize}`;
+            if (levels.length > 0) url += `&levels=${encodeURIComponent(levels.join(','))}`;
             if (app) url += `&appName=${encodeURIComponent(app)}`;
+            if (env) url += `&environment=${encodeURIComponent(env)}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (traceId) url += `&traceId=${encodeURIComponent(traceId)}`;
             if (from) url += `&from=${encodeURIComponent(new Date(from).toISOString())}`;
             if (to) url += `&to=${encodeURIComponent(new Date(to).toISOString())}`;
 
+            // Show loading spinner on refresh button
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('refresh-spin');
+
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
                 totalCount = result.totalCount;
-                totalPages = result.totalPages;
+                totalPages = result.totalPages || 1;
+                expandedRow = null;
                 renderLogs(result.data);
-                updatePageInfo();
+                updatePagination();
+                updateActiveFilters();
             } catch (error) {
                 console.error('Failed to load logs:', error);
+                showToast('Failed to load logs: ' + error.message, 'error');
+            } finally {
+                refreshIcon.classList.remove('refresh-spin');
             }
         }
+
+        // --- Render Logs ---
+        let currentLogs = []; // Store current logs for selection
+        let selectedLogs = new Set(); // Track selected log IDs
 
         function renderLogs(logs) {
             const tbody = document.getElementById('logsBody');
+            currentLogs = logs || [];
+            document.getElementById('selectAllCheckbox').checked = false;
+            updateBulkActionsBar();
 
             if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="h-24 text-center text-muted-foreground">No logs found</td></tr>';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="h-32 text-center">
+                            <div class="flex flex-col items-center gap-2 text-muted-foreground">
+                                <svg class="w-8 h-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <span class="text-sm">No logs found</span>
+                                <span class="text-xs">Try adjusting your filters</span>
+                            </div>
+                        </td>
+                    </tr>`;
                 return;
             }
 
-            tbody.innerHTML = logs.map(log => `
-                <tr class="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td class="px-4 py-2.5 font-mono text-xs text-muted-foreground">${formatDate(log.timestamp)}</td>
-                    <td class="px-4 py-2.5"><span class="${levelBadgeClasses(log.level)}">${log.level}</span></td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400">${escapeHtml(log.appName)}</td>
-                    <td class="px-4 py-2.5 text-sm max-w-[400px] truncate">${escapeHtml(truncate(log.message, 100))}</td>
-                    <td class="px-4 py-2.5">
-                        <button onclick='showDetail(${JSON.stringify(log).replace(/'/g, "&#39;")})' class="h-7 rounded-md border border-border bg-background px-2.5 text-xs font-medium hover:bg-secondary transition-colors">
-                            View
-                        </button>
+            tbody.innerHTML = logs.map((log, i) => {
+                const logJson = JSON.stringify(log).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+                const isSelected = selectedLogs.has(log.id);
+                return `
+                <tr class="log-row border-b border-border/50 transition-colors ${isSelected ? 'bg-primary/10' : ''}" data-index="${i}" data-id="${log.id}">
+                    <td class="px-3 py-2.5 text-center" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="log-checkbox rounded border-input" data-id="${log.id}" ${isSelected ? 'checked' : ''} onchange="toggleLogSelection(this, '${log.id}')">
+                    </td>
+                    <td class="px-4 py-2.5" onclick="toggleExpand(this.parentElement, ${i})">
+                        <div class="font-mono text-xs text-muted-foreground">${formatDate(log.timestamp)}</div>
+                        <div class="text-[10px] text-muted-foreground/60">${relativeTime(log.timestamp)}</div>
+                    </td>
+                    <td class="px-4 py-2.5" onclick="toggleExpand(this.parentElement, ${i})">${levelBadge(log.level)}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400" onclick="toggleExpand(this.parentElement, ${i})">${escapeHtml(log.appName)}</td>
+                    <td class="px-4 py-2.5" onclick="toggleExpand(this.parentElement, ${i})">${envBadge(log.environment)}</td>
+                    <td class="px-4 py-2.5 text-sm max-w-[400px]" onclick="toggleExpand(this.parentElement, ${i})"><span class="line-clamp-1">${escapeHtml(truncate(log.message, 120))}</span></td>
+                    <td class="px-4 py-2.5 text-center" onclick="toggleExpand(this.parentElement, ${i})">
+                        <svg class="w-4 h-4 text-muted-foreground transition-transform expand-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
                     </td>
                 </tr>
-            `).join('');
+                <tr class="expand-row border-b border-border/30" data-expand="${i}">
+                    <td colspan="7">
+                        <div class="expand-content p-4 bg-muted/20">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                <div>
+                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">ID</span>
+                                    <p class="font-mono text-xs mt-0.5 break-all">${log.id}</p>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Host</span>
+                                    <p class="font-mono text-xs mt-0.5">${escapeHtml(log.host || '-')}</p>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Environment</span>
+                                    <p class="text-xs mt-0.5">${envBadge(log.environment)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Trace ID</span>
+                                    <p class="font-mono text-xs mt-0.5 break-all">${escapeHtml(log.traceId || '-')}</p>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Message</span>
+                                <pre class="mt-1 rounded-lg bg-background/80 border border-border p-3 font-mono text-xs whitespace-pre-wrap break-words max-h-48 overflow-auto scrollbar-thin">${escapeHtml(log.message)}</pre>
+                            </div>
+                            ${log.metadata ? `
+                            <div>
+                                <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Metadata</span>
+                                <pre class="mt-1 rounded-lg bg-background/80 border border-border p-3 font-mono text-xs overflow-x-auto scrollbar-thin max-h-48">${formatMetadata(log.metadata)}</pre>
+                            </div>` : ''}
+                            <div class="flex gap-2 mt-3 pt-3 border-t border-border/30">
+                                <button onclick="event.stopPropagation(); showDetail(${logJson})" class="h-7 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-secondary transition-colors">
+                                    Full View
+                                </button>
+                                <button onclick="event.stopPropagation(); copyToClipboard('${log.id}')" class="h-7 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-secondary transition-colors">
+                                    Copy ID
+                                </button>
+                                ${log.traceId ? `<button onclick="event.stopPropagation(); filterByTrace('${escapeHtml(log.traceId)}')" class="h-7 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-secondary transition-colors">Filter Trace</button>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
         }
 
+        function formatMetadata(metadata) {
+            try {
+                const parsed = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+                return escapeHtml(JSON.stringify(parsed, null, 2));
+            } catch {
+                return escapeHtml(metadata);
+            }
+        }
+
+        // --- Expand/Collapse Row ---
+        function toggleExpand(row, index) {
+            const expandRow = document.querySelector(`tr[data-expand="${index}"]`);
+            const chevron = row.querySelector('.expand-chevron');
+            if (!expandRow) return;
+
+            // Close previously expanded
+            if (expandedRow !== null && expandedRow !== index) {
+                const prev = document.querySelector(`tr[data-expand="${expandedRow}"]`);
+                const prevChevron = document.querySelector(`tr[data-index="${expandedRow}"] .expand-chevron`);
+                if (prev) prev.classList.remove('open');
+                if (prevChevron) prevChevron.style.transform = '';
+            }
+
+            const isOpen = expandRow.classList.contains('open');
+            if (isOpen) {
+                expandRow.classList.remove('open');
+                chevron.style.transform = '';
+                expandedRow = null;
+            } else {
+                expandRow.classList.add('open');
+                chevron.style.transform = 'rotate(180deg)';
+                expandedRow = index;
+            }
+        }
+
+        // --- Copy & Filter ---
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success'));
+        }
+
+        function filterByTrace(traceId) {
+            document.getElementById('traceIdFilter').value = traceId;
+            currentPage = 1;
+            loadLogs();
+        }
+
+        // --- Modal ---
         function showDetail(log) {
             const modal = document.getElementById('logModal');
             const details = document.getElementById('logDetails');
 
-            let metadataHtml = '-';
+            let metadataHtml = '<span class="text-muted-foreground text-xs">-</span>';
             try {
                 if (log.metadata) {
                     const parsed = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
-                    metadataHtml = `<pre class="rounded-md bg-muted p-3 font-mono text-xs overflow-x-auto">${JSON.stringify(parsed, null, 2)}</pre>`;
+                    metadataHtml = `<pre class="rounded-lg bg-muted/50 border border-border p-3 font-mono text-xs overflow-x-auto scrollbar-thin">${JSON.stringify(parsed, null, 2)}</pre>`;
                 }
-            } catch { metadataHtml = `<pre class="rounded-md bg-muted p-3 font-mono text-xs">${escapeHtml(log.metadata)}</pre>`; }
+            } catch { metadataHtml = `<pre class="rounded-lg bg-muted/50 border border-border p-3 font-mono text-xs">${escapeHtml(log.metadata)}</pre>`; }
 
             details.innerHTML = `
                 <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
@@ -285,7 +691,7 @@
                 </div>
                 <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
                     <span class="text-muted-foreground font-medium">Level</span>
-                    <span class="${levelBadgeClasses(log.level)}">${log.level}</span>
+                    ${levelBadge(log.level)}
                 </div>
                 <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
                     <span class="text-muted-foreground font-medium">App</span>
@@ -293,11 +699,11 @@
                 </div>
                 <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
                     <span class="text-muted-foreground font-medium">Host</span>
-                    <span>${escapeHtml(log.host || '-')}</span>
+                    <span class="font-mono text-xs">${escapeHtml(log.host || '-')}</span>
                 </div>
                 <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
                     <span class="text-muted-foreground font-medium">Environment</span>
-                    <span>${escapeHtml(log.environment || '-')}</span>
+                    ${envBadge(log.environment)}
                 </div>
                 <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
                     <span class="text-muted-foreground font-medium">Trace ID</span>
@@ -305,7 +711,7 @@
                 </div>
                 <div class="border-t border-border pt-3 space-y-2">
                     <p class="text-sm font-medium text-muted-foreground">Message</p>
-                    <pre class="rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-words">${escapeHtml(log.message)}</pre>
+                    <pre class="rounded-lg bg-muted/50 border border-border p-3 font-mono text-xs whitespace-pre-wrap break-words">${escapeHtml(log.message)}</pre>
                 </div>
                 <div class="space-y-2">
                     <p class="text-sm font-medium text-muted-foreground">Metadata</p>
@@ -323,47 +729,258 @@
             modal.classList.remove('flex');
         }
 
+        // --- Live Mode ---
         function toggleLive() {
             isLive = !isLive;
             const btn = document.getElementById('liveToggle');
+            const dot = document.getElementById('liveDot');
 
             if (isLive) {
-                btn.classList.add('bg-green-500', 'text-black', 'border-green-500', 'animate-pulse-live');
+                btn.classList.add('bg-green-500', 'text-black', 'border-green-500');
                 btn.classList.remove('text-green-500', 'hover:bg-green-500/10');
-                btn.textContent = 'LIVE';
+                dot.classList.add('animate-ping');
+                dot.style.opacity = '0.75';
+                currentPage = 1;
                 liveInterval = setInterval(loadLogs, 2000);
+                showToast('Live mode enabled', 'success');
             } else {
-                btn.classList.remove('bg-green-500', 'text-black', 'border-green-500', 'animate-pulse-live');
+                btn.classList.remove('bg-green-500', 'text-black', 'border-green-500');
                 btn.classList.add('text-green-500', 'hover:bg-green-500/10');
-                btn.textContent = 'LIVE';
+                dot.classList.remove('animate-ping');
+                dot.style.opacity = '0';
                 clearInterval(liveInterval);
+                showToast('Live mode disabled', 'info');
             }
         }
 
-        function updatePageInfo() {
+        // --- Pagination ---
+        function updatePagination() {
             document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages} (${totalCount.toLocaleString()} logs)`;
             document.getElementById('prevPage').disabled = currentPage <= 1;
             document.getElementById('nextPage').disabled = currentPage >= totalPages;
+            document.getElementById('firstPage').disabled = currentPage <= 1;
+            document.getElementById('lastPage').disabled = currentPage >= totalPages;
+            renderPageNumbers();
         }
 
-        // Event listeners
+        function renderPageNumbers() {
+            const container = document.getElementById('pageNumbers');
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+            const pages = [];
+            const maxVisible = 5;
+
+            if (totalPages <= maxVisible + 2) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                let start = Math.max(2, currentPage - 1);
+                let end = Math.min(totalPages - 1, currentPage + 1);
+                if (currentPage <= 3) { start = 2; end = maxVisible - 1; }
+                if (currentPage >= totalPages - 2) { start = totalPages - maxVisible + 2; end = totalPages - 1; }
+                if (start > 2) pages.push('...');
+                for (let i = start; i <= end; i++) pages.push(i);
+                if (end < totalPages - 1) pages.push('...');
+                pages.push(totalPages);
+            }
+
+            container.innerHTML = pages.map(p => {
+                if (p === '...') return `<span class="h-8 w-6 flex items-center justify-center text-xs text-muted-foreground">...</span>`;
+                return `<button onclick="goToPage(${p})" class="page-btn h-8 rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground hover:bg-secondary transition-colors ${p === currentPage ? 'active' : ''}">${p}</button>`;
+            }).join('');
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadLogs();
+        }
+
+        // --- Clear Filters ---
+        function clearAllFilters() {
+            document.querySelectorAll('.level-check').forEach(c => { c.checked = c.value === ''; });
+            updateLevelLabel();
+            document.getElementById('appFilter').value = '';
+            document.getElementById('envFilter').value = '';
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('traceIdFilter').value = '';
+            document.getElementById('fromFilter').value = '';
+            document.getElementById('toFilter').value = '';
+            document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+            document.querySelector('.time-range-btn[data-hours="0"]').classList.add('active-time-range');
+            currentPage = 1;
+            loadLogs();
+        }
+
+        // --- Bulk Selection ---
+        function toggleLogSelection(checkbox, logId) {
+            if (checkbox.checked) {
+                selectedLogs.add(logId);
+                checkbox.closest('tr').classList.add('bg-primary/10');
+            } else {
+                selectedLogs.delete(logId);
+                checkbox.closest('tr').classList.remove('bg-primary/10');
+            }
+            updateBulkActionsBar();
+            updateSelectAllCheckbox();
+        }
+
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.log-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+                const logId = cb.dataset.id;
+                if (checkbox.checked) {
+                    selectedLogs.add(logId);
+                    cb.closest('tr').classList.add('bg-primary/10');
+                } else {
+                    selectedLogs.delete(logId);
+                    cb.closest('tr').classList.remove('bg-primary/10');
+                }
+            });
+            updateBulkActionsBar();
+        }
+
+        function selectAllOnPage() {
+            const checkboxes = document.querySelectorAll('.log-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                selectedLogs.add(cb.dataset.id);
+                cb.closest('tr').classList.add('bg-primary/10');
+            });
+            document.getElementById('selectAllCheckbox').checked = true;
+            updateBulkActionsBar();
+        }
+
+        function clearSelection() {
+            selectedLogs.clear();
+            document.querySelectorAll('.log-checkbox').forEach(cb => {
+                cb.checked = false;
+                cb.closest('tr').classList.remove('bg-primary/10');
+            });
+            document.getElementById('selectAllCheckbox').checked = false;
+            updateBulkActionsBar();
+        }
+
+        function updateSelectAllCheckbox() {
+            const checkboxes = document.querySelectorAll('.log-checkbox');
+            const allChecked = checkboxes.length > 0 && [...checkboxes].every(cb => cb.checked);
+            document.getElementById('selectAllCheckbox').checked = allChecked;
+        }
+
+        function updateBulkActionsBar() {
+            const bar = document.getElementById('bulkActionsBar');
+            const count = selectedLogs.size;
+            document.getElementById('selectedCount').textContent = count;
+            if (count > 0) {
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+            } else {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+            }
+        }
+
+        function getSelectedLogsData() {
+            return currentLogs.filter(log => selectedLogs.has(log.id));
+        }
+
+        function copySelectedAsJson() {
+            const logs = getSelectedLogsData();
+            if (logs.length === 0) {
+                showToast('No logs selected', 'error');
+                return;
+            }
+            const json = JSON.stringify(logs, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                showToast(`${logs.length} logs copied as JSON`, 'success');
+            });
+        }
+
+        function copySelectedAsCsv() {
+            const logs = getSelectedLogsData();
+            if (logs.length === 0) {
+                showToast('No logs selected', 'error');
+                return;
+            }
+            const headers = ['id', 'timestamp', 'level', 'appName', 'environment', 'host', 'message', 'traceId', 'metadata'];
+            const levelMap = {0:'Trace', 1:'Debug', 2:'Info', 3:'Warning', 4:'Error', 5:'Fatal'};
+            const csvRows = [headers.join(',')];
+            logs.forEach(log => {
+                const row = [
+                    log.id,
+                    log.timestamp,
+                    levelMap[log.level] || log.level,
+                    `"${(log.appName || '').replace(/"/g, '""')}"`,
+                    log.environment || '',
+                    log.host || '',
+                    `"${(log.message || '').replace(/"/g, '""').replace(/\n/g, '\\n')}"`,
+                    log.traceId || '',
+                    `"${(log.metadata || '').replace(/"/g, '""')}"`
+                ];
+                csvRows.push(row.join(','));
+            });
+            navigator.clipboard.writeText(csvRows.join('\n')).then(() => {
+                showToast(`${logs.length} logs copied as CSV`, 'success');
+            });
+        }
+
+        function downloadSelectedAsJson() {
+            const logs = getSelectedLogsData();
+            if (logs.length === 0) {
+                showToast('No logs selected', 'error');
+                return;
+            }
+            const json = JSON.stringify(logs, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `logs-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`${logs.length} logs downloaded`, 'success');
+        }
+
+        // --- Event Listeners ---
         document.getElementById('refreshBtn').addEventListener('click', loadLogs);
         document.getElementById('liveToggle').addEventListener('click', toggleLive);
-        document.getElementById('levelFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
         document.getElementById('appFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('envFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
         document.getElementById('searchFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
-        document.getElementById('fromFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
-        document.getElementById('toFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('traceIdFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
+        document.getElementById('fromFilter').addEventListener('change', () => {
+            document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+            currentPage = 1; loadLogs();
+        });
+        document.getElementById('toFilter').addEventListener('change', () => {
+            document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+            currentPage = 1; loadLogs();
+        });
+        document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
 
-        document.getElementById('prevPage').addEventListener('click', () => {
-            if (currentPage > 1) { currentPage--; loadLogs(); updatePageInfo(); }
+        document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+            pageSize = parseInt(e.target.value);
+            currentPage = 1;
+            loadLogs();
         });
-        document.getElementById('nextPage').addEventListener('click', () => {
-            currentPage++; loadLogs(); updatePageInfo();
-        });
+
+        document.getElementById('firstPage').addEventListener('click', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadLogs(); } });
+        document.getElementById('nextPage').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; loadLogs(); } });
+        document.getElementById('lastPage').addEventListener('click', () => { currentPage = totalPages; loadLogs(); });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeModal();
+        });
+
+        // Keyboard shortcuts for pagination
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'ArrowLeft' && currentPage > 1) { currentPage--; loadLogs(); }
+            if (e.key === 'ArrowRight' && currentPage < totalPages) { currentPage++; loadLogs(); }
+            if (e.key === 'r') loadLogs();
         });
 
         // Initial load

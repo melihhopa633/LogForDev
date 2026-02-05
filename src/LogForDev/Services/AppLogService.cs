@@ -1,5 +1,6 @@
 using LogForDev.Models;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Text;
 
 namespace LogForDev.Services;
@@ -106,7 +107,7 @@ public class AppLogService : BackgroundService, IAppLogService
                 $"('{log.Id}', now64(3), '{EscapeString(log.Level)}', '{EscapeString(log.Category)}', " +
                 $"'{EscapeString(log.Message)}', '{EscapeString(log.Exception ?? "")}', " +
                 $"'{EscapeString(log.RequestMethod ?? "")}', '{EscapeString(log.RequestPath ?? "")}', " +
-                $"{log.StatusCode}, {log.DurationMs:F2})");
+                $"{log.StatusCode}, {log.DurationMs.ToString("F2", CultureInfo.InvariantCulture)})");
 
             sb.AppendLine(string.Join(",\n", values));
             await _clickHouse.ExecuteAsync(sb.ToString());

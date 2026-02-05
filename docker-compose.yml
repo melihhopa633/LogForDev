@@ -31,9 +31,7 @@ services:
       - "9000:9000"
     volumes:
       - clickhouse-data:/var/lib/clickhouse
-      - ./docker/clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
-      - CLICKHOUSE_DB=logfordev
       - CLICKHOUSE_USER=admin
       - CLICKHOUSE_PASSWORD=admin
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1

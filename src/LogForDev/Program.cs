@@ -1,5 +1,6 @@
 using LogForDev.Services;
 using LogForDev.Middleware;
+using LogForDev.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.Configure<LogForDevOptions>(builder.Configuration.GetSection("LogForDev"));
 builder.Services.Configure<ClickHouseOptions>(builder.Configuration.GetSection("ClickHouse"));
 builder.Services.AddSingleton<IClickHouseService, ClickHouseService>();
+builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<LogBufferService>();
 builder.Services.AddSingleton<ILogBufferService>(sp => sp.GetRequiredService<LogBufferService>());
