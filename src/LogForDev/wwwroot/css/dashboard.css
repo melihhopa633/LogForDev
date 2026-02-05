@@ -1,0 +1,157 @@
+/**
+ * LogForDev - Dashboard Styles
+ */
+
+/* Time Range Active Button */
+.active-time-range {
+    background-color: rgb(37 99 235 / 0.15) !important;
+    border-color: rgb(37 99 235 / 0.5) !important;
+    color: rgb(96 165 250) !important;
+}
+
+/* Log Table Rows */
+.log-row {
+    cursor: pointer;
+}
+
+.log-row:nth-child(4n+1),
+.log-row:nth-child(4n+2) {
+    background-color: rgba(39, 39, 42, 0.15);
+}
+
+.log-row:hover {
+    background-color: rgba(39, 39, 42, 0.4) !important;
+}
+
+/* Expandable Rows */
+.expand-row {
+    display: none;
+}
+
+.expand-row.open {
+    display: table-row;
+}
+
+.expand-row td {
+    padding: 0 !important;
+}
+
+.expand-content {
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+/* Pagination */
+.page-btn {
+    min-width: 2rem;
+}
+
+.page-btn.active {
+    background-color: rgb(37 99 235) !important;
+    color: white !important;
+    border-color: rgb(37 99 235) !important;
+}
+
+/* Refresh Animation */
+.refresh-spin {
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Live Mode Pulse */
+@keyframes pulse-live {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse-live {
+    animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* Pattern Row Hover */
+.pattern-row:hover {
+    background-color: rgba(39, 39, 42, 0.3);
+}
+
+/* Trace Timeline */
+.trace-timeline-line {
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--border), transparent);
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+/* Custom Scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+}
+
+/* Tab Active State */
+.tab-active {
+    border-color: rgb(37 99 235);
+    color: var(--foreground);
+}
+
+.tab-inactive {
+    border-color: transparent;
+    color: var(--muted-foreground);
+}
+
+/* Keyboard Shortcut Keys */
+kbd {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Line Clamp Utilities */
+.line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}

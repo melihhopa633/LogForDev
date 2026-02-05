@@ -5,8 +5,12 @@ using LogForDev.Services;
 
 namespace LogForDev.Controllers;
 
+/// <summary>
+/// API endpoints for sending and querying logs
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class LogsController : ControllerBase
 {
     private readonly ILogService _logService;
@@ -29,7 +33,15 @@ public class LogsController : ControllerBase
     /// <summary>
     /// Send a single log entry
     /// </summary>
+    /// <param name="request">The log entry to send</param>
+    /// <returns>Response with the created log ID</returns>
+    /// <response code="200">Log successfully queued</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
     [HttpPost]
+    [ProducesResponseType(typeof(LogResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LogResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(LogResponse), StatusCodes.Status500InternalServerError)]
     public ActionResult<LogResponse> PostLog([FromBody] LogEntryRequest request)
     {
         if (!ValidateApiKey())
@@ -54,9 +66,17 @@ public class LogsController : ControllerBase
     }
 
     /// <summary>
-    /// Send multiple log entries at once
+    /// Send multiple log entries at once (batch insert)
     /// </summary>
+    /// <param name="request">Batch of log entries to send</param>
+    /// <returns>Response with the count of inserted logs</returns>
+    /// <response code="200">Logs successfully queued</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
     [HttpPost("batch")]
+    [ProducesResponseType(typeof(LogResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LogResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(LogResponse), StatusCodes.Status500InternalServerError)]
     public ActionResult<LogResponse> PostBatch([FromBody] BatchLogRequest request)
     {
         if (!ValidateApiKey())
@@ -85,9 +105,17 @@ public class LogsController : ControllerBase
     }
 
     /// <summary>
-    /// Query logs with filters
+    /// Query logs with filters and pagination
     /// </summary>
+    /// <param name="query">Filter parameters (level, appName, search, from, to, page, pageSize)</param>
+    /// <returns>Paginated list of log entries</returns>
+    /// <response code="200">Returns the filtered logs</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
     [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<LogEntry>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<PagedResult<LogEntry>>> GetLogs([FromQuery] LogQueryParams query)
     {
         if (!ValidateApiKey())
@@ -106,9 +134,16 @@ public class LogsController : ControllerBase
     }
 
     /// <summary>
-    /// Get log statistics
+    /// Get log statistics (last 24 hours)
     /// </summary>
+    /// <returns>Statistics including total logs, errors, warnings, and top apps</returns>
+    /// <response code="200">Returns the statistics</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
     [HttpGet("stats")]
+    [ProducesResponseType(typeof(LogStats), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<LogStats>> GetStats()
     {
         if (!ValidateApiKey())
@@ -127,9 +162,16 @@ public class LogsController : ControllerBase
     }
 
     /// <summary>
-    /// Get list of registered app names
+    /// Get list of registered application names
     /// </summary>
+    /// <returns>List of unique app names that have sent logs</returns>
+    /// <response code="200">Returns the app names</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
     [HttpGet("apps")]
+    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<string>>> GetApps()
     {
         if (!ValidateApiKey())
@@ -150,7 +192,14 @@ public class LogsController : ControllerBase
     /// <summary>
     /// Get list of environments
     /// </summary>
+    /// <returns>List of unique environment names</returns>
+    /// <response code="200">Returns the environment names</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
     [HttpGet("environments")]
+    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<string>>> GetEnvironments()
     {
         if (!ValidateApiKey())
@@ -169,9 +218,78 @@ public class LogsController : ControllerBase
     }
 
     /// <summary>
-    /// Query internal application logs
+    /// Get log patterns (aggregated similar logs)
     /// </summary>
+    /// <param name="query">Query parameters for pattern matching</param>
+    /// <returns>List of log patterns with counts</returns>
+    /// <response code="200">Returns the log patterns</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
+    [HttpGet("patterns")]
+    [ProducesResponseType(typeof(List<LogPattern>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<List<LogPattern>>> GetPatterns([FromQuery] LogPatternQueryParams query)
+    {
+        if (!ValidateApiKey())
+            return Unauthorized();
+
+        try
+        {
+            var patterns = await _logService.GetPatternsAsync(query);
+            return Ok(patterns);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get patterns");
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Get trace timeline (all logs for a trace ID)
+    /// </summary>
+    /// <param name="traceId">The trace ID to query</param>
+    /// <returns>Timeline of logs in the trace</returns>
+    /// <response code="200">Returns the trace timeline</response>
+    /// <response code="404">Trace not found</response>
+    /// <response code="401">Invalid or missing API key</response>
+    /// <response code="500">Internal server error</response>
+    [HttpGet("trace/{traceId}")]
+    [ProducesResponseType(typeof(TraceTimeline), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<TraceTimeline>> GetTraceTimeline(string traceId)
+    {
+        if (!ValidateApiKey())
+            return Unauthorized();
+
+        try
+        {
+            var timeline = await _logService.GetTraceTimelineAsync(traceId);
+            if (timeline == null)
+                return NotFound(new { error = "Trace not found" });
+
+            return Ok(timeline);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get trace timeline for {TraceId}", traceId);
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Query internal LogForDev application logs
+    /// </summary>
+    /// <param name="query">Filter parameters for internal logs</param>
+    /// <returns>Paginated list of internal application log entries</returns>
+    /// <response code="200">Returns the internal logs</response>
+    /// <response code="500">Internal server error</response>
     [HttpGet("app")]
+    [ProducesResponseType(typeof(PagedResult<AppLogEntry>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<PagedResult<AppLogEntry>>> GetAppLogs([FromQuery] AppLogQueryParams query)
     {
         try

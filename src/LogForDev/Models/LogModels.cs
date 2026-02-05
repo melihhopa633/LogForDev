@@ -160,3 +160,81 @@ public class AppLogQueryParams
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 50;
 }
+
+// Log Aggregation Models
+public class LogPattern
+{
+    [JsonPropertyName("pattern")]
+    public string Pattern { get; set; } = string.Empty;
+
+    [JsonPropertyName("count")]
+    public long Count { get; set; }
+
+    [JsonPropertyName("level")]
+    public LogLevel Level { get; set; }
+
+    [JsonPropertyName("appName")]
+    public string AppName { get; set; } = string.Empty;
+
+    [JsonPropertyName("firstSeen")]
+    public DateTime FirstSeen { get; set; }
+
+    [JsonPropertyName("lastSeen")]
+    public DateTime LastSeen { get; set; }
+
+    [JsonPropertyName("sampleMessage")]
+    public string SampleMessage { get; set; } = string.Empty;
+}
+
+public class LogPatternQueryParams
+{
+    public LogLevel? Level { get; set; }
+    public string? Levels { get; set; }
+    public string? AppName { get; set; }
+    public int Hours { get; set; } = 24;
+    public int MinCount { get; set; } = 2;
+    public int Limit { get; set; } = 50;
+}
+
+// Trace Correlation Models
+public class TraceTimeline
+{
+    [JsonPropertyName("traceId")]
+    public string TraceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("logs")]
+    public List<TraceLogEntry> Logs { get; set; } = new();
+
+    [JsonPropertyName("totalDurationMs")]
+    public double TotalDurationMs { get; set; }
+
+    [JsonPropertyName("services")]
+    public List<string> Services { get; set; } = new();
+
+    [JsonPropertyName("hasErrors")]
+    public bool HasErrors { get; set; }
+}
+
+public class TraceLogEntry
+{
+    [JsonPropertyName("id")]
+    public Guid Id { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public DateTime Timestamp { get; set; }
+
+    [JsonPropertyName("level")]
+    public LogLevel Level { get; set; }
+
+    [JsonPropertyName("appName")]
+    public string AppName { get; set; } = string.Empty;
+
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+
+    [JsonPropertyName("metadata")]
+    public string? Metadata { get; set; }
+
+    [JsonPropertyName("offsetMs")]
+    public double OffsetMs { get; set; }
+}

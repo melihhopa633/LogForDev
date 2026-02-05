@@ -12,9 +12,16 @@
             <a href="#send-log" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Send a Log</a>
             <a href="#send-batch" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Send Batch Logs</a>
             <a href="#query-logs" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Query Logs</a>
+            <a href="#error-responses" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Error Responses</a>
             <a href="#log-levels" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Log Levels</a>
             <a href="#configuration" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Configuration</a>
-            <a href="#examples" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Client Examples</a>
+            <a href="#sdk-examples" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">SDK Examples</a>
+            <a href="#best-practices" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Best Practices</a>
+            <div class="pt-3 mt-3 border-t border-border">
+                <a href="/swagger" class="block px-3 py-1.5 text-sm rounded-md text-primary hover:bg-primary/10 transition-colors font-medium">
+                    → Interactive API (Swagger)
+                </a>
+            </div>
         </div>
     </aside>
 
@@ -23,6 +30,13 @@
         <div>
             <h1 class="text-3xl font-bold tracking-tight">API Documentation</h1>
             <p class="mt-2 text-lg text-muted-foreground">LogForDev provides a simple REST API to send and query logs from any application.</p>
+            <div class="mt-4 p-4 rounded-lg border border-primary/30 bg-primary/5">
+                <p class="text-sm">
+                    <strong class="text-primary">Tip:</strong> Try the interactive API at
+                    <a href="/swagger" class="text-primary hover:underline font-medium">/swagger</a>
+                    to test endpoints directly in your browser.
+                </p>
+            </div>
         </div>
 
         <!-- Quick Start -->
@@ -30,7 +44,33 @@
             <h2 class="text-xl font-semibold border-b border-border pb-2">Quick Start</h2>
             <p class="text-sm text-muted-foreground">Base URL: <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">http://your-server:5000</code></p>
             <p class="text-sm text-muted-foreground">All API endpoints require authentication via API key.</p>
-            <p class="text-sm text-muted-foreground">Send your first log with a single curl command:</p>
+
+            <!-- Try It Section -->
+            <div class="rounded-lg border border-border bg-muted/30 p-4">
+                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Try it now</p>
+                <div class="space-y-3">
+                    <div class="flex gap-2">
+                        <input type="text" id="tryApiKey" placeholder="Enter your API key"
+                            class="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono" />
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="tryMessage" placeholder="Log message..." value="Hello from LogForDev!"
+                            class="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        <select id="tryLevel" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                            <option value="info">Info</option>
+                            <option value="debug">Debug</option>
+                            <option value="warning">Warning</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <button onclick="sendTestLog()" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap">
+                            Send Log
+                        </button>
+                    </div>
+                    <pre id="tryResult" class="hidden rounded-lg border border-border bg-background p-3 font-mono text-xs overflow-x-auto"></pre>
+                </div>
+            </div>
+
+            <p class="text-sm text-muted-foreground pt-2">Or use curl:</p>
             <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">curl -X POST http://localhost:5000/api/logs \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
@@ -46,7 +86,18 @@
             <h2 class="text-xl font-semibold border-b border-border pb-2">Authentication</h2>
             <p class="text-sm text-muted-foreground">Include your API key in the request header:</p>
             <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">X-API-Key: your-api-key</code></pre>
-            <p class="text-sm text-muted-foreground">The API key is configured via the <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground border border-border">LOGFORDEV__APIKEY</code> environment variable or in <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground border border-border">appsettings.json</code>.</p>
+
+            <div class="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 mt-4">
+                <p class="text-sm text-yellow-400">
+                    <strong>Where to get your API key?</strong><br>
+                    The API key is configured via the <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs border border-border">LOGFORDEV__APIKEY</code> environment variable
+                    or in <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs border border-border">appsettings.json</code>.
+                    Default value is <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs border border-border">change-me-in-production</code>.
+                </p>
+            </div>
+
+            <p class="text-sm text-muted-foreground mt-4">Alternative: Query parameter (not recommended for production)</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">GET /api/logs?apiKey=your-api-key</code></pre>
         </section>
 
         <!-- Send a Log -->
@@ -56,20 +107,24 @@
                 <span class="inline-flex items-center rounded-md bg-blue-500 px-2.5 py-0.5 text-xs font-semibold text-black">POST</span>
                 <code class="font-mono text-sm text-muted-foreground">/api/logs</code>
             </div>
+
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Request Body</p>
             <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
-  "level": "info",
-  "message": "User logged in successfully",
-  "appName": "auth-service",
-  "metadata": {
+  "level": "info",                    // Required: trace, debug, info, warning, error, fatal
+  "message": "User logged in",        // Required: Log message
+  "appName": "auth-service",          // Required: Your application name
+  "metadata": {                       // Optional: Additional structured data
     "userId": 123,
     "ip": "192.168.1.1"
   },
-  "traceId": "abc-123",
-  "environment": "production"
+  "traceId": "abc-123",               // Optional: Distributed tracing ID
+  "spanId": "span-456",               // Optional: Span ID for tracing
+  "environment": "production",        // Optional: Environment (production, staging, development)
+  "host": "server-1"                  // Optional: Server hostname (auto-detected if not provided)
 }</code></pre>
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Response</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
+
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Success Response (200)</p>
+            <pre class="rounded-lg border border-green-500/30 bg-green-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-green-400">{
   "success": true,
   "id": "550e8400-e29b-41d4-a716-446655440000"
 }</code></pre>
@@ -82,28 +137,34 @@
                 <span class="inline-flex items-center rounded-md bg-blue-500 px-2.5 py-0.5 text-xs font-semibold text-black">POST</span>
                 <code class="font-mono text-sm text-muted-foreground">/api/logs/batch</code>
             </div>
+            <p class="text-sm text-muted-foreground">Send multiple logs in a single request for better performance.</p>
+
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Request Body</p>
             <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
   "logs": [
     {
       "level": "info",
       "message": "Request started",
-      "appName": "api-gateway"
+      "appName": "api-gateway",
+      "traceId": "trace-001"
     },
     {
       "level": "debug",
       "message": "Processing payment",
-      "appName": "payment-service"
+      "appName": "payment-service",
+      "traceId": "trace-001"
     },
     {
       "level": "info",
       "message": "Request completed",
-      "appName": "api-gateway"
+      "appName": "api-gateway",
+      "traceId": "trace-001"
     }
   ]
 }</code></pre>
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Response</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
+
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Success Response (200)</p>
+            <pre class="rounded-lg border border-green-500/30 bg-green-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-green-400">{
   "success": true,
   "count": 3
 }</code></pre>
@@ -116,6 +177,7 @@
                 <span class="inline-flex items-center rounded-md bg-green-500 px-2.5 py-0.5 text-xs font-semibold text-black">GET</span>
                 <code class="font-mono text-sm text-muted-foreground">/api/logs</code>
             </div>
+
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Query Parameters</p>
             <div class="rounded-lg border border-border overflow-hidden">
                 <table class="w-full text-sm">
@@ -130,7 +192,12 @@
                         <tr class="border-b border-border">
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">level</code></td>
                             <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Filter by log level (Trace, Debug, Info, Warning, Error, Fatal)</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Single level: Trace, Debug, Info, Warning, Error, Fatal</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">levels</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Multiple levels (comma-separated): "Error,Warning"</td>
                         </tr>
                         <tr class="border-b border-border">
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">appName</code></td>
@@ -138,19 +205,29 @@
                             <td class="px-4 py-2.5 text-muted-foreground">Filter by application name</td>
                         </tr>
                         <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">environment</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Filter by environment</td>
+                        </tr>
+                        <tr class="border-b border-border">
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search</code></td>
                             <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Search in message content</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Search in message content (case-insensitive)</td>
+                        </tr>
+                        <tr class="border-b border-border">
+                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">traceId</code></td>
+                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Filter by trace ID</td>
                         </tr>
                         <tr class="border-b border-border">
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">from</code></td>
                             <td class="px-4 py-2.5 text-muted-foreground">datetime</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Start date filter (ISO 8601)</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Start date (ISO 8601): 2024-01-01T00:00:00Z</td>
                         </tr>
                         <tr class="border-b border-border">
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">to</code></td>
                             <td class="px-4 py-2.5 text-muted-foreground">datetime</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">End date filter (ISO 8601)</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">End date (ISO 8601): 2024-01-31T23:59:59Z</td>
                         </tr>
                         <tr class="border-b border-border">
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">page</code></td>
@@ -160,13 +237,71 @@
                         <tr>
                             <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">pageSize</code></td>
                             <td class="px-4 py-2.5 text-muted-foreground">integer</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Results per page (default: 50)</td>
+                            <td class="px-4 py-2.5 text-muted-foreground">Results per page (default: 50, max: 1000)</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Example</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">GET /api/logs?level=Error&appName=payment-service&page=1&pageSize=20</code></pre>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">GET /api/logs?levels=Error,Warning&appName=payment-service&page=1&pageSize=20</code></pre>
+
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Response (200)</p>
+            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "timestamp": "2024-01-15T10:30:00.000Z",
+      "level": 4,           // 0=Trace, 1=Debug, 2=Info, 3=Warning, 4=Error, 5=Fatal
+      "appName": "payment-service",
+      "message": "Payment failed: insufficient funds",
+      "metadata": "{\"orderId\": 123}",
+      "traceId": "trace-001",
+      "spanId": null,
+      "host": "server-1",
+      "environment": "production"
+    }
+  ],
+  "totalCount": 1523,
+  "page": 1,
+  "pageSize": 20,
+  "totalPages": 77
+}</code></pre>
+        </section>
+
+        <!-- Error Responses -->
+        <section id="error-responses" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Error Responses</h2>
+            <p class="text-sm text-muted-foreground">All error responses follow a consistent format:</p>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">401 Unauthorized</p>
+                    <p class="text-sm text-muted-foreground mb-2">Missing or invalid API key</p>
+                    <pre class="rounded-lg border border-red-500/30 bg-red-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-red-400">{
+  "success": false,
+  "error": "Invalid API key"
+}</code></pre>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">400 Bad Request</p>
+                    <p class="text-sm text-muted-foreground mb-2">Invalid request body or parameters</p>
+                    <pre class="rounded-lg border border-red-500/30 bg-red-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-red-400">{
+  "success": false,
+  "error": "Invalid log level. Valid values: Trace, Debug, Info, Warning, Error, Fatal"
+}</code></pre>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">500 Internal Server Error</p>
+                    <p class="text-sm text-muted-foreground mb-2">Server-side error (database connection, etc.)</p>
+                    <pre class="rounded-lg border border-red-500/30 bg-red-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-red-400">{
+  "success": false,
+  "error": "Internal server error"
+}</code></pre>
+                </div>
+            </div>
         </section>
 
         <!-- Log Levels -->
@@ -267,121 +402,370 @@
   "ClickHouse": {
     "Host": "localhost",
     "Port": 8123,
-    "Database": "logfordev"
+    "Database": "logfordev",
+    "Username": "default",
+    "Password": ""
   },
   "LogForDev": {
-    "ApiKey": "change-me-in-production",
+    "ApiKey": "your-secure-api-key-here",
     "RetentionDays": 30
   }
 }</code></pre>
         </section>
 
-        <!-- Client Examples -->
-        <section id="examples" class="space-y-6">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Client Examples</h2>
+        <!-- SDK Examples -->
+        <section id="sdk-examples" class="space-y-6">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">SDK Examples</h2>
+            <p class="text-sm text-muted-foreground">Production-ready examples with error handling and retry logic.</p>
 
-            <div class="space-y-4">
-                <h3 class="text-base font-semibold">.NET / C#</h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">using var client = new HttpClient();
-client.DefaultRequestHeaders.Add("X-API-Key", "your-api-key");
-
-var log = new {
-    level = "error",
-    message = "Database connection failed",
-    appName = "order-service",
-    metadata = new { connectionString = "***", retryCount = 3 }
-};
-
-await client.PostAsJsonAsync("http://localhost:5000/api/logs", log);</code></pre>
-            </div>
-
-            <div class="space-y-4">
-                <h3 class="text-base font-semibold">Python</h3>
+            <!-- Python -->
+            <div class="space-y-3">
+                <h3 class="text-base font-semibold flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center text-xs">🐍</span>
+                    Python
+                </h3>
                 <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">import requests
+from typing import Optional, Dict, Any
+import time
 
-response = requests.post(
-    "http://localhost:5000/api/logs",
-    headers={"X-API-Key": "your-api-key"},
-    json={
-        "level": "error",
-        "message": "Database connection failed",
-        "appName": "order-service",
-        "metadata": {"connection_string": "***", "retry_count": 3}
-    }
-)</code></pre>
+class LogForDevClient:
+    def __init__(self, server_url: str, api_key: str, app_name: str,
+                 environment: str = "development", max_retries: int = 3):
+        self.server_url = server_url.rstrip('/')
+        self.api_key = api_key
+        self.app_name = app_name
+        self.environment = environment
+        self.max_retries = max_retries
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "X-API-Key": api_key
+        })
+
+    def _send(self, level: str, message: str, metadata: Optional[Dict] = None,
+              trace_id: Optional[str] = None) -> bool:
+        payload = {
+            "level": level,
+            "message": message,
+            "appName": self.app_name,
+            "environment": self.environment
+        }
+        if metadata:
+            payload["metadata"] = metadata
+        if trace_id:
+            payload["traceId"] = trace_id
+
+        for attempt in range(self.max_retries):
+            try:
+                response = self.session.post(
+                    f"{self.server_url}/api/logs",
+                    json=payload,
+                    timeout=5
+                )
+                return response.status_code == 200
+            except requests.RequestException:
+                if attempt < self.max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+        return False
+
+    def trace(self, message: str, **kwargs): return self._send("trace", message, **kwargs)
+    def debug(self, message: str, **kwargs): return self._send("debug", message, **kwargs)
+    def info(self, message: str, **kwargs): return self._send("info", message, **kwargs)
+    def warning(self, message: str, **kwargs): return self._send("warning", message, **kwargs)
+    def error(self, message: str, **kwargs): return self._send("error", message, **kwargs)
+    def fatal(self, message: str, **kwargs): return self._send("fatal", message, **kwargs)
+
+# Usage
+logger = LogForDevClient(
+    server_url="http://localhost:5000",
+    api_key="your-api-key",
+    app_name="my-python-app",
+    environment="production"
+)
+
+logger.info("User logged in", metadata={"user_id": 123}, trace_id="req-001")
+logger.error("Payment failed", metadata={"order_id": 456, "error": "Insufficient funds"})</code></pre>
             </div>
 
-            <div class="space-y-4">
-                <h3 class="text-base font-semibold">Node.js</h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">const response = await fetch("http://localhost:5000/api/logs", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": "your-api-key"
-    },
-    body: JSON.stringify({
-        level: "error",
-        message: "Database connection failed",
-        appName: "order-service",
-        metadata: { connectionString: "***", retryCount: 3 }
-    })
-});</code></pre>
-            </div>
-
-            <div class="space-y-4">
-                <h3 class="text-base font-semibold">Java</h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">HttpClient client = HttpClient.newHttpClient();
-String json = """
-    {
-        "level": "error",
-        "message": "Database connection failed",
-        "appName": "order-service"
-    }
-    """;
-
-HttpRequest request = HttpRequest.newBuilder()
-    .uri(URI.create("http://localhost:5000/api/logs"))
-    .header("Content-Type", "application/json")
-    .header("X-API-Key", "your-api-key")
-    .POST(HttpRequest.BodyPublishers.ofString(json))
-    .build();
-
-client.send(request, HttpResponse.BodyHandlers.ofString());</code></pre>
-            </div>
-
-            <div class="space-y-4">
-                <h3 class="text-base font-semibold">Go</h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">payload := map[string]interface{}{
-    "level":   "error",
-    "message": "Database connection failed",
-    "appName": "order-service",
+            <!-- Node.js -->
+            <div class="space-y-3">
+                <h3 class="text-base font-semibold flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center text-xs">⬢</span>
+                    Node.js / TypeScript
+                </h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">interface LogOptions {
+  metadata?: Record&lt;string, any&gt;;
+  traceId?: string;
 }
 
-jsonData, _ := json.Marshal(payload)
-req, _ := http.NewRequest("POST", "http://localhost:5000/api/logs", bytes.NewBuffer(jsonData))
-req.Header.Set("Content-Type", "application/json")
-req.Header.Set("X-API-Key", "your-api-key")
+class LogForDevClient {
+  private serverUrl: string;
+  private apiKey: string;
+  private appName: string;
+  private environment: string;
+  private maxRetries: number;
 
-client := &http.Client{}
-resp, _ := client.Do(req)</code></pre>
+  constructor(config: {
+    serverUrl: string;
+    apiKey: string;
+    appName: string;
+    environment?: string;
+    maxRetries?: number;
+  }) {
+    this.serverUrl = config.serverUrl.replace(/\/$/, '');
+    this.apiKey = config.apiKey;
+    this.appName = config.appName;
+    this.environment = config.environment || 'development';
+    this.maxRetries = config.maxRetries || 3;
+  }
+
+  private async send(level: string, message: string, options?: LogOptions): Promise&lt;boolean&gt; {
+    const payload = {
+      level,
+      message,
+      appName: this.appName,
+      environment: this.environment,
+      ...options
+    };
+
+    for (let attempt = 0; attempt &lt; this.maxRetries; attempt++) {
+      try {
+        const response = await fetch(`${this.serverUrl}/api/logs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': this.apiKey
+          },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) return true;
+      } catch (error) {
+        if (attempt &lt; this.maxRetries - 1) {
+          await new Promise(r =&gt; setTimeout(r, Math.pow(2, attempt) * 1000));
+        }
+      }
+    }
+    return false;
+  }
+
+  trace(message: string, options?: LogOptions) { return this.send('trace', message, options); }
+  debug(message: string, options?: LogOptions) { return this.send('debug', message, options); }
+  info(message: string, options?: LogOptions) { return this.send('info', message, options); }
+  warning(message: string, options?: LogOptions) { return this.send('warning', message, options); }
+  error(message: string, options?: LogOptions) { return this.send('error', message, options); }
+  fatal(message: string, options?: LogOptions) { return this.send('fatal', message, options); }
+}
+
+// Usage
+const logger = new LogForDevClient({
+  serverUrl: 'http://localhost:5000',
+  apiKey: 'your-api-key',
+  appName: 'my-node-app',
+  environment: 'production'
+});
+
+await logger.info('User logged in', { metadata: { userId: 123 }, traceId: 'req-001' });
+await logger.error('Payment failed', { metadata: { orderId: 456 } });</code></pre>
             </div>
 
+            <!-- C# -->
+            <div class="space-y-3">
+                <h3 class="text-base font-semibold flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center text-xs">C#</span>
+                    .NET / C#
+                </h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">using System.Net.Http.Json;
+using Polly;
+using Polly.Retry;
+
+public class LogForDevClient : IDisposable
+{
+    private readonly HttpClient _client;
+    private readonly string _appName;
+    private readonly string _environment;
+    private readonly AsyncRetryPolicy _retryPolicy;
+
+    public LogForDevClient(string serverUrl, string apiKey, string appName,
+        string environment = "development", int maxRetries = 3)
+    {
+        _appName = appName;
+        _environment = environment;
+        _client = new HttpClient { BaseAddress = new Uri(serverUrl) };
+        _client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+
+        _retryPolicy = Policy
+            .Handle&lt;HttpRequestException&gt;()
+            .WaitAndRetryAsync(maxRetries, attempt =&gt;
+                TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+    }
+
+    private async Task&lt;bool&gt; SendAsync(string level, string message,
+        object? metadata = null, string? traceId = null)
+    {
+        var payload = new
+        {
+            level,
+            message,
+            appName = _appName,
+            environment = _environment,
+            metadata,
+            traceId
+        };
+
+        return await _retryPolicy.ExecuteAsync(async () =&gt;
+        {
+            var response = await _client.PostAsJsonAsync("/api/logs", payload);
+            return response.IsSuccessStatusCode;
+        });
+    }
+
+    public Task&lt;bool&gt; TraceAsync(string msg, object? meta = null, string? traceId = null)
+        =&gt; SendAsync("trace", msg, meta, traceId);
+    public Task&lt;bool&gt; DebugAsync(string msg, object? meta = null, string? traceId = null)
+        =&gt; SendAsync("debug", msg, meta, traceId);
+    public Task&lt;bool&gt; InfoAsync(string msg, object? meta = null, string? traceId = null)
+        =&gt; SendAsync("info", msg, meta, traceId);
+    public Task&lt;bool&gt; WarningAsync(string msg, object? meta = null, string? traceId = null)
+        =&gt; SendAsync("warning", msg, meta, traceId);
+    public Task&lt;bool&gt; ErrorAsync(string msg, object? meta = null, string? traceId = null)
+        =&gt; SendAsync("error", msg, meta, traceId);
+    public Task&lt;bool&gt; FatalAsync(string msg, object? meta = null, string? traceId = null)
+        =&gt; SendAsync("fatal", msg, meta, traceId);
+
+    public void Dispose() =&gt; _client.Dispose();
+}
+
+// Usage
+using var logger = new LogForDevClient(
+    "http://localhost:5000",
+    "your-api-key",
+    "my-dotnet-app",
+    "production"
+);
+
+await logger.InfoAsync("User logged in", new { UserId = 123 }, "req-001");
+await logger.ErrorAsync("Payment failed", new { OrderId = 456 });</code></pre>
+            </div>
+
+            <!-- Go -->
+            <div class="space-y-3">
+                <h3 class="text-base font-semibold flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center text-xs">Go</span>
+                    Go
+                </h3>
+                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">package logfordev
+
+import (
+    "bytes"
+    "encoding/json"
+    "net/http"
+    "time"
+)
+
+type Client struct {
+    serverURL   string
+    apiKey      string
+    appName     string
+    environment string
+    httpClient  *http.Client
+    maxRetries  int
+}
+
+func NewClient(serverURL, apiKey, appName, environment string) *Client {
+    return &Client{
+        serverURL:   serverURL,
+        apiKey:      apiKey,
+        appName:     appName,
+        environment: environment,
+        httpClient:  &http.Client{Timeout: 5 * time.Second},
+        maxRetries:  3,
+    }
+}
+
+func (c *Client) send(level, message string, metadata map[string]any, traceID string) error {
+    payload := map[string]any{
+        "level":       level,
+        "message":     message,
+        "appName":     c.appName,
+        "environment": c.environment,
+    }
+    if metadata != nil {
+        payload["metadata"] = metadata
+    }
+    if traceID != "" {
+        payload["traceId"] = traceID
+    }
+
+    body, _ := json.Marshal(payload)
+
+    for attempt := 0; attempt &lt; c.maxRetries; attempt++ {
+        req, _ := http.NewRequest("POST", c.serverURL+"/api/logs", bytes.NewBuffer(body))
+        req.Header.Set("Content-Type", "application/json")
+        req.Header.Set("X-API-Key", c.apiKey)
+
+        resp, err := c.httpClient.Do(req)
+        if err == nil && resp.StatusCode == 200 {
+            resp.Body.Close()
+            return nil
+        }
+        if resp != nil {
+            resp.Body.Close()
+        }
+        time.Sleep(time.Duration(1&lt;&lt;attempt) * time.Second)
+    }
+    return fmt.Errorf("failed after %d retries", c.maxRetries)
+}
+
+func (c *Client) Info(msg string, meta map[string]any, traceID string) error {
+    return c.send("info", msg, meta, traceID)
+}
+// ... other levels
+
+// Usage
+client := logfordev.NewClient(
+    "http://localhost:5000",
+    "your-api-key",
+    "my-go-app",
+    "production",
+)
+client.Info("User logged in", map[string]any{"userId": 123}, "req-001")</code></pre>
+            </div>
+        </section>
+
+        <!-- Best Practices -->
+        <section id="best-practices" class="space-y-4">
+            <h2 class="text-xl font-semibold border-b border-border pb-2">Best Practices</h2>
+
             <div class="space-y-4">
-                <h3 class="text-base font-semibold">PHP</h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">$ch = curl_init("http://localhost:5000/api/logs");
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Content-Type: application/json",
-    "X-API-Key: your-api-key"
-]);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-    "level" => "error",
-    "message" => "Database connection failed",
-    "appName" => "order-service"
-]));
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$response = curl_exec($ch);
-curl_close($ch);</code></pre>
+                <div class="rounded-lg border border-border p-4">
+                    <h4 class="font-medium mb-2">1. Use Batch Endpoints for High Throughput</h4>
+                    <p class="text-sm text-muted-foreground">Buffer logs locally and send in batches of 100-500 for better performance.</p>
+                </div>
+
+                <div class="rounded-lg border border-border p-4">
+                    <h4 class="font-medium mb-2">2. Add Trace IDs for Distributed Systems</h4>
+                    <p class="text-sm text-muted-foreground">Generate a unique trace ID per request and pass it to all services to correlate logs.</p>
+                </div>
+
+                <div class="rounded-lg border border-border p-4">
+                    <h4 class="font-medium mb-2">3. Use Structured Metadata</h4>
+                    <p class="text-sm text-muted-foreground">Put contextual data in metadata, not the message. Makes filtering easier.</p>
+                    <pre class="mt-2 rounded bg-muted p-2 font-mono text-xs">// Good
+logger.error("Payment failed", metadata={"orderId": 123, "error": "timeout"})
+
+// Bad
+logger.error("Payment failed for order 123: timeout")</pre>
+                </div>
+
+                <div class="rounded-lg border border-border p-4">
+                    <h4 class="font-medium mb-2">4. Implement Retry with Backoff</h4>
+                    <p class="text-sm text-muted-foreground">Network issues happen. Use exponential backoff to avoid overwhelming the server.</p>
+                </div>
+
+                <div class="rounded-lg border border-border p-4">
+                    <h4 class="font-medium mb-2">5. Don't Log Sensitive Data</h4>
+                    <p class="text-sm text-muted-foreground">Never log passwords, tokens, credit card numbers, or PII in plain text.</p>
+                </div>
             </div>
         </section>
     </div>
@@ -399,5 +783,50 @@ curl_close($ch);</code></pre>
                 }
             });
         });
+
+        // Try it functionality
+        async function sendTestLog() {
+            const apiKey = document.getElementById('tryApiKey').value;
+            const message = document.getElementById('tryMessage').value;
+            const level = document.getElementById('tryLevel').value;
+            const resultEl = document.getElementById('tryResult');
+
+            if (!message) {
+                resultEl.textContent = 'Error: Please enter a message';
+                resultEl.className = 'rounded-lg border border-red-500/30 bg-red-500/5 p-3 font-mono text-xs text-red-400';
+                resultEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (apiKey) headers['X-API-Key'] = apiKey;
+
+                const response = await fetch('/api/logs', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        level,
+                        message,
+                        appName: 'docs-playground',
+                        environment: 'test'
+                    })
+                });
+
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+
+                if (response.ok) {
+                    resultEl.className = 'rounded-lg border border-green-500/30 bg-green-500/5 p-3 font-mono text-xs text-green-400';
+                } else {
+                    resultEl.className = 'rounded-lg border border-red-500/30 bg-red-500/5 p-3 font-mono text-xs text-red-400';
+                }
+            } catch (error) {
+                resultEl.textContent = 'Error: ' + error.message;
+                resultEl.className = 'rounded-lg border border-red-500/30 bg-red-500/5 p-3 font-mono text-xs text-red-400';
+            }
+
+            resultEl.classList.remove('hidden');
+        }
     </script>
 }

@@ -227,4 +227,99 @@ public class LogRepository : ILogRepository
             .Replace("\\", "\\\\")
             .Replace("'", "\\'");
     }
+
+    public async Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query)
+    {
+        // ClickHouse aggregation query to find similar log patterns
+        // Groups by: first 50 chars of message (normalized) + level + app_name
+        var sql = $@"
+            SELECT
+                replaceRegexpAll(substring(message, 1, 100), '[0-9]+', '*') as pattern,
+                count() as cnt,
+                level,
+                app_name,
+                min(timestamp) as first_seen,
+                max(timestamp) as last_seen,
+                any(message) as sample_message
+            FROM {TableName}
+            WHERE timestamp > now() - INTERVAL {query.Hours} HOUR";
+
+        if (query.Level.HasValue)
+        {
+            sql += $" AND level = '{query.Level.Value}'";
+        }
+
+        if (!string.IsNullOrEmpty(query.Levels))
+        {
+            var levelList = query.Levels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var quotedLevels = string.Join(",", levelList.Select(l => $"'{l}'"));
+            sql += $" AND level IN ({quotedLevels})";
+        }
+
+        if (!string.IsNullOrEmpty(query.AppName))
+        {
+            sql += $" AND app_name = '{EscapeString(query.AppName)}'";
+        }
+
+        sql += $@"
+            GROUP BY pattern, level, app_name
+            HAVING cnt >= {query.MinCount}
+            ORDER BY cnt DESC
+            LIMIT {query.Limit}";
+
+        return await _clickHouse.QueryAsync(sql, r => new LogPattern
+        {
+            Pattern = r.GetString(0),
+            Count = Convert.ToInt64(r.GetValue(1)),
+            Level = Enum.Parse<LogLevel>(r.GetString(2), true),
+            AppName = r.GetString(3),
+            FirstSeen = r.GetDateTime(4),
+            LastSeen = r.GetDateTime(5),
+            SampleMessage = r.GetString(6)
+        });
+    }
+
+    public async Task<TraceTimeline?> GetTraceTimelineAsync(string traceId)
+    {
+        if (string.IsNullOrEmpty(traceId))
+            return null;
+
+        var sql = $@"
+            SELECT id, timestamp, level, app_name, message, metadata
+            FROM {TableName}
+            WHERE trace_id = '{EscapeString(traceId)}'
+            ORDER BY timestamp ASC
+            LIMIT 500";
+
+        var logs = await _clickHouse.QueryAsync(sql, r => new TraceLogEntry
+        {
+            Id = r.GetGuid(0),
+            Timestamp = r.GetDateTime(1),
+            Level = Enum.Parse<LogLevel>(r.GetString(2), true),
+            AppName = r.GetString(3),
+            Message = r.GetString(4),
+            Metadata = r.IsDBNull(5) ? null : r.GetString(5)
+        });
+
+        if (!logs.Any())
+            return null;
+
+        var firstTimestamp = logs.First().Timestamp;
+        var lastTimestamp = logs.Last().Timestamp;
+
+        // Calculate offset from first log
+        foreach (var log in logs)
+        {
+            log.OffsetMs = (log.Timestamp - firstTimestamp).TotalMilliseconds;
+        }
+
+        return new TraceTimeline
+        {
+            TraceId = traceId,
+            Logs = logs,
+            TotalDurationMs = (lastTimestamp - firstTimestamp).TotalMilliseconds,
+            Services = logs.Select(l => l.AppName).Distinct().ToList(),
+            HasErrors = logs.Any(l => l.Level >= LogLevel.Error)
+        };
+    }
 }

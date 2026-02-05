@@ -11,6 +11,8 @@ public interface ILogService
     Task<LogStats> GetStatsAsync();
     Task<List<string>> GetAppNamesAsync();
     Task<List<string>> GetEnvironmentsAsync();
+    Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query);
+    Task<TraceTimeline?> GetTraceTimelineAsync(string traceId);
 }
 
 public class LogService : ILogService
@@ -98,6 +100,32 @@ public class LogService : ILogService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get environments");
+            throw;
+        }
+    }
+
+    public async Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query)
+    {
+        try
+        {
+            return await _repository.GetPatternsAsync(query);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get patterns");
+            throw;
+        }
+    }
+
+    public async Task<TraceTimeline?> GetTraceTimelineAsync(string traceId)
+    {
+        try
+        {
+            return await _repository.GetTraceTimelineAsync(traceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get trace timeline for {TraceId}", traceId);
             throw;
         }
     }

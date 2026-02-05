@@ -11,4 +11,6 @@ public interface ILogRepository
     Task<LogStats> GetStatsAsync();
     Task<List<string>> GetAppNamesAsync();
     Task<List<string>> GetEnvironmentsAsync();
+    Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query);
+    Task<TraceTimeline?> GetTraceTimelineAsync(string traceId);
 }
