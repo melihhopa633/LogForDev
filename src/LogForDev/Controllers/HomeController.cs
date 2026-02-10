@@ -42,6 +42,20 @@ public class HomeController : Controller
         return View();
     }
 
+    public async Task<IActionResult> Projects()
+    {
+        try
+        {
+            ViewBag.Projects = await _projectService.GetAllProjectsAsync();
+        }
+        catch
+        {
+            ViewBag.Projects = new List<Project>();
+        }
+
+        return View();
+    }
+
     public IActionResult Docs()
     {
         return View();

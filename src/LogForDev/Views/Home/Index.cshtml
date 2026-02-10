@@ -17,6 +17,7 @@
             </div>
         </div>
         <p class="text-2xl lg:text-3xl font-bold tracking-tight" id="totalLogs">@stats.TotalLogs.ToString("N0")</p>
+        <p class="text-[10px] text-muted-foreground mt-1">in the last 24 hours</p>
     </div>
     <div class="group rounded-xl border border-border bg-card p-5 hover:border-red-500/40 transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
@@ -26,6 +27,7 @@
             </div>
         </div>
         <p class="text-2xl lg:text-3xl font-bold text-red-500 tracking-tight" id="errorCount">@stats.ErrorCount.ToString("N0")</p>
+        <p class="text-[10px] text-muted-foreground mt-1">in the last 24 hours</p>
     </div>
     <div class="group rounded-xl border border-border bg-card p-5 hover:border-yellow-500/40 transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
@@ -35,6 +37,7 @@
             </div>
         </div>
         <p class="text-2xl lg:text-3xl font-bold text-yellow-500 tracking-tight" id="warningCount">@stats.WarningCount.ToString("N0")</p>
+        <p class="text-[10px] text-muted-foreground mt-1">in the last 24 hours</p>
     </div>
     <div class="group rounded-xl border border-border bg-card p-5 hover:border-emerald-500/40 transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
@@ -44,21 +47,11 @@
             </div>
         </div>
         <p class="text-2xl lg:text-3xl font-bold text-emerald-500 tracking-tight" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</p>
+        <p class="text-[10px] text-muted-foreground mt-1">current rate</p>
     </div>
 </div>
 
-<!-- Tab Switcher -->
-<div class="flex gap-1 mb-4 border-b border-border">
-    <button id="tabLogs" onclick="switchTab('logs')" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-foreground">
-        Logs
-    </button>
-    <button id="tabPatterns" onclick="switchTab('patterns')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors">
-        Patterns
-    </button>
-</div>
-
 <!-- Logs View -->
-<div id="logsView">
 
 <!-- Filters -->
 <div class="rounded-xl border border-border bg-card p-4 mb-6">
@@ -142,8 +135,51 @@
         </div>
     </div>
 
-    <!-- Row 2: Time Range + TraceId -->
+    <!-- Row 2: Time Range + TraceId + Actions -->
     <div class="flex flex-col lg:flex-row gap-3 items-end border-t border-border pt-3 mt-3">
+        <div class="flex gap-1 items-center" id="timeRangeButtons">
+            <span class="text-xs font-medium text-muted-foreground mr-1">Time:</span>
+            <button onclick="setTimeRange(1)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="1">1h</button>
+            <button onclick="setTimeRange(6)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="6">6h</button>
+            <button onclick="setTimeRange(24)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="24">24h</button>
+            <button onclick="setTimeRange(168)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="168">7d</button>
+            <button onclick="setTimeRange(0)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors active-time-range" data-hours="0">All</button>
+            <button onclick="toggleCustomRange()" id="customRangeBtn" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">Custom</button>
+        </div>
+        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
+            <input type="text" id="traceIdFilter" placeholder="Trace ID..."
+                class="h-8 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full lg:w-[180px] font-mono text-xs" />
+        </div>
+        <button id="clearFilters" class="h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
+            Clear All
+        </button>
+        <div class="relative lg:ml-auto">
+            <button onclick="toggleDeleteMenu()" class="h-8 rounded-md border border-red-500/30 bg-red-500/10 px-3 text-xs font-medium text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Delete Logs
+            </button>
+            <div id="deleteMenu" class="hidden absolute right-0 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg z-50 p-2 space-y-1">
+                <button onclick="deleteLogs(null)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">
+                    Delete All
+                </button>
+                <button onclick="deleteLogs(1)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    Older than 1 day
+                </button>
+                <button onclick="deleteLogs(7)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    Older than 7 days
+                </button>
+                <button onclick="deleteLogs(15)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    Older than 15 days
+                </button>
+                <button onclick="deleteLogs(30)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    Older than 30 days
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Date Range (hidden by default) -->
+    <div id="customRangeRow" class="hidden flex-col lg:flex-row gap-3 items-end border-t border-border pt-3 mt-3">
         <div class="flex flex-col gap-1.5 w-full lg:w-auto">
             <label class="text-xs font-medium text-muted-foreground">From</label>
             <input type="datetime-local" id="fromFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
@@ -151,45 +187,6 @@
         <div class="flex flex-col gap-1.5 w-full lg:w-auto">
             <label class="text-xs font-medium text-muted-foreground">To</label>
             <input type="datetime-local" id="toFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
-        </div>
-        <div class="flex gap-1" id="timeRangeButtons">
-            <button onclick="setTimeRange(1)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="1">1h</button>
-            <button onclick="setTimeRange(6)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="6">6h</button>
-            <button onclick="setTimeRange(24)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="24">24h</button>
-            <button onclick="setTimeRange(168)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="168">7d</button>
-            <button onclick="setTimeRange(0)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors active-time-range" data-hours="0">All</button>
-        </div>
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto lg:ml-auto">
-            <label class="text-xs font-medium text-muted-foreground">Trace ID</label>
-            <input type="text" id="traceIdFilter" placeholder="Filter by trace ID..."
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full lg:w-[220px] font-mono text-xs" />
-        </div>
-        <button id="clearFilters" class="h-9 rounded-md border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
-            Clear All
-        </button>
-        <!-- Log Silme -->
-        <div class="relative ml-auto">
-            <button onclick="toggleDeleteMenu()" class="h-9 rounded-md border border-red-500/30 bg-red-500/10 px-3 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap flex items-center gap-1.5">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                Loglari Sil
-            </button>
-            <div id="deleteMenu" class="hidden absolute right-0 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg z-50 p-2 space-y-1">
-                <button onclick="deleteLogs(null)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">
-                    Hepsini Sil
-                </button>
-                <button onclick="deleteLogs(1)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    1 gunden eski
-                </button>
-                <button onclick="deleteLogs(7)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    7 gunden eski
-                </button>
-                <button onclick="deleteLogs(15)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    15 gunden eski
-                </button>
-                <button onclick="deleteLogs(30)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    30 gunden eski
-                </button>
-            </div>
         </div>
     </div>
 
@@ -231,15 +228,14 @@
                     </th>
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[170px]">Timestamp</th>
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[90px]">Level</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[120px]">App</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[100px]">Environment</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[130px]">Project</th>
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">Message</th>
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[50px]"></th>
                 </tr>
             </thead>
             <tbody id="logsBody">
                 <tr>
-                    <td colspan="6" class="h-32 text-center">
+                    <td colspan="5" class="h-32 text-center">
                         <div class="flex flex-col items-center gap-2 text-muted-foreground">
                             <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                             <span class="text-sm">Loading logs...</span>
@@ -276,72 +272,6 @@
         <button id="lastPage" class="h-8 w-8 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center" title="Last page">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
         </button>
-    </div>
-</div>
-
-</div> <!-- End logsView -->
-
-<!-- Patterns View -->
-<div id="patternsView" class="hidden">
-    <div class="rounded-xl border border-border bg-card p-4 mb-4">
-        <div class="flex flex-col lg:flex-row gap-3 items-end">
-            <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-                <label class="text-xs font-medium text-muted-foreground">Time Range</label>
-                <select id="patternHours" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[120px]">
-                    <option value="1">Last 1 hour</option>
-                    <option value="6">Last 6 hours</option>
-                    <option value="24" selected>Last 24 hours</option>
-                    <option value="168">Last 7 days</option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-                <label class="text-xs font-medium text-muted-foreground">Level</label>
-                <select id="patternLevel" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[120px]">
-                    <option value="">All Levels</option>
-                    <option value="Error">Error</option>
-                    <option value="Warning">Warning</option>
-                    <option value="Info">Info</option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-                <label class="text-xs font-medium text-muted-foreground">Min Occurrences</label>
-                <select id="patternMinCount" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[100px]">
-                    <option value="2">2+</option>
-                    <option value="5">5+</option>
-                    <option value="10" selected>10+</option>
-                    <option value="50">50+</option>
-                    <option value="100">100+</option>
-                </select>
-            </div>
-            <button onclick="loadPatterns()" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-                Refresh
-            </button>
-        </div>
-    </div>
-
-    <div class="rounded-xl border border-border overflow-hidden">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="border-b border-border bg-muted/30">
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">Pattern</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[100px]">Count</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[90px]">Level</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[120px]">App</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[150px]">Last Seen</th>
-                </tr>
-            </thead>
-            <tbody id="patternsBody">
-                <tr>
-                    <td colspan="5" class="h-32 text-center">
-                        <div class="flex flex-col items-center gap-2 text-muted-foreground">
-                            <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            <span class="text-sm">Loading patterns...</span>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 </div>
 
@@ -594,9 +524,13 @@
                 document.getElementById('pageSizeSelect').value = pageSize;
             }
 
-            // Clear time range buttons if custom dates
+            // Show custom date range row if custom dates are set
             if (from || to) {
                 document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+                const customRow = document.getElementById('customRangeRow');
+                customRow.classList.remove('hidden');
+                customRow.classList.add('flex');
+                document.getElementById('customRangeBtn').classList.add('active-time-range');
             }
         }
 
@@ -719,6 +653,11 @@
             const activeBtn = document.querySelector(`.time-range-btn[data-hours="${hours}"]`);
             if (activeBtn) activeBtn.classList.add('active-time-range');
 
+            // Hide custom range row
+            const customRow = document.getElementById('customRangeRow');
+            customRow.classList.add('hidden');
+            customRow.classList.remove('flex');
+
             currentPage = 1;
             loadLogs();
         }
@@ -726,6 +665,27 @@
         function toLocalISOString(date) {
             const pad = n => String(n).padStart(2, '0');
             return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        // --- Toggle Custom Date Range ---
+        function toggleCustomRange() {
+            const row = document.getElementById('customRangeRow');
+            const btn = document.getElementById('customRangeBtn');
+            if (row.classList.contains('hidden')) {
+                row.classList.remove('hidden');
+                row.classList.add('flex');
+                btn.classList.add('active-time-range');
+                document.querySelectorAll('.time-range-btn:not(#customRangeBtn)').forEach(b => b.classList.remove('active-time-range'));
+            } else {
+                row.classList.add('hidden');
+                row.classList.remove('flex');
+                btn.classList.remove('active-time-range');
+                document.getElementById('fromFilter').value = '';
+                document.getElementById('toFilter').value = '';
+                document.querySelector('.time-range-btn[data-hours="0"]').classList.add('active-time-range');
+                currentPage = 1;
+                loadLogs();
+            }
         }
 
         // --- Active Filter Tags ---
@@ -776,7 +736,7 @@
             }
         });
         async function deleteLogs(days) {
-            const msg = days ? `${days} gunden eski loglar silinecek. Emin misiniz?` : 'TUM loglar silinecek! Emin misiniz?';
+            const msg = days ? `Logs older than ${days} days will be deleted. Are you sure?` : 'ALL logs will be deleted! Are you sure?';
             if (!confirm(msg)) return;
             document.getElementById('deleteMenu').classList.add('hidden');
             try {
@@ -787,10 +747,10 @@
                     showToast(data.message, 'success');
                     loadLogs();
                 } else {
-                    showToast(data.error || 'Silme islemi basarisiz', 'error');
+                    showToast(data.error || 'Delete operation failed', 'error');
                 }
             } catch (e) {
-                showToast('Silme islemi basarisiz', 'error');
+                showToast('Delete operation failed', 'error');
             }
         }
 
@@ -849,7 +809,7 @@
             if (!logs || logs.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="h-32 text-center">
+                        <td colspan="6" class="h-32 text-center">
                             <div class="flex flex-col items-center gap-2 text-muted-foreground">
                                 <svg class="w-8 h-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                                 <span class="text-sm">No logs found</span>
@@ -873,28 +833,31 @@
                         <div class="text-[10px] text-muted-foreground/60">${relativeTime(log.timestamp)}</div>
                     </td>
                     <td class="px-4 py-2.5" onclick="toggleExpand(this.parentElement, ${i})">${levelBadge(log.level)}</td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400" onclick="toggleExpand(this.parentElement, ${i})">${escapeHtml(log.appName)}</td>
-                    <td class="px-4 py-2.5" onclick="toggleExpand(this.parentElement, ${i})">${envBadge(log.environment)}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400" onclick="toggleExpand(this.parentElement, ${i})">${escapeHtml(log.projectName || log.appName || '-')}</td>
                     <td class="px-4 py-2.5 text-sm max-w-[400px]" onclick="toggleExpand(this.parentElement, ${i})"><span class="line-clamp-1">${escapeHtml(truncate(log.message, 120))}</span></td>
                     <td class="px-4 py-2.5 text-center" onclick="toggleExpand(this.parentElement, ${i})">
                         <svg class="w-4 h-4 text-muted-foreground transition-transform expand-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
                     </td>
                 </tr>
                 <tr class="expand-row border-b border-border/30" data-expand="${i}">
-                    <td colspan="7">
+                    <td colspan="6">
                         <div class="expand-content p-4 bg-muted/20">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
                                 <div>
                                     <span class="text-[10px] text-muted-foreground uppercase tracking-wider">ID</span>
                                     <p class="font-mono text-xs mt-0.5 break-all">${log.id}</p>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Host</span>
-                                    <p class="font-mono text-xs mt-0.5">${escapeHtml(log.host || '-')}</p>
+                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">App</span>
+                                    <p class="font-mono text-xs mt-0.5 text-purple-400">${escapeHtml(log.appName || '-')}</p>
                                 </div>
                                 <div>
                                     <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Environment</span>
                                     <p class="text-xs mt-0.5">${envBadge(log.environment)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Host</span>
+                                    <p class="font-mono text-xs mt-0.5">${escapeHtml(log.host || '-')}</p>
                                 </div>
                                 <div>
                                     <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Trace ID</span>
@@ -935,106 +898,6 @@
             } catch {
                 return escapeHtml(metadata);
             }
-        }
-
-        // --- Tab Switching ---
-        let currentTab = 'logs';
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('logsView').classList.toggle('hidden', tab !== 'logs');
-            document.getElementById('patternsView').classList.toggle('hidden', tab !== 'patterns');
-
-            document.getElementById('tabLogs').classList.toggle('border-primary', tab === 'logs');
-            document.getElementById('tabLogs').classList.toggle('text-foreground', tab === 'logs');
-            document.getElementById('tabLogs').classList.toggle('border-transparent', tab !== 'logs');
-            document.getElementById('tabLogs').classList.toggle('text-muted-foreground', tab !== 'logs');
-
-            document.getElementById('tabPatterns').classList.toggle('border-primary', tab === 'patterns');
-            document.getElementById('tabPatterns').classList.toggle('text-foreground', tab === 'patterns');
-            document.getElementById('tabPatterns').classList.toggle('border-transparent', tab !== 'patterns');
-            document.getElementById('tabPatterns').classList.toggle('text-muted-foreground', tab !== 'patterns');
-
-            if (tab === 'patterns') {
-                loadPatterns();
-            }
-        }
-
-        // --- Patterns ---
-        async function loadPatterns() {
-            const hours = document.getElementById('patternHours').value;
-            const level = document.getElementById('patternLevel').value;
-            const minCount = document.getElementById('patternMinCount').value;
-
-            let url = `/api/logs/patterns?hours=${hours}&minCount=${minCount}&limit=50`;
-            if (level) url += `&level=${level}`;
-
-            const tbody = document.getElementById('patternsBody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="h-32 text-center">
-                        <div class="flex flex-col items-center gap-2 text-muted-foreground">
-                            <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            <span class="text-sm">Loading patterns...</span>
-                        </div>
-                    </td>
-                </tr>`;
-
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const patterns = await response.json();
-                renderPatterns(patterns);
-            } catch (error) {
-                console.error('Failed to load patterns:', error);
-                showToast('Failed to load patterns: ' + error.message, 'error');
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="h-32 text-center text-muted-foreground">
-                            Failed to load patterns
-                        </td>
-                    </tr>`;
-            }
-        }
-
-        function renderPatterns(patterns) {
-            const tbody = document.getElementById('patternsBody');
-
-            if (!patterns || patterns.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="h-32 text-center">
-                            <div class="flex flex-col items-center gap-2 text-muted-foreground">
-                                <svg class="w-8 h-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                <span class="text-sm">No patterns found</span>
-                                <span class="text-xs">Try adjusting the time range or min count</span>
-                            </div>
-                        </td>
-                    </tr>`;
-                return;
-            }
-
-            tbody.innerHTML = patterns.map((p, i) => `
-                <tr class="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer" onclick="searchPattern('${escapeHtml(p.sampleMessage.substring(0, 50))}')">
-                    <td class="px-4 py-3">
-                        <div class="font-mono text-xs text-foreground line-clamp-2">${escapeHtml(p.pattern)}</div>
-                        <div class="text-xs text-muted-foreground mt-1 line-clamp-1">${escapeHtml(p.sampleMessage)}</div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">${p.count.toLocaleString()}</span>
-                    </td>
-                    <td class="px-4 py-3">${levelBadge(p.level)}</td>
-                    <td class="px-4 py-3 font-mono text-xs text-purple-400">${escapeHtml(p.appName)}</td>
-                    <td class="px-4 py-3 text-xs text-muted-foreground">${relativeTime(p.lastSeen)}</td>
-                </tr>
-            `).join('');
-        }
-
-        function searchPattern(sample) {
-            document.getElementById('searchFilter').value = sample;
-            switchTab('logs');
-            currentPage = 1;
-            loadLogs();
         }
 
         // --- Trace Timeline ---
@@ -1316,8 +1179,13 @@
             document.getElementById('traceIdFilter').value = '';
             document.getElementById('fromFilter').value = '';
             document.getElementById('toFilter').value = '';
+            document.getElementById('projectFilter').value = '';
             document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
             document.querySelector('.time-range-btn[data-hours="0"]').classList.add('active-time-range');
+            // Hide custom range
+            const customRow = document.getElementById('customRangeRow');
+            customRow.classList.add('hidden');
+            customRow.classList.remove('flex');
             currentPage = 1;
             loadLogs();
         }
@@ -1467,6 +1335,7 @@
             document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
             currentPage = 1; loadLogs();
         });
+        document.getElementById('projectFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
         document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
 
         document.getElementById('pageSizeSelect').addEventListener('change', (e) => {

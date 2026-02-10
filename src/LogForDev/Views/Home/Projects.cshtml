@@ -1,0 +1,324 @@
+@{
+    ViewData["Title"] = "Projects";
+    var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
+}
+
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed top-16 right-4 z-[100] space-y-2"></div>
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight">Projects</h1>
+        <p class="text-sm text-muted-foreground mt-1">Manage your projects and API keys</p>
+    </div>
+    <button onclick="openCreateModal()" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Project
+    </button>
+</div>
+
+<!-- Projects Table -->
+<div class="rounded-xl border border-border overflow-hidden">
+    <div class="overflow-x-auto scrollbar-thin">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-border bg-muted/30">
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">Name</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">API Key</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[160px]">Created</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[100px]">Status</th>
+                    <th class="h-10 px-4 text-center font-medium text-muted-foreground text-xs uppercase tracking-wider w-[80px]">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="projectsBody">
+                @if (projects.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="h-32 text-center">
+                            <div class="flex flex-col items-center gap-2 text-muted-foreground">
+                                <svg class="w-8 h-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7l2 2h9v15H3z"/></svg>
+                                <span class="text-sm">No projects yet</span>
+                                <span class="text-xs">Create your first project to get started</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var project in projects)
+                    {
+                        var maskedKey = project.ApiKey.Length > 12
+                            ? project.ApiKey.Substring(0, 8) + "..." + project.ApiKey.Substring(project.ApiKey.Length - 4)
+                            : project.ApiKey;
+                        var statusClass = project.IsExpired
+                            ? "bg-red-500/10 text-red-400 border-red-500/20"
+                            : "bg-green-500/10 text-green-400 border-green-500/20";
+                        var statusText = project.IsExpired ? "Expired" : "Active";
+                        <tr class="border-b border-border/50 hover:bg-muted/20 transition-colors" data-project-id="@project.Id">
+                            <td class="px-4 py-3">
+                                <span class="font-medium text-foreground">@project.Name</span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <code class="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">@maskedKey</code>
+                                    <button onclick="copyApiKey('@project.ApiKey')" class="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary transition-colors" title="Copy API Key">
+                                        <svg class="w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-xs text-muted-foreground">
+                                @project.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-medium border @statusClass">@statusText</span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="openDeleteModal('@project.Id', '@project.Name')" class="h-7 w-7 rounded-md border border-red-500/30 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-colors mx-auto" title="Delete project">
+                                    <svg class="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Project Modal -->
+<div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeCreateModal()"></div>
+    <div class="relative z-50 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">New Project</h3>
+            <button onclick="closeCreateModal()" class="rounded-md p-1 opacity-70 hover:opacity-100 hover:bg-secondary transition-all">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Project Name</label>
+                <input type="text" id="projectName" placeholder="My Project"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">API Key Expiry (days)</label>
+                <input type="number" id="projectExpiry" placeholder="Leave empty for no expiry" min="1"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+                <p class="text-xs text-muted-foreground">Leave empty for a key that never expires</p>
+            </div>
+            <button onclick="createProject()" id="createBtn"
+                class="w-full h-9 rounded-md bg-primary text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                Create Project
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- API Key Reveal Modal -->
+<div id="apiKeyModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div class="relative z-50 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Project Created</h3>
+        </div>
+        <div class="space-y-4">
+            <div class="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
+                <p class="text-sm text-yellow-300 font-medium mb-1">Save your API key</p>
+                <p class="text-xs text-yellow-300/70">This is the only time you'll see the full key. Copy it now.</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">API Key</label>
+                <div class="flex items-center gap-2">
+                    <code id="revealedApiKey" class="flex-1 font-mono text-xs text-foreground bg-muted/50 border border-border px-3 py-2 rounded-md break-all select-all"></code>
+                    <button onclick="copyRevealedKey()" class="h-9 rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-secondary transition-colors flex items-center gap-1.5 shrink-0">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        Copy
+                    </button>
+                </div>
+            </div>
+            <button onclick="closeApiKeyModal()" class="w-full h-9 rounded-md bg-primary text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+    <div class="relative z-50 w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-red-400">Delete Project</h3>
+            <button onclick="closeDeleteModal()" class="rounded-md p-1 opacity-70 hover:opacity-100 hover:bg-secondary transition-all">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <p class="text-sm text-muted-foreground mb-4">Are you sure you want to delete <strong id="deleteProjectName" class="text-foreground"></strong>? This action cannot be undone.</p>
+        <div class="flex gap-2 justify-end">
+            <button onclick="closeDeleteModal()" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-secondary transition-colors">
+                Cancel
+            </button>
+            <button onclick="confirmDelete()" id="confirmDeleteBtn"
+                class="h-9 rounded-md bg-red-500 px-4 text-sm font-medium text-white hover:bg-red-600 transition-colors flex items-center gap-2">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let deleteProjectId = null;
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const colors = {
+                info: 'border-primary/50 bg-primary/10 text-blue-300',
+                error: 'border-red-500/50 bg-red-500/10 text-red-300',
+                success: 'border-green-500/50 bg-green-500/10 text-green-300'
+            };
+            const toast = document.createElement('div');
+            toast.className = `rounded-lg border px-4 py-3 text-sm shadow-lg ${colors[type] || colors.info} transition-all duration-300 transform translate-x-0`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function copyApiKey(key) {
+            navigator.clipboard.writeText(key).then(() => showToast('API key copied to clipboard', 'success'));
+        }
+
+        function copyRevealedKey() {
+            const key = document.getElementById('revealedApiKey').textContent;
+            navigator.clipboard.writeText(key).then(() => showToast('API key copied to clipboard', 'success'));
+        }
+
+        // --- Create Modal ---
+        function openCreateModal() {
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectExpiry').value = '';
+            const modal = document.getElementById('createModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('projectName').focus();
+        }
+
+        function closeCreateModal() {
+            const modal = document.getElementById('createModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function createProject() {
+            const name = document.getElementById('projectName').value.trim();
+            if (!name) {
+                showToast('Project name is required', 'error');
+                return;
+            }
+
+            const expiryVal = document.getElementById('projectExpiry').value;
+            const expiryDays = expiryVal ? parseInt(expiryVal) : null;
+
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+
+            try {
+                const resp = await fetch('/api/logs/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, expiryDays })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    closeCreateModal();
+                    // Show API key
+                    document.getElementById('revealedApiKey').textContent = data.apiKey;
+                    const keyModal = document.getElementById('apiKeyModal');
+                    keyModal.classList.remove('hidden');
+                    keyModal.classList.add('flex');
+                    showToast('Project created successfully', 'success');
+                } else {
+                    showToast(data.error || 'Failed to create project', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to create project', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Project';
+            }
+        }
+
+        function closeApiKeyModal() {
+            const modal = document.getElementById('apiKeyModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            window.location.reload();
+        }
+
+        // --- Delete Modal ---
+        function openDeleteModal(id, name) {
+            deleteProjectId = id;
+            document.getElementById('deleteProjectName').textContent = name;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            deleteProjectId = null;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function confirmDelete() {
+            if (!deleteProjectId) return;
+
+            const btn = document.getElementById('confirmDeleteBtn');
+            btn.disabled = true;
+            btn.textContent = 'Deleting...';
+
+            try {
+                const resp = await fetch(`/api/logs/projects/${deleteProjectId}`, { method: 'DELETE' });
+                const data = await resp.json();
+
+                if (data.success) {
+                    closeDeleteModal();
+                    showToast('Project deleted', 'success');
+                    // Remove row from table
+                    const row = document.querySelector(`tr[data-project-id="${deleteProjectId}"]`);
+                    if (row) row.remove();
+                } else {
+                    showToast(data.error || 'Failed to delete project', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to delete project', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Delete';
+            }
+        }
+
+        // Enter key in project name input
+        document.getElementById('projectName').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') createProject();
+        });
+
+        // Escape to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCreateModal();
+                closeDeleteModal();
+                closeApiKeyModal();
+            }
+        });
+    </script>
+}

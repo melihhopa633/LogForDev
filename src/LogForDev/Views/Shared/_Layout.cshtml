@@ -61,6 +61,9 @@
                 <a href="/Home/AppLogs" class="px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "AppLogs" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50")">
                     App Logs
                 </a>
+                <a href="/Home/Projects" class="px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "Projects" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50")">
+                    Projects
+                </a>
                 <a href="/Home/Docs" class="px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "Docs" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50")">
                     Docs
                 </a>
@@ -87,6 +90,7 @@
         <div id="mobileMenu" class="hidden md:hidden border-t border-border px-4 py-3 space-y-1 bg-background">
             <a href="/" class="block px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50")">Dashboard</a>
             <a href="/Home/AppLogs" class="block px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "AppLogs" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50")">App Logs</a>
+            <a href="/Home/Projects" class="block px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "Projects" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50")">Projects</a>
             <a href="/Home/Docs" class="block px-3 py-2 text-sm rounded-md transition-colors @(ViewContext.RouteData.Values["action"]?.ToString() == "Docs" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50")">Docs</a>
             <a href="https://github.com/melihhopa633/LogForDev" target="_blank" class="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-secondary/50">GitHub</a>
             <a href="https://buymeacoffee.com/melihhopa" target="_blank" class="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-secondary/50">Buy me a coffee</a>

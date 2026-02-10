@@ -176,6 +176,15 @@ public class AppLogQueryParams
     public int PageSize { get; set; } = 50;
 }
 
+public class CreateProjectRequest
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("expiryDays")]
+    public int? ExpiryDays { get; set; }
+}
+
 // Log Aggregation Models
 public class LogPattern
 {

@@ -204,12 +204,51 @@ public class LogsController : ControllerBase
         try
         {
             await _logService.DeleteLogsAsync(olderThanDays);
-            var msg = olderThanDays.HasValue ? $"{olderThanDays} gunden eski loglar silindi" : "Tum loglar silindi";
+            var msg = olderThanDays.HasValue ? $"Logs older than {olderThanDays} days deleted" : "All logs deleted";
             return Ok(new { success = true, message = msg });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete logs");
+            return StatusCode(500, new { success = false, error = "Internal server error" });
+        }
+    }
+
+    [HttpPost("projects")]
+    [AllowAnonymous]
+    public async Task<ActionResult> CreateProject([FromBody] CreateProjectRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return BadRequest(new { success = false, error = "Project name is required" });
+
+            var apiKey = $"lfdev_{Guid.NewGuid():N}";
+            var project = await _projectService.CreateProjectAsync(request.Name, apiKey, request.ExpiryDays);
+            return Ok(new { success = true, project, apiKey });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create project");
+            return StatusCode(500, new { success = false, error = "Internal server error" });
+        }
+    }
+
+    [HttpDelete("projects/{id}")]
+    [AllowAnonymous]
+    public async Task<ActionResult> DeleteProject(Guid id)
+    {
+        try
+        {
+            var result = await _projectService.DeleteProjectAsync(id);
+            if (!result)
+                return StatusCode(500, new { success = false, error = "Failed to delete project" });
+
+            return Ok(new { success = true, message = "Project deleted" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete project {ProjectId}", id);
             return StatusCode(500, new { success = false, error = "Internal server error" });
         }
     }
