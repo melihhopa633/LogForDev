@@ -22,3 +22,4 @@ appsettings.Development.json
 
 # Test/Seeder projects
 src/LogForDev.Seeder/
+src/LogForDev/setup-state.json

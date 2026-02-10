@@ -26,16 +26,17 @@
                 <tr class="border-b border-border bg-muted/30">
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">Name</th>
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">API Key</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[160px]">Created</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[150px]">Created</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[150px]">Expires</th>
                     <th class="h-10 px-4 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[100px]">Status</th>
-                    <th class="h-10 px-4 text-center font-medium text-muted-foreground text-xs uppercase tracking-wider w-[80px]">Actions</th>
+                    <th class="h-10 px-4 text-center font-medium text-muted-foreground text-xs uppercase tracking-wider w-[120px]">Actions</th>
                 </tr>
             </thead>
             <tbody id="projectsBody">
                 @if (projects.Count == 0)
                 {
-                    <tr>
-                        <td colspan="5" class="h-32 text-center">
+                    <tr id="emptyRow">
+                        <td colspan="6" class="h-32 text-center">
                             <div class="flex flex-col items-center gap-2 text-muted-foreground">
                                 <svg class="w-8 h-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7l2 2h9v15H3z"/></svg>
                                 <span class="text-sm">No projects yet</span>
@@ -55,14 +56,17 @@
                             ? "bg-red-500/10 text-red-400 border-red-500/20"
                             : "bg-green-500/10 text-green-400 border-green-500/20";
                         var statusText = project.IsExpired ? "Expired" : "Active";
-                        <tr class="border-b border-border/50 hover:bg-muted/20 transition-colors" data-project-id="@project.Id">
+                        <tr class="border-b border-border/50 hover:bg-muted/20 transition-colors"
+                            data-project-id="@project.Id"
+                            data-project-name="@System.Net.WebUtility.HtmlEncode(project.Name)"
+                            data-project-apikey="@project.ApiKey">
                             <td class="px-4 py-3">
-                                <span class="font-medium text-foreground">@project.Name</span>
+                                <span class="font-medium text-foreground project-name-display">@project.Name</span>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
                                     <code class="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">@maskedKey</code>
-                                    <button onclick="copyApiKey('@project.ApiKey')" class="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary transition-colors" title="Copy API Key">
+                                    <button class="copy-key-btn h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary transition-colors" title="Copy API Key">
                                         <svg class="w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                     </button>
                                 </div>
@@ -70,13 +74,40 @@
                             <td class="px-4 py-3 text-xs text-muted-foreground">
                                 @project.CreatedAt.ToString("yyyy-MM-dd HH:mm")
                             </td>
+                            <td class="px-4 py-3 text-xs">
+                                @if (project.ExpiresAt.HasValue)
+                                {
+                                    var daysLeft = (project.ExpiresAt.Value - DateTime.UtcNow).TotalDays;
+                                    if (project.IsExpired)
+                                    {
+                                        <span class="text-red-400">Expired @project.ExpiresAt.Value.ToString("yyyy-MM-dd")</span>
+                                    }
+                                    else if (daysLeft < 7)
+                                    {
+                                        <span class="text-yellow-400">@project.ExpiresAt.Value.ToString("yyyy-MM-dd") <span class="text-[10px]">(@((int)daysLeft)d left)</span></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted-foreground">@project.ExpiresAt.Value.ToString("yyyy-MM-dd") <span class="text-[10px]">(@((int)daysLeft)d left)</span></span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-emerald-400">Never</span>
+                                }
+                            </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-medium border @statusClass">@statusText</span>
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <button onclick="openDeleteModal('@project.Id', '@project.Name')" class="h-7 w-7 rounded-md border border-red-500/30 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-colors mx-auto" title="Delete project">
-                                    <svg class="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                </button>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button class="edit-btn h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center hover:bg-secondary transition-colors" title="Edit project">
+                                        <svg class="w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                    <button class="delete-btn h-7 w-7 rounded-md border border-red-500/30 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-colors" title="Delete project">
+                                        <svg class="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -145,6 +176,30 @@
     </div>
 </div>
 
+<!-- Edit Project Modal -->
+<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="relative z-50 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Edit Project</h3>
+            <button onclick="closeEditModal()" class="rounded-md p-1 opacity-70 hover:opacity-100 hover:bg-secondary transition-all">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Project Name</label>
+                <input type="text" id="editProjectName" placeholder="Project name"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+            </div>
+            <button onclick="saveProject()" id="saveBtn"
+                class="w-full h-9 rounded-md bg-primary text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirm Modal -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
@@ -171,6 +226,7 @@
 @section Scripts {
     <script>
         let deleteProjectId = null;
+        let editProjectId = null;
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -190,14 +246,32 @@
             }, 3000);
         }
 
-        function copyApiKey(key) {
-            navigator.clipboard.writeText(key).then(() => showToast('API key copied to clipboard', 'success'));
-        }
-
         function copyRevealedKey() {
             const key = document.getElementById('revealedApiKey').textContent;
             navigator.clipboard.writeText(key).then(() => showToast('API key copied to clipboard', 'success'));
         }
+
+        // --- Event delegation for copy/edit/delete buttons ---
+        document.getElementById('projectsBody').addEventListener('click', function(e) {
+            const copyBtn = e.target.closest('.copy-key-btn');
+            const editBtn = e.target.closest('.edit-btn');
+            const deleteBtn = e.target.closest('.delete-btn');
+            const row = e.target.closest('tr[data-project-id]');
+
+            if (!row) return;
+
+            const id = row.dataset.projectId;
+            const name = row.dataset.projectName;
+            const apikey = row.dataset.projectApikey;
+
+            if (copyBtn) {
+                navigator.clipboard.writeText(apikey).then(() => showToast('API key copied to clipboard', 'success'));
+            } else if (editBtn) {
+                openEditModal(id, name);
+            } else if (deleteBtn) {
+                openDeleteModal(id, name);
+            }
+        });
 
         // --- Create Modal ---
         function openCreateModal() {
@@ -239,7 +313,6 @@
 
                 if (data.success) {
                     closeCreateModal();
-                    // Show API key
                     document.getElementById('revealedApiKey').textContent = data.apiKey;
                     const keyModal = document.getElementById('apiKeyModal');
                     keyModal.classList.remove('hidden');
@@ -261,6 +334,64 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             window.location.reload();
+        }
+
+        // --- Edit Modal ---
+        function openEditModal(id, name) {
+            editProjectId = id;
+            document.getElementById('editProjectName').value = name;
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('editProjectName').focus();
+        }
+
+        function closeEditModal() {
+            editProjectId = null;
+            const modal = document.getElementById('editModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function saveProject() {
+            if (!editProjectId) return;
+
+            const name = document.getElementById('editProjectName').value.trim();
+            if (!name) {
+                showToast('Project name is required', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const resp = await fetch(`/api/logs/projects/${editProjectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    // Update the row in the table
+                    const row = document.querySelector(`tr[data-project-id="${editProjectId}"]`);
+                    if (row) {
+                        row.dataset.projectName = name;
+                        row.querySelector('.project-name-display').textContent = name;
+                    }
+                    closeEditModal();
+                    showToast('Project updated', 'success');
+                } else {
+                    showToast(data.error || 'Failed to update project', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to update project', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
         }
 
         // --- Delete Modal ---
@@ -291,31 +422,35 @@
                 const data = await resp.json();
 
                 if (data.success) {
-                    closeDeleteModal();
-                    showToast('Project deleted', 'success');
-                    // Remove row from table
                     const row = document.querySelector(`tr[data-project-id="${deleteProjectId}"]`);
                     if (row) row.remove();
+                    closeDeleteModal();
+                    showToast('Project deleted', 'success');
                 } else {
                     showToast(data.error || 'Failed to delete project', 'error');
                 }
             } catch (e) {
-                showToast('Failed to delete project', 'error');
+                console.error('Delete error:', e);
+                showToast('Failed to delete project: ' + e.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Delete';
             }
         }
 
-        // Enter key in project name input
+        // Enter key handlers
         document.getElementById('projectName').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') createProject();
+        });
+        document.getElementById('editProjectName').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') saveProject();
         });
 
         // Escape to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeCreateModal();
+                closeEditModal();
                 closeDeleteModal();
                 closeApiKeyModal();
             }

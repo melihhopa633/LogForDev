@@ -41,7 +41,7 @@
 
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div class="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 md:px-6">
+        <div class="flex h-14 items-center justify-between px-4 md:px-8">
             <a href="/" class="flex items-center gap-2 font-bold text-lg text-foreground hover:opacity-90 transition-opacity">
                 <svg class="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -98,13 +98,13 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-6">
+    <main class="flex-1 w-full px-4 md:px-8 py-6">
         @RenderBody()
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-border py-6 px-4">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground px-4 md:px-8">
             <p>LogForDev &mdash; Open Source Logging System</p>
             <div class="flex items-center gap-4">
                 <a href="https://github.com/melihhopa633/LogForDev" target="_blank" class="hover:text-foreground transition-colors">GitHub</a>

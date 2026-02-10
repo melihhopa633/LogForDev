@@ -9,6 +9,7 @@ public interface IProjectService
     Task<Project> CreateProjectAsync(string name, string apiKey, int? expiryDays = null);
     Task<List<Project>> GetAllProjectsAsync();
     Task<bool> DeleteProjectAsync(Guid projectId);
+    Task<bool> UpdateProjectAsync(Guid projectId, string name);
     Task RefreshCacheAsync();
 }
 
@@ -130,6 +131,30 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to delete project {ProjectId}", projectId);
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateProjectAsync(Guid projectId, string name)
+    {
+        try
+        {
+            var sql = $"ALTER TABLE projects UPDATE name = '{EscapeString(name)}' WHERE id = '{projectId}'";
+            await _clickHouse.ExecuteAsync(sql);
+
+            // Update cache
+            var cached = _cache.FirstOrDefault(kvp => kvp.Value.Id == projectId);
+            if (cached.Key != null)
+            {
+                cached.Value.Name = name;
+            }
+
+            _logger.LogInformation("Updated project {ProjectId} name to '{Name}'", projectId, name);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to update project {ProjectId}", projectId);
             return false;
         }
     }

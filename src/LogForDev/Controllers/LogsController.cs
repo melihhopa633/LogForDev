@@ -234,6 +234,28 @@ public class LogsController : ControllerBase
         }
     }
 
+    [HttpPut("projects/{id}")]
+    [AllowAnonymous]
+    public async Task<ActionResult> UpdateProject(Guid id, [FromBody] UpdateProjectRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return BadRequest(new { success = false, error = "Project name is required" });
+
+            var result = await _projectService.UpdateProjectAsync(id, request.Name);
+            if (!result)
+                return StatusCode(500, new { success = false, error = "Failed to update project" });
+
+            return Ok(new { success = true, message = "Project updated" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update project {ProjectId}", id);
+            return StatusCode(500, new { success = false, error = "Internal server error" });
+        }
+    }
+
     [HttpDelete("projects/{id}")]
     [AllowAnonymous]
     public async Task<ActionResult> DeleteProject(Guid id)

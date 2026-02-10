@@ -1,197 +1,114 @@
 @{
     ViewData["Title"] = "Dashboard";
-    var stats = ViewBag.Stats as LogStats ?? new LogStats();
     var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
 }
 
 <!-- Toast Container -->
 <div id="toastContainer" class="fixed top-16 right-4 z-[100] space-y-2"></div>
 
-<!-- Stats Cards -->
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-    <div class="group rounded-xl border border-border bg-card p-5 hover:border-primary/40 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Logs (24h)</p>
-            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            </div>
-        </div>
-        <p class="text-2xl lg:text-3xl font-bold tracking-tight" id="totalLogs">@stats.TotalLogs.ToString("N0")</p>
-        <p class="text-[10px] text-muted-foreground mt-1">in the last 24 hours</p>
-    </div>
-    <div class="group rounded-xl border border-border bg-card p-5 hover:border-red-500/40 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Errors</p>
-            <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            </div>
-        </div>
-        <p class="text-2xl lg:text-3xl font-bold text-red-500 tracking-tight" id="errorCount">@stats.ErrorCount.ToString("N0")</p>
-        <p class="text-[10px] text-muted-foreground mt-1">in the last 24 hours</p>
-    </div>
-    <div class="group rounded-xl border border-border bg-card p-5 hover:border-yellow-500/40 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Warnings</p>
-            <div class="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </div>
-        </div>
-        <p class="text-2xl lg:text-3xl font-bold text-yellow-500 tracking-tight" id="warningCount">@stats.WarningCount.ToString("N0")</p>
-        <p class="text-[10px] text-muted-foreground mt-1">in the last 24 hours</p>
-    </div>
-    <div class="group rounded-xl border border-border bg-card p-5 hover:border-emerald-500/40 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Logs/min</p>
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            </div>
-        </div>
-        <p class="text-2xl lg:text-3xl font-bold text-emerald-500 tracking-tight" id="logsPerMin">@stats.LogsPerMinute.ToString("F1")</p>
-        <p class="text-[10px] text-muted-foreground mt-1">current rate</p>
-    </div>
-</div>
-
-<!-- Logs View -->
-
 <!-- Filters -->
-<div class="rounded-xl border border-border bg-card p-4 mb-6">
-    <!-- Row 1: Primary Filters -->
-    <div class="flex flex-col lg:flex-row gap-3 items-end">
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Level</label>
-            <div class="relative">
-                <button id="levelDropdownBtn" type="button"
-                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[160px] flex items-center justify-between gap-2 w-full lg:w-auto">
-                    <span id="levelDropdownLabel">All Levels</span>
-                    <svg class="w-3.5 h-3.5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-                </button>
-                <div id="levelDropdown" class="hidden absolute top-full left-0 mt-1 w-56 rounded-lg border border-border bg-background shadow-xl z-50 py-1.5">
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check rounded" value="" onchange="toggleAllLevels(this)" checked>
-                        <span>All Levels</span>
-                    </label>
-                    <div class="h-px bg-border my-1"></div>
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check" value="Trace">
-                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-zinc-700/50 text-zinc-400">TRACE</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check" value="Debug">
-                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-blue-500/20 text-blue-400">DEBUG</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check" value="Info">
-                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-green-500/20 text-green-400">INFO</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check" value="Warning">
-                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-yellow-500/20 text-yellow-400">WARNING</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check" value="Error">
-                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-red-500/20 text-red-400">ERROR</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input type="checkbox" class="level-check" value="Fatal">
-                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold bg-red-600 text-white">FATAL</span>
-                    </label>
-                </div>
-            </div>
+<div class="rounded-xl border border-border bg-card p-5 mb-4">
+    <!-- Row 1: Level toggles + Time range + Project + Actions -->
+    <div class="flex flex-wrap items-center gap-3">
+        <!-- Level Toggle Buttons -->
+        <div class="flex items-center gap-1.5 mr-1">
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-zinc-400 hover:bg-secondary transition-all" data-level="Trace">TRC</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-blue-400 hover:bg-blue-500/10 transition-all" data-level="Debug">DBG</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-green-400 hover:bg-green-500/10 transition-all" data-level="Info">INF</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-yellow-400 hover:bg-yellow-500/10 transition-all" data-level="Warning">WRN</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-all" data-level="Error">ERR</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-red-300 hover:bg-red-600/10 transition-all" data-level="Fatal">FTL</button>
         </div>
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Project</label>
-            <select id="projectFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
-                <option value="">All Projects</option>
-                @foreach (var project in projects)
-                {
-                    var suffix = project.IsExpired ? " (expired)" : "";
-                    <option value="@project.Id">@project.Name@suffix</option>
-                }
-            </select>
+
+        <div class="w-px h-6 bg-border hidden lg:block"></div>
+
+        <!-- Time Range -->
+        <div class="flex items-center gap-1.5" id="timeRangeButtons">
+            <button onclick="setTimeRange(1)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="1">1h</button>
+            <button onclick="setTimeRange(6)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="6">6h</button>
+            <button onclick="setTimeRange(24)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="24">24h</button>
+            <button onclick="setTimeRange(168)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="168">7d</button>
+            <button onclick="setTimeRange(0)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors active-time-range" data-hours="0">All</button>
+            <button onclick="toggleCustomRange()" id="customRangeBtn" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </button>
         </div>
-        <div class="flex flex-col gap-1.5 flex-1 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Search</label>
-            <div class="relative">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" id="searchFilter" placeholder="Search messages..."
-                    class="h-9 rounded-md border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full" />
-            </div>
-        </div>
-        <div class="flex gap-2">
-            <button id="refreshBtn" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
+
+        <div class="w-px h-6 bg-border hidden lg:block"></div>
+
+        <!-- Project -->
+        <select id="projectFilter" class="h-9 rounded-lg border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[130px]">
+            <option value="">All Projects</option>
+            @foreach (var project in projects)
+            {
+                var suffix = project.IsExpired ? " (expired)" : "";
+                <option value="@project.Id">@project.Name@suffix</option>
+            }
+        </select>
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2">
+            <button id="refreshBtn" class="h-9 rounded-lg bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
                 <svg id="refreshIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                 Refresh
             </button>
-            <button id="liveToggle" class="h-9 rounded-md border border-green-500 px-4 text-sm font-medium text-green-500 hover:bg-green-500/10 transition-colors whitespace-nowrap flex items-center gap-2">
+            <button id="liveToggle" class="h-9 rounded-lg border border-green-500/50 px-4 text-xs font-medium text-green-500 hover:bg-green-500/10 transition-colors flex items-center gap-2">
                 <span class="relative flex h-2 w-2">
                     <span id="liveDot" class="absolute inline-flex h-full w-full rounded-full opacity-0 bg-green-400"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
                 LIVE
             </button>
-            <button onclick="openShortcutsModal()" class="h-9 w-9 rounded-md border border-border bg-background text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center" title="Keyboard shortcuts (?)">
+            <button onclick="openShortcutsModal()" class="h-9 w-9 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center" title="Keyboard shortcuts (?)">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </button>
         </div>
     </div>
 
-    <!-- Row 2: Time Range + TraceId + Actions -->
-    <div class="flex flex-col lg:flex-row gap-3 items-end border-t border-border pt-3 mt-3">
-        <div class="flex gap-1 items-center" id="timeRangeButtons">
-            <span class="text-xs font-medium text-muted-foreground mr-1">Time:</span>
-            <button onclick="setTimeRange(1)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="1">1h</button>
-            <button onclick="setTimeRange(6)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="6">6h</button>
-            <button onclick="setTimeRange(24)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="24">24h</button>
-            <button onclick="setTimeRange(168)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="168">7d</button>
-            <button onclick="setTimeRange(0)" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors active-time-range" data-hours="0">All</button>
-            <button onclick="toggleCustomRange()" id="customRangeBtn" class="time-range-btn h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">Custom</button>
+    <!-- Row 2: Search + Trace + Actions -->
+    <div class="flex flex-col lg:flex-row gap-3 items-center mt-4 pt-4 border-t border-border/50">
+        <div class="relative flex-1 w-full">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="searchFilter" placeholder="Search messages..."
+                class="h-9 rounded-lg border border-input bg-background pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-full" />
         </div>
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <input type="text" id="traceIdFilter" placeholder="Trace ID..."
-                class="h-8 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full lg:w-[180px] font-mono text-xs" />
-        </div>
-        <button id="clearFilters" class="h-8 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
-            Clear All
+        <input type="text" id="traceIdFilter" placeholder="Trace ID..."
+            class="h-9 rounded-lg border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-full lg:w-[220px] font-mono" />
+        <button id="clearFilters" class="h-9 rounded-lg border border-border bg-background px-4 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
+            Clear
         </button>
-        <div class="relative lg:ml-auto">
-            <button onclick="toggleDeleteMenu()" class="h-8 rounded-md border border-red-500/30 bg-red-500/10 px-3 text-xs font-medium text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                Delete Logs
+        <div class="relative">
+            <button onclick="toggleDeleteMenu()" class="h-9 rounded-lg border border-red-500/30 bg-red-500/10 px-4 text-xs font-medium text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Delete
             </button>
-            <div id="deleteMenu" class="hidden absolute right-0 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg z-50 p-2 space-y-1">
-                <button onclick="deleteLogs(null)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">
-                    Delete All
-                </button>
-                <button onclick="deleteLogs(1)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    Older than 1 day
-                </button>
-                <button onclick="deleteLogs(7)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    Older than 7 days
-                </button>
-                <button onclick="deleteLogs(15)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    Older than 15 days
-                </button>
-                <button onclick="deleteLogs(30)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
-                    Older than 30 days
-                </button>
+            <div id="deleteMenu" class="hidden absolute right-0 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg z-50 p-2 space-y-0.5">
+                <button onclick="deleteLogs(null)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">Delete All</button>
+                <button onclick="deleteLogs(1)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 1 day</button>
+                <button onclick="deleteLogs(7)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 7 days</button>
+                <button onclick="deleteLogs(15)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 15 days</button>
+                <button onclick="deleteLogs(30)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 30 days</button>
             </div>
         </div>
     </div>
 
     <!-- Custom Date Range (hidden by default) -->
-    <div id="customRangeRow" class="hidden flex-col lg:flex-row gap-3 items-end border-t border-border pt-3 mt-3">
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">From</label>
-            <input type="datetime-local" id="fromFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+    <div id="customRangeRow" class="hidden flex-col lg:flex-row gap-3 items-end mt-4 pt-4 border-t border-border/50">
+        <div class="flex flex-col gap-1 w-full lg:w-auto">
+            <label class="text-[11px] font-medium text-muted-foreground">From</label>
+            <input type="datetime-local" id="fromFilter" class="h-9 rounded-lg border border-input bg-background px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">To</label>
-            <input type="datetime-local" id="toFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
+        <div class="flex flex-col gap-1 w-full lg:w-auto">
+            <label class="text-[11px] font-medium text-muted-foreground">To</label>
+            <input type="datetime-local" id="toFilter" class="h-9 rounded-lg border border-input bg-background px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
     </div>
 
     <!-- Active Filter Tags -->
-    <div id="activeFilters" class="hidden flex-wrap gap-1.5 pt-3 mt-3 border-t border-border"></div>
+    <div id="activeFilters" class="hidden flex-wrap gap-2 pt-4 mt-4 border-t border-border/50"></div>
 </div>
 
 <!-- Bulk Actions Bar -->
@@ -388,6 +305,7 @@
 
 @section Scripts {
     <style>
+        .level-toggle.active { font-weight: 700; }
         .active-time-range {
             background-color: rgb(37 99 235 / 0.15) !important;
             border-color: rgb(37 99 235 / 0.5) !important;
@@ -487,11 +405,15 @@
             const levels = params.get('levels');
             if (levels) {
                 const levelArr = levels.split(',');
-                document.querySelectorAll('.level-check').forEach(c => {
-                    c.checked = levelArr.includes(c.value);
+                document.querySelectorAll('.level-toggle').forEach(btn => {
+                    const level = btn.dataset.level;
+                    if (levelArr.includes(level)) {
+                        btn.classList.add('active');
+                        const colors = levelColors[level];
+                        colors.active.split(' ').forEach(c => btn.classList.add(c));
+                        btn.classList.remove('bg-background');
+                    }
                 });
-                document.querySelector('.level-check[value=""]').checked = false;
-                updateLevelLabel();
             }
 
             // Project
@@ -588,48 +510,33 @@
             return `<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium border ${cls}">${escapeHtml(env)}</span>`;
         }
 
-        // --- Level Multi-Select ---
+        // --- Level Toggle Buttons ---
+        const levelColors = {
+            Trace:   { active: 'bg-zinc-700/60 border-zinc-500/50 text-zinc-300', ring: '' },
+            Debug:   { active: 'bg-blue-500/20 border-blue-500/50 text-blue-300', ring: '' },
+            Info:    { active: 'bg-green-500/20 border-green-500/50 text-green-300', ring: '' },
+            Warning: { active: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', ring: '' },
+            Error:   { active: 'bg-red-500/20 border-red-500/50 text-red-300', ring: '' },
+            Fatal:   { active: 'bg-red-600/30 border-red-500/50 text-red-200', ring: '' },
+        };
+
         function getSelectedLevels() {
-            const checks = document.querySelectorAll('.level-check[value]:not([value=""])');
-            const selected = [...checks].filter(c => c.checked).map(c => c.value);
-            return selected;
+            const active = document.querySelectorAll('.level-toggle.active');
+            return [...active].map(b => b.dataset.level);
         }
 
-        function toggleAllLevels(el) {
-            const checks = document.querySelectorAll('.level-check[value]:not([value=""])');
-            checks.forEach(c => c.checked = false);
-            updateLevelLabel();
-            currentPage = 1;
-            loadLogs();
-        }
-
-        function updateLevelLabel() {
-            const selected = getSelectedLevels();
-            const allCheck = document.querySelector('.level-check[value=""]');
-            const label = document.getElementById('levelDropdownLabel');
-            if (selected.length === 0) {
-                allCheck.checked = true;
-                label.textContent = 'All Levels';
-            } else {
-                allCheck.checked = false;
-                label.textContent = selected.length === 1 ? selected[0] : `${selected.length} levels`;
-            }
-        }
-
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('levelDropdown');
-            const btn = document.getElementById('levelDropdownBtn');
-            if (btn.contains(e.target)) {
-                dropdown.classList.toggle('hidden');
-            } else if (!dropdown.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
-        document.querySelectorAll('.level-check[value]:not([value=""])').forEach(el => {
-            el.addEventListener('change', () => {
-                document.querySelector('.level-check[value=""]').checked = false;
-                updateLevelLabel();
+        document.querySelectorAll('.level-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                const level = btn.dataset.level;
+                const colors = levelColors[level];
+                if (btn.classList.contains('active')) {
+                    colors.active.split(' ').forEach(c => btn.classList.add(c));
+                    btn.classList.remove('bg-background');
+                } else {
+                    colors.active.split(' ').forEach(c => btn.classList.remove(c));
+                    btn.classList.add('bg-background');
+                }
                 currentPage = 1;
                 loadLogs();
             });
@@ -693,7 +600,7 @@
             const container = document.getElementById('activeFilters');
             const tags = [];
             const levels = getSelectedLevels();
-            if (levels.length > 0) tags.push({ label: `Level: ${levels.join(', ')}`, clear: () => { document.querySelectorAll('.level-check').forEach(c => { c.checked = c.value === ''; }); updateLevelLabel(); }});
+            if (levels.length > 0) tags.push({ label: `Level: ${levels.join(', ')}`, clear: () => { document.querySelectorAll('.level-toggle').forEach(btn => { btn.classList.remove('active'); const colors = levelColors[btn.dataset.level]; colors.active.split(' ').forEach(c => btn.classList.remove(c)); btn.classList.add('bg-background'); }); }});
             const search = document.getElementById('searchFilter').value;
             if (search) tags.push({ label: `Search: "${search}"`, clear: () => { document.getElementById('searchFilter').value = ''; }});
             const traceId = document.getElementById('traceIdFilter').value;
@@ -1091,16 +998,26 @@
             modal.classList.remove('flex');
         }
 
-        // Quick level filter functions
+        // Quick level filter functions (keyboard shortcuts)
         function setLevelFilter(level) {
-            document.querySelectorAll('.level-check').forEach(c => {
+            document.querySelectorAll('.level-toggle').forEach(btn => {
+                const colors = levelColors[btn.dataset.level];
                 if (level === 'all') {
-                    c.checked = c.value === '';
+                    btn.classList.remove('active');
+                    colors.active.split(' ').forEach(c => btn.classList.remove(c));
+                    btn.classList.add('bg-background');
                 } else {
-                    c.checked = c.value.toLowerCase() === level.toLowerCase();
+                    const match = btn.dataset.level.toLowerCase() === level.toLowerCase();
+                    btn.classList.toggle('active', match);
+                    if (match) {
+                        colors.active.split(' ').forEach(c => btn.classList.add(c));
+                        btn.classList.remove('bg-background');
+                    } else {
+                        colors.active.split(' ').forEach(c => btn.classList.remove(c));
+                        btn.classList.add('bg-background');
+                    }
                 }
             });
-            updateLevelLabel();
             currentPage = 1;
             loadLogs();
         }
@@ -1173,8 +1090,13 @@
 
         // --- Clear Filters ---
         function clearAllFilters() {
-            document.querySelectorAll('.level-check').forEach(c => { c.checked = c.value === ''; });
-            updateLevelLabel();
+            // Reset level toggles
+            document.querySelectorAll('.level-toggle').forEach(btn => {
+                btn.classList.remove('active');
+                const colors = levelColors[btn.dataset.level];
+                colors.active.split(' ').forEach(c => btn.classList.remove(c));
+                btn.classList.add('bg-background');
+            });
             document.getElementById('searchFilter').value = '';
             document.getElementById('traceIdFilter').value = '';
             document.getElementById('fromFilter').value = '';
@@ -1182,7 +1104,6 @@
             document.getElementById('projectFilter').value = '';
             document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
             document.querySelector('.time-range-btn[data-hours="0"]').classList.add('active-time-range');
-            // Hide custom range
             const customRow = document.getElementById('customRangeRow');
             customRow.classList.add('hidden');
             customRow.classList.remove('flex');

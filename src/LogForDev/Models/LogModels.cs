@@ -185,6 +185,12 @@ public class CreateProjectRequest
     public int? ExpiryDays { get; set; }
 }
 
+public class UpdateProjectRequest
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+}
+
 // Log Aggregation Models
 public class LogPattern
 {
