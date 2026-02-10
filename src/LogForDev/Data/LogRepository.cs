@@ -271,7 +271,7 @@ public class LogRepository : ILogRepository
         {
             Pattern = r.GetString(0),
             Count = Convert.ToInt64(r.GetValue(1)),
-            Level = Enum.Parse<LogLevel>(r.GetString(2), true),
+            Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
             AppName = r.GetString(3),
             FirstSeen = r.GetDateTime(4),
             LastSeen = r.GetDateTime(5),
@@ -295,7 +295,7 @@ public class LogRepository : ILogRepository
         {
             Id = r.GetGuid(0),
             Timestamp = r.GetDateTime(1),
-            Level = Enum.Parse<LogLevel>(r.GetString(2), true),
+            Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
             AppName = r.GetString(3),
             Message = r.GetString(4),
             Metadata = r.IsDBNull(5) ? null : r.GetString(5)
@@ -319,7 +319,7 @@ public class LogRepository : ILogRepository
             Logs = logs,
             TotalDurationMs = (lastTimestamp - firstTimestamp).TotalMilliseconds,
             Services = logs.Select(l => l.AppName).Distinct().ToList(),
-            HasErrors = logs.Any(l => l.Level >= LogLevel.Error)
+            HasErrors = logs.Any(l => l.Level >= Models.LogLevel.Error)
         };
     }
 }

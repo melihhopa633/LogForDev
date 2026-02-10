@@ -1,0 +1,392 @@
+@{
+    Layout = null;
+    var baseUrl = ViewBag.BaseUrl as string ?? "";
+    var apiKey = ViewBag.ApiKey as string ?? "change-me";
+}
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setup Wizard - LogForDev</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#09090b',
+                        foreground: '#fafafa',
+                        card: { DEFAULT: '#09090b', foreground: '#fafafa' },
+                        primary: { DEFAULT: '#2563eb', foreground: '#fafafa' },
+                        secondary: { DEFAULT: '#27272a', foreground: '#fafafa' },
+                        muted: { DEFAULT: '#27272a', foreground: '#a1a1aa' },
+                        accent: { DEFAULT: '#27272a', foreground: '#fafafa' },
+                        destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
+                        border: '#27272a',
+                        input: '#27272a',
+                        ring: '#2563eb',
+                    },
+                    borderRadius: {
+                        lg: '0.5rem',
+                        md: 'calc(0.5rem - 2px)',
+                        sm: 'calc(0.5rem - 4px)',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-feature-settings: "rlig" 1, "calt" 1; }
+        .step-panel { display: none; }
+        .step-panel.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .spinner { border: 2px solid #27272a; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; display: inline-block; }
+        @@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-background text-foreground min-h-screen flex items-center justify-center antialiased p-4">
+    <div class="w-full max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-2 mb-3">
+                <svg class="w-9 h-9 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <h1 class="text-2xl font-bold">LogForDev</h1>
+            </div>
+            <p class="text-muted-foreground">Kurulum Sihirbazi</p>
+        </div>
+
+        <!-- Step Indicators -->
+        <div class="flex items-center justify-center gap-2 mb-8">
+            <button onclick="goToStep(1)" id="stepBtn1" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary text-primary-foreground">
+                <span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
+                Veritabani
+            </button>
+            <div class="w-8 h-px bg-border"></div>
+            <button onclick="goToStep(2)" id="stepBtn2" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">2</span>
+                Test
+            </button>
+            <div class="w-8 h-px bg-border"></div>
+            <button onclick="goToStep(3)" id="stepBtn3" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">3</span>
+                Bitir
+            </button>
+        </div>
+
+        <!-- Card -->
+        <div class="border border-border rounded-lg bg-card">
+            <!-- Step 1: Database & API Key -->
+            <div id="step1" class="step-panel active p-6">
+                <h2 class="text-lg font-semibold mb-1">Veritabani & API Key Ayarlari</h2>
+                <p class="text-sm text-muted-foreground mb-6">ClickHouse baglanti bilgilerini ve API anahtarinizi yapilandirin.</p>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Host</label>
+                            <input type="text" id="chHost" value="@ViewBag.ClickHouseHost" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Port</label>
+                            <input type="number" id="chPort" value="@ViewBag.ClickHousePort" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Veritabani</label>
+                        <input type="text" id="chDatabase" value="@ViewBag.ClickHouseDatabase" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Kullanici Adi</label>
+                            <input type="text" id="chUsername" value="@ViewBag.ClickHouseUsername" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Sifre</label>
+                            <input type="password" id="chPassword" value="@ViewBag.ClickHousePassword" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        </div>
+                    </div>
+
+                    <!-- Test Connection -->
+                    <div class="flex items-center gap-3">
+                        <button onclick="testConnection()" id="btnTestConn" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                            Baglantiyi Test Et
+                        </button>
+                        <span id="connResult" class="text-sm"></span>
+                    </div>
+
+                    <div class="border-t border-border my-2"></div>
+
+                    <!-- API Key -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">API Key</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="apiKey" value="@ViewBag.ApiKey" class="flex-1 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <button onclick="generateKey()" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors whitespace-nowrap">
+                                Rastgele Olustur
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Retention -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Log Saklama Suresi</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="retentionDays" value="@ViewBag.RetentionDays" min="1" max="365" class="w-24 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <span class="text-sm text-muted-foreground">gun</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-6">
+                    <button onclick="goToStep(2)" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        Ileri &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Test Log -->
+            <div id="step2" class="step-panel p-6">
+                <h2 class="text-lg font-semibold mb-1">Ilk Log Gonderme</h2>
+                <p class="text-sm text-muted-foreground mb-6">Kurulumunuzu test edin. Asagidaki curl komutunu kullanarak veya butona tiklayarak test logu gonderin.</p>
+
+                <div class="space-y-4">
+                    <!-- curl example -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">curl Ornegi</label>
+                        <div class="relative">
+                            <pre id="curlExample" class="bg-zinc-900 border border-border rounded-md p-4 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap"></pre>
+                            <button onclick="copyCurl()" class="absolute top-2 right-2 p-1.5 bg-secondary hover:bg-secondary/80 rounded-md transition-colors" title="Kopyala">
+                                <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Send Test Log -->
+                    <div class="flex items-center gap-3">
+                        <button onclick="sendTestLog()" id="btnTestLog" class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                            Test Logu Gonder
+                        </button>
+                        <span id="testLogResult" class="text-sm"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(1)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                        &larr; Geri
+                    </button>
+                    <button onclick="goToStep(3)" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        Ileri &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Finish -->
+            <div id="step3" class="step-panel p-6">
+                <h2 class="text-lg font-semibold mb-1">Kurulumu Tamamla</h2>
+                <p class="text-sm text-muted-foreground mb-6">LogForDev kullanima hazir! Dashboard'un temel ozelliklerine goz atin.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div class="border border-border rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                            <h3 class="font-medium text-sm">Gercek Zamanli Dashboard</h3>
+                        </div>
+                        <p class="text-xs text-muted-foreground">Loglarinizi canli olarak izleyin, filtreleyin ve analiz edin.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <h3 class="font-medium text-sm">Gelismis Arama</h3>
+                        </div>
+                        <p class="text-xs text-muted-foreground">Seviye, uygulama, ortam ve tarih araligi ile filtreleme.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                            </svg>
+                            <h3 class="font-medium text-sm">REST API</h3>
+                        </div>
+                        <p class="text-xs text-muted-foreground">Herhangi bir dilden log gonderin. Swagger dokumantasyonu dahil.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+                            </svg>
+                            <h3 class="font-medium text-sm">Log Desenleri</h3>
+                        </div>
+                        <p class="text-xs text-muted-foreground">Tekrar eden log desenlerini otomatik tespit edin.</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between">
+                    <button onclick="goToStep(2)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                        &larr; Geri
+                    </button>
+                    <button onclick="completeSetup()" id="btnComplete" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        Kurulumu Tamamla
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-xs text-muted-foreground mt-6">LogForDev &mdash; Open Source Logging System</p>
+    </div>
+
+    <script>
+        let currentStep = 1;
+
+        function goToStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById('stepBtn' + i);
+                if (i <= step) {
+                    btn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary text-primary-foreground';
+                } else {
+                    btn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-secondary text-muted-foreground';
+                }
+            }
+
+            if (step === 2) updateCurlExample();
+        }
+
+        function updateCurlExample() {
+            const host = '@baseUrl';
+            const key = document.getElementById('apiKey').value;
+            const curl = `curl -X POST ${host}/api/logs \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: ${key}" \\
+  -d '{
+    "level": "info",
+    "message": "Hello from my app!",
+    "appName": "my-app",
+    "environment": "production"
+  }'`;
+            document.getElementById('curlExample').textContent = curl;
+        }
+
+        function copyCurl() {
+            const text = document.getElementById('curlExample').textContent;
+            navigator.clipboard.writeText(text);
+        }
+
+        async function testConnection() {
+            const btn = document.getElementById('btnTestConn');
+            const result = document.getElementById('connResult');
+            btn.disabled = true;
+            result.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                const resp = await fetch('/api/setup/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host: document.getElementById('chHost').value,
+                        port: parseInt(document.getElementById('chPort').value),
+                        database: document.getElementById('chDatabase').value,
+                        username: document.getElementById('chUsername').value,
+                        password: document.getElementById('chPassword').value
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    result.innerHTML = '<span class="text-green-500">&#10003; ' + data.message + '</span>';
+                } else {
+                    result.innerHTML = '<span class="text-red-500">&#10007; ' + data.message + '</span>';
+                }
+            } catch (e) {
+                result.innerHTML = '<span class="text-red-500">&#10007; Baglanti hatasi</span>';
+            }
+            btn.disabled = false;
+        }
+
+        async function generateKey() {
+            try {
+                const resp = await fetch('/api/setup/generate-key', { method: 'POST' });
+                const data = await resp.json();
+                document.getElementById('apiKey').value = data.key;
+            } catch (e) {
+                alert('Anahtar olusturulamadi');
+            }
+        }
+
+        async function sendTestLog() {
+            const btn = document.getElementById('btnTestLog');
+            const result = document.getElementById('testLogResult');
+            btn.disabled = true;
+            result.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                const resp = await fetch('/api/setup/send-test-log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey: document.getElementById('apiKey').value })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    result.innerHTML = '<span class="text-green-500">&#10003; ' + data.message + '</span>';
+                } else {
+                    result.innerHTML = '<span class="text-red-500">&#10007; ' + data.message + '</span>';
+                }
+            } catch (e) {
+                result.innerHTML = '<span class="text-red-500">&#10007; Log gonderilemedi</span>';
+            }
+            btn.disabled = false;
+        }
+
+        async function completeSetup() {
+            const btn = document.getElementById('btnComplete');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Kaydediliyor...';
+
+            try {
+                const resp = await fetch('/api/setup/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clickHouseHost: document.getElementById('chHost').value,
+                        clickHousePort: parseInt(document.getElementById('chPort').value),
+                        clickHouseDatabase: document.getElementById('chDatabase').value,
+                        clickHouseUsername: document.getElementById('chUsername').value,
+                        clickHousePassword: document.getElementById('chPassword').value,
+                        apiKey: document.getElementById('apiKey').value,
+                        retentionDays: parseInt(document.getElementById('retentionDays').value)
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    alert(data.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Kurulumu Tamamla';
+                }
+            } catch (e) {
+                alert('Kurulum tamamlanamadi');
+                btn.disabled = false;
+                btn.textContent = 'Kurulumu Tamamla';
+            }
+        }
+    </script>
+</body>
+</html>

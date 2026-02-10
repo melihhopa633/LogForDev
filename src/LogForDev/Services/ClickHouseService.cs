@@ -8,6 +8,7 @@ namespace LogForDev.Services;
 public interface IClickHouseService
 {
     Task InitializeAsync();
+    Task<(bool Success, string? Error)> TestConnectionAsync();
     Task<ClickHouseConnection> GetConnectionAsync();
     Task ExecuteAsync(string sql, object? parameters = null);
     Task<List<T>> QueryAsync<T>(string sql, Func<System.Data.IDataReader, T> mapper);
@@ -22,6 +23,24 @@ public class ClickHouseService : IClickHouseService
     {
         _options = options.Value;
         _logger = logger;
+    }
+
+    public async Task<(bool Success, string? Error)> TestConnectionAsync()
+    {
+        try
+        {
+            await using var connection = new ClickHouseConnection(_options.DefaultConnectionString);
+            await connection.OpenAsync();
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            await cmd.ExecuteScalarAsync();
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ClickHouse connection test failed");
+            return (false, ex.Message);
+        }
     }
 
     public async Task InitializeAsync()

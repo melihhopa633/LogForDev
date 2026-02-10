@@ -78,13 +78,30 @@ builder.Services.AddSingleton<AppLogService>();
 builder.Services.AddSingleton<IAppLogService>(sp => sp.GetRequiredService<AppLogService>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<AppLogService>());
 
+// Setup wizard
+builder.Services.AddSingleton<ISetupStateService, SetupStateService>();
+
 var app = builder.Build();
 
-// Initialize database
-using (var scope = app.Services.CreateScope())
+// Initialize database (skip failure if setup not complete)
+var setupState = app.Services.GetRequiredService<ISetupStateService>();
+try
 {
-    var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
-    await clickHouse.InitializeAsync();
+    using (var scope = app.Services.CreateScope())
+    {
+        var clickHouse = scope.ServiceProvider.GetRequiredService<IClickHouseService>();
+        await clickHouse.InitializeAsync();
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    if (setupState.IsSetupComplete())
+    {
+        logger.LogError(ex, "Failed to initialize ClickHouse");
+        throw;
+    }
+    logger.LogWarning("ClickHouse initialization skipped - setup not complete yet");
 }
 
 // Swagger UI - always enabled
@@ -107,6 +124,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseMiddleware<SetupMiddleware>();
 app.UseRouting();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseAuthorization();
