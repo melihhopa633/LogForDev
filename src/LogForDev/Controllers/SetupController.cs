@@ -12,6 +12,7 @@ public class SetupController : Controller
     private readonly ISetupStateService _setupState;
     private readonly IClickHouseService _clickHouseService;
     private readonly ILogBufferService _buffer;
+    private readonly IProjectService _projectService;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<SetupController> _logger;
@@ -20,6 +21,7 @@ public class SetupController : Controller
         ISetupStateService setupState,
         IClickHouseService clickHouseService,
         ILogBufferService buffer,
+        IProjectService projectService,
         IConfiguration configuration,
         IWebHostEnvironment env,
         ILogger<SetupController> logger)
@@ -27,6 +29,7 @@ public class SetupController : Controller
         _setupState = setupState;
         _clickHouseService = clickHouseService;
         _buffer = buffer;
+        _projectService = projectService;
         _configuration = configuration;
         _env = env;
         _logger = logger;
@@ -40,7 +43,6 @@ public class SetupController : Controller
         ViewBag.ClickHouseDatabase = _configuration["ClickHouse:Database"] ?? "logfordev";
         ViewBag.ClickHouseUsername = _configuration["ClickHouse:Username"] ?? "";
         ViewBag.ClickHousePassword = _configuration["ClickHouse:Password"] ?? "";
-        ViewBag.ApiKey = _configuration["LogForDev:ApiKey"] ?? "change-me";
         ViewBag.RetentionDays = _configuration["LogForDev:RetentionDays"] ?? "30";
         ViewBag.BaseUrl = $"{Request.Scheme}://{Request.Host}";
 
@@ -146,8 +148,7 @@ public class SetupController : Controller
                     {
                         writer.WritePropertyName("LogForDev");
                         writer.WriteStartObject();
-                        writer.WriteString("ApiKey", request.ApiKey ?? "change-me");
-                        writer.WriteNumber("RetentionDays", request.RetentionDays > 0 ? request.RetentionDays : 30);
+                        writer.WriteNumber("RetentionDays", request.RetentionDays >= 0 ? request.RetentionDays : 30);
                         writer.WriteEndObject();
                     }
                     else
@@ -179,10 +180,27 @@ public class SetupController : Controller
                 using var createDbCmd = connection.CreateCommand();
                 createDbCmd.CommandText = $"CREATE DATABASE IF NOT EXISTS {options.Database}";
                 await createDbCmd.ExecuteNonQueryAsync();
+
+                // Re-initialize tables (including projects table)
+                await _clickHouseService.InitializeAsync();
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Database initialization during setup completion failed, will retry on restart");
+            }
+
+            // Create the first project
+            if (!string.IsNullOrEmpty(request.ProjectName) && !string.IsNullOrEmpty(request.ApiKey))
+            {
+                try
+                {
+                    int? expiryDays = request.KeyExpiryDays > 0 ? request.KeyExpiryDays : null;
+                    await _projectService.CreateProjectAsync(request.ProjectName, request.ApiKey, expiryDays);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to create initial project during setup");
+                }
             }
 
             // Mark setup as complete
@@ -219,6 +237,8 @@ public class SetupCompleteRequest
     public string? ClickHouseDatabase { get; set; }
     public string? ClickHouseUsername { get; set; }
     public string? ClickHousePassword { get; set; }
+    public string? ProjectName { get; set; }
     public string? ApiKey { get; set; }
+    public int KeyExpiryDays { get; set; }
     public int RetentionDays { get; set; }
 }

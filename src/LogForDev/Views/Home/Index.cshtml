@@ -1,8 +1,7 @@
 @{
     ViewData["Title"] = "Dashboard";
     var stats = ViewBag.Stats as LogStats ?? new LogStats();
-    var apps = ViewBag.Apps as List<string> ?? new List<string>();
-    var environments = ViewBag.Environments as List<string> ?? new List<string>();
+    var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
 }
 
 <!-- Toast Container -->
@@ -107,22 +106,13 @@
             </div>
         </div>
         <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">App</label>
-            <select id="appFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
-                <option value="">All Apps</option>
-                @foreach (var app in apps)
+            <label class="text-xs font-medium text-muted-foreground">Project</label>
+            <select id="projectFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
+                <option value="">All Projects</option>
+                @foreach (var project in projects)
                 {
-                    <option value="@app">@app</option>
-                }
-            </select>
-        </div>
-        <div class="flex flex-col gap-1.5 w-full lg:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Environment</label>
-            <select id="envFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
-                <option value="">All Environments</option>
-                @foreach (var env in environments)
-                {
-                    <option value="@env">@env</option>
+                    var suffix = project.IsExpired ? " (expired)" : "";
+                    <option value="@project.Id">@project.Name@suffix</option>
                 }
             </select>
         </div>
@@ -177,6 +167,30 @@
         <button id="clearFilters" class="h-9 rounded-md border border-border bg-background px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
             Clear All
         </button>
+        <!-- Log Silme -->
+        <div class="relative ml-auto">
+            <button onclick="toggleDeleteMenu()" class="h-9 rounded-md border border-red-500/30 bg-red-500/10 px-3 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap flex items-center gap-1.5">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Loglari Sil
+            </button>
+            <div id="deleteMenu" class="hidden absolute right-0 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg z-50 p-2 space-y-1">
+                <button onclick="deleteLogs(null)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">
+                    Hepsini Sil
+                </button>
+                <button onclick="deleteLogs(1)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    1 gunden eski
+                </button>
+                <button onclick="deleteLogs(7)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    7 gunden eski
+                </button>
+                <button onclick="deleteLogs(15)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    15 gunden eski
+                </button>
+                <button onclick="deleteLogs(30)" class="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary text-foreground transition-colors">
+                    30 gunden eski
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Active Filter Tags -->
@@ -514,11 +528,8 @@
             const levels = getSelectedLevels();
             if (levels.length > 0) params.set('levels', levels.join(','));
 
-            const app = document.getElementById('appFilter').value;
-            if (app) params.set('app', app);
-
-            const env = document.getElementById('envFilter').value;
-            if (env) params.set('env', env);
+            const projectId = document.getElementById('projectFilter').value;
+            if (projectId) params.set('projectId', projectId);
 
             const search = document.getElementById('searchFilter').value;
             if (search) params.set('search', search);
@@ -553,13 +564,9 @@
                 updateLevelLabel();
             }
 
-            // App
-            const app = params.get('app');
-            if (app) document.getElementById('appFilter').value = app;
-
-            // Environment
-            const env = params.get('env');
-            if (env) document.getElementById('envFilter').value = env;
+            // Project
+            const projectId = params.get('projectId');
+            if (projectId) document.getElementById('projectFilter').value = projectId;
 
             // Search
             const search = params.get('search');
@@ -727,10 +734,6 @@
             const tags = [];
             const levels = getSelectedLevels();
             if (levels.length > 0) tags.push({ label: `Level: ${levels.join(', ')}`, clear: () => { document.querySelectorAll('.level-check').forEach(c => { c.checked = c.value === ''; }); updateLevelLabel(); }});
-            const app = document.getElementById('appFilter').value;
-            if (app) tags.push({ label: `App: ${app}`, clear: () => { document.getElementById('appFilter').value = ''; }});
-            const env = document.getElementById('envFilter').value;
-            if (env) tags.push({ label: `Env: ${env}`, clear: () => { document.getElementById('envFilter').value = ''; }});
             const search = document.getElementById('searchFilter').value;
             if (search) tags.push({ label: `Search: "${search}"`, clear: () => { document.getElementById('searchFilter').value = ''; }});
             const traceId = document.getElementById('traceIdFilter').value;
@@ -762,11 +765,39 @@
             }
         }
 
+        // --- Delete Logs ---
+        function toggleDeleteMenu() {
+            document.getElementById('deleteMenu').classList.toggle('hidden');
+        }
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('deleteMenu');
+            if (!e.target.closest('.relative') || !e.target.closest('[onclick*="toggleDeleteMenu"]')) {
+                if (!e.target.closest('#deleteMenu')) menu.classList.add('hidden');
+            }
+        });
+        async function deleteLogs(days) {
+            const msg = days ? `${days} gunden eski loglar silinecek. Emin misiniz?` : 'TUM loglar silinecek! Emin misiniz?';
+            if (!confirm(msg)) return;
+            document.getElementById('deleteMenu').classList.add('hidden');
+            try {
+                const url = days ? `/api/logs?olderThanDays=${days}` : '/api/logs';
+                const resp = await fetch(url, { method: 'DELETE' });
+                const data = await resp.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadLogs();
+                } else {
+                    showToast(data.error || 'Silme islemi basarisiz', 'error');
+                }
+            } catch (e) {
+                showToast('Silme islemi basarisiz', 'error');
+            }
+        }
+
         // --- Load Logs ---
         async function loadLogs(shouldUpdateUrl = true) {
             const levels = getSelectedLevels();
-            const app = document.getElementById('appFilter').value;
-            const env = document.getElementById('envFilter').value;
+            const projectId = document.getElementById('projectFilter').value;
             const search = document.getElementById('searchFilter').value;
             const traceId = document.getElementById('traceIdFilter').value;
             const from = document.getElementById('fromFilter').value;
@@ -774,8 +805,7 @@
 
             let url = `/api/logs?page=${currentPage}&pageSize=${pageSize}`;
             if (levels.length > 0) url += `&levels=${encodeURIComponent(levels.join(','))}`;
-            if (app) url += `&appName=${encodeURIComponent(app)}`;
-            if (env) url += `&environment=${encodeURIComponent(env)}`;
+            if (projectId) url += `&projectId=${encodeURIComponent(projectId)}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
             if (traceId) url += `&traceId=${encodeURIComponent(traceId)}`;
             if (from) url += `&from=${encodeURIComponent(new Date(from).toISOString())}`;
@@ -1282,8 +1312,6 @@
         function clearAllFilters() {
             document.querySelectorAll('.level-check').forEach(c => { c.checked = c.value === ''; });
             updateLevelLabel();
-            document.getElementById('appFilter').value = '';
-            document.getElementById('envFilter').value = '';
             document.getElementById('searchFilter').value = '';
             document.getElementById('traceIdFilter').value = '';
             document.getElementById('fromFilter').value = '';
@@ -1429,8 +1457,6 @@
         // --- Event Listeners ---
         document.getElementById('refreshBtn').addEventListener('click', loadLogs);
         document.getElementById('liveToggle').addEventListener('click', toggleLive);
-        document.getElementById('appFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
-        document.getElementById('envFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
         document.getElementById('searchFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
         document.getElementById('traceIdFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
         document.getElementById('fromFilter').addEventListener('change', () => {

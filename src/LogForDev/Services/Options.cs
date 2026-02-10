@@ -2,7 +2,6 @@ namespace LogForDev.Services;
 
 public class LogForDevOptions
 {
-    public string ApiKey { get; set; } = "change-me";
     public int RetentionDays { get; set; } = 30;
 }
 

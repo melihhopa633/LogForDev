@@ -7,11 +7,13 @@ namespace LogForDev.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogService _logService;
+    private readonly IProjectService _projectService;
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(ILogService logService, ILogger<HomeController> logger)
+    public HomeController(ILogService logService, IProjectService projectService, ILogger<HomeController> logger)
     {
         _logService = logService;
+        _projectService = projectService;
         _logger = logger;
     }
 
@@ -20,21 +22,23 @@ public class HomeController : Controller
         try
         {
             var stats = await _logService.GetStatsAsync();
-            var apps = await _logService.GetAppNamesAsync();
-            var environments = await _logService.GetEnvironmentsAsync();
-
             ViewBag.Stats = stats;
-            ViewBag.Apps = apps;
-            ViewBag.Environments = environments;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load dashboard");
             ViewBag.Stats = new LogStats();
-            ViewBag.Apps = new List<string>();
-            ViewBag.Environments = new List<string>();
         }
-        
+
+        try
+        {
+            ViewBag.Projects = await _projectService.GetAllProjectsAsync();
+        }
+        catch
+        {
+            ViewBag.Projects = new List<Project>();
+        }
+
         return View();
     }
 

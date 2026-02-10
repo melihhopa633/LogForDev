@@ -18,8 +18,9 @@ public class LogRepository : ILogRepository
 
     public async Task<Guid> InsertAsync(LogEntry log)
     {
+        var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
         var sql = $@"
-            INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment)
+            INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment, project_id, project_name)
             VALUES (
                 '{log.Id}',
                 now64(3),
@@ -30,7 +31,9 @@ public class LogRepository : ILogRepository
                 '{EscapeString(log.TraceId ?? "")}',
                 '{EscapeString(log.SpanId ?? "")}',
                 '{EscapeString(log.Host ?? "")}',
-                '{EscapeString(log.Environment)}'
+                '{EscapeString(log.Environment)}',
+                '{projectId}',
+                '{EscapeString(log.ProjectName ?? "")}'
             )";
 
         await _clickHouse.ExecuteAsync(sql);
@@ -43,12 +46,16 @@ public class LogRepository : ILogRepository
         if (!logList.Any()) return 0;
 
         var sql = new StringBuilder();
-        sql.AppendLine($"INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment) VALUES");
+        sql.AppendLine($"INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment, project_id, project_name) VALUES");
 
         var values = logList.Select(log =>
-            $"('{log.Id}', now64(3), '{log.Level}', '{EscapeString(log.AppName)}', '{EscapeString(log.Message)}', " +
-            $"'{EscapeString(log.Metadata ?? "{}")}', '{EscapeString(log.TraceId ?? "")}', '{EscapeString(log.SpanId ?? "")}', " +
-            $"'{EscapeString(log.Host ?? "")}', '{EscapeString(log.Environment)}')");
+        {
+            var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
+            return $"('{log.Id}', now64(3), '{log.Level}', '{EscapeString(log.AppName)}', '{EscapeString(log.Message)}', " +
+                $"'{EscapeString(log.Metadata ?? "{}")}', '{EscapeString(log.TraceId ?? "")}', '{EscapeString(log.SpanId ?? "")}', " +
+                $"'{EscapeString(log.Host ?? "")}', '{EscapeString(log.Environment)}', " +
+                $"'{projectId}', '{EscapeString(log.ProjectName ?? "")}')";
+        });
 
         sql.AppendLine(string.Join(",\n", values));
 
@@ -65,7 +72,7 @@ public class LogRepository : ILogRepository
 
         // Data query
         var dataSql = queryBuilder
-            .Select("id", "timestamp", "level", "app_name", "message", "metadata", "trace_id", "span_id", "host", "environment")
+            .Select("id", "timestamp", "level", "app_name", "message", "metadata", "trace_id", "span_id", "host", "environment", "project_id", "project_name")
             .OrderByDesc("timestamp")
             .Paginate(query.Page, query.PageSize)
             .BuildSelect();
@@ -179,6 +186,11 @@ public class LogRepository : ILogRepository
             builder.Where("trace_id", query.TraceId);
         }
 
+        if (query.ProjectId.HasValue)
+        {
+            builder.Where("project_id", query.ProjectId.Value.ToString());
+        }
+
         if (query.From.HasValue && query.To.HasValue)
         {
             builder.WhereBetween("timestamp",
@@ -203,6 +215,9 @@ public class LogRepository : ILogRepository
 
     private static LogEntry MapLogEntry(System.Data.IDataReader reader)
     {
+        var projectId = reader.IsDBNull(10) ? (Guid?)null : reader.GetGuid(10);
+        if (projectId == Guid.Empty) projectId = null;
+
         return new LogEntry
         {
             Id = reader.GetGuid(0),
@@ -214,7 +229,9 @@ public class LogRepository : ILogRepository
             TraceId = reader.IsDBNull(6) ? null : reader.GetString(6),
             SpanId = reader.IsDBNull(7) ? null : reader.GetString(7),
             Host = reader.IsDBNull(8) ? null : reader.GetString(8),
-            Environment = reader.GetString(9)
+            Environment = reader.GetString(9),
+            ProjectId = projectId,
+            ProjectName = reader.IsDBNull(11) ? null : reader.GetString(11)
         };
     }
 
@@ -321,5 +338,20 @@ public class LogRepository : ILogRepository
             Services = logs.Select(l => l.AppName).Distinct().ToList(),
             HasErrors = logs.Any(l => l.Level >= Models.LogLevel.Error)
         };
+    }
+
+    public async Task DeleteLogsAsync(int? olderThanDays = null)
+    {
+        string sql;
+        if (olderThanDays.HasValue && olderThanDays.Value > 0)
+        {
+            sql = $"ALTER TABLE {TableName} DELETE WHERE timestamp < now() - INTERVAL {olderThanDays.Value} DAY";
+        }
+        else
+        {
+            sql = $"TRUNCATE TABLE {TableName}";
+        }
+        await _clickHouse.ExecuteAsync(sql);
+        _logger.LogInformation("Logs deleted: {Mode}", olderThanDays.HasValue ? $"older than {olderThanDays} days" : "all");
     }
 }

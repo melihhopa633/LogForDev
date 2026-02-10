@@ -1,7 +1,6 @@
 @{
     Layout = null;
     var baseUrl = ViewBag.BaseUrl as string ?? "";
-    var apiKey = ViewBag.ApiKey as string ?? "change-me";
 }
 <!DOCTYPE html>
 <html lang="tr" class="dark">
@@ -83,10 +82,10 @@
 
         <!-- Card -->
         <div class="border border-border rounded-lg bg-card">
-            <!-- Step 1: Database & API Key -->
+            <!-- Step 1: Database & Project -->
             <div id="step1" class="step-panel active p-6">
-                <h2 class="text-lg font-semibold mb-1">Veritabani & API Key Ayarlari</h2>
-                <p class="text-sm text-muted-foreground mb-6">ClickHouse baglanti bilgilerini ve API anahtarinizi yapilandirin.</p>
+                <h2 class="text-lg font-semibold mb-1">Veritabani & Proje Ayarlari</h2>
+                <p class="text-sm text-muted-foreground mb-6">ClickHouse baglanti bilgilerini yapilandirin ve ilk projenizi olusturun.</p>
 
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -110,7 +109,18 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1.5">Sifre</label>
-                            <input type="password" id="chPassword" value="@ViewBag.ClickHousePassword" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <div class="relative">
+                                <input type="password" id="chPassword" value="@ViewBag.ClickHousePassword" class="w-full px-3 py-2 pr-10 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                                <button type="button" onclick="togglePassword()" class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -124,24 +134,52 @@
 
                     <div class="border-t border-border my-2"></div>
 
-                    <!-- API Key -->
+                    <!-- Project -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Proje Adi <span class="text-red-400">*</span></label>
+                        <input type="text" id="projectName" placeholder="ornegin: backend, mobile, web-app" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium mb-1.5">API Key</label>
                         <div class="flex gap-2">
-                            <input type="text" id="apiKey" value="@ViewBag.ApiKey" class="flex-1 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <input type="text" id="apiKey" class="flex-1 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring" readonly />
                             <button onclick="generateKey()" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors whitespace-nowrap">
-                                Rastgele Olustur
+                                Yeniden Olustur
                             </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">API Key Gecerlilik Suresi</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="keyExpiryDays" value="0" min="0" class="w-28 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <span class="text-sm text-muted-foreground">gun</span>
+                            <span class="text-xs text-muted-foreground ml-1">(0 = suresiz)</span>
                         </div>
                     </div>
 
                     <!-- Retention -->
                     <div>
                         <label class="block text-sm font-medium mb-1.5">Log Saklama Suresi</label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="retentionDays" value="@ViewBag.RetentionDays" min="1" max="365" class="w-24 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                            <span class="text-sm text-muted-foreground">gun</span>
+                        <div class="flex items-center gap-3">
+                            <select id="retentionMode" onchange="toggleRetentionInput()" class="px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                                <option value="0">Sinirsiz (sil)</option>
+                                <option value="7">7 gun</option>
+                                <option value="15">15 gun</option>
+                                <option value="30" selected>30 gun</option>
+                                <option value="60">60 gun</option>
+                                <option value="90">90 gun</option>
+                                <option value="180">180 gun</option>
+                                <option value="365">365 gun</option>
+                                <option value="custom">Ozel...</option>
+                            </select>
+                            <div id="customRetentionWrap" class="hidden flex items-center gap-2">
+                                <input type="number" id="retentionDaysCustom" value="30" min="1" class="w-24 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                                <span class="text-sm text-muted-foreground">gun</span>
+                            </div>
                         </div>
+                        <p class="text-xs text-muted-foreground mt-1">0 = sinirsiz saklama, loglar otomatik silinmez</p>
                     </div>
                 </div>
 
@@ -222,16 +260,16 @@
                             </svg>
                             <h3 class="font-medium text-sm">REST API</h3>
                         </div>
-                        <p class="text-xs text-muted-foreground">Herhangi bir dilden log gonderin. Swagger dokumantasyonu dahil.</p>
+                        <p class="text-xs text-muted-foreground">Herhangi bir dilden log gonderin.</p>
                     </div>
                     <div class="border border-border rounded-lg p-4">
                         <div class="flex items-center gap-2 mb-2">
                             <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
                             </svg>
-                            <h3 class="font-medium text-sm">Log Desenleri</h3>
+                            <h3 class="font-medium text-sm">Proje Bazli Yonetim</h3>
                         </div>
-                        <p class="text-xs text-muted-foreground">Tekrar eden log desenlerini otomatik tespit edin.</p>
+                        <p class="text-xs text-muted-foreground">Her proje icin ayri API key ve filtreleme imkani.</p>
                     </div>
                 </div>
 
@@ -253,7 +291,62 @@
     <script>
         let currentStep = 1;
 
+        function toggleRetentionInput() {
+            const mode = document.getElementById('retentionMode').value;
+            const wrap = document.getElementById('customRetentionWrap');
+            wrap.classList.toggle('hidden', mode !== 'custom');
+        }
+
+        function getRetentionDays() {
+            const mode = document.getElementById('retentionMode').value;
+            if (mode === '0') return 0;
+            if (mode === 'custom') return parseInt(document.getElementById('retentionDaysCustom').value) || 30;
+            return parseInt(mode);
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('chPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            const eyeOffIcon = document.getElementById('eyeOffIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.classList.add('hidden');
+                eyeOffIcon.classList.remove('hidden');
+            } else {
+                input.type = 'password';
+                eyeIcon.classList.remove('hidden');
+                eyeOffIcon.classList.add('hidden');
+            }
+        }
+
+        // Init on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateKey();
+            // Set retention dropdown from saved value
+            const savedRetention = @ViewBag.RetentionDays;
+            const select = document.getElementById('retentionMode');
+            const predefined = ['0','7','15','30','60','90','180','365'];
+            if (predefined.includes(String(savedRetention))) {
+                select.value = String(savedRetention);
+            } else {
+                select.value = 'custom';
+                document.getElementById('retentionDaysCustom').value = savedRetention;
+                toggleRetentionInput();
+            }
+        });
+
         function goToStep(step) {
+            // Validate project name before leaving step 1
+            if (currentStep === 1 && step > 1) {
+                const projectName = document.getElementById('projectName').value.trim();
+                if (!projectName) {
+                    document.getElementById('projectName').focus();
+                    document.getElementById('projectName').classList.add('ring-2', 'ring-red-500');
+                    setTimeout(() => document.getElementById('projectName').classList.remove('ring-2', 'ring-red-500'), 2000);
+                    return;
+                }
+            }
+
             currentStep = step;
             document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('step' + step).classList.add('active');
@@ -369,8 +462,10 @@
                         clickHouseDatabase: document.getElementById('chDatabase').value,
                         clickHouseUsername: document.getElementById('chUsername').value,
                         clickHousePassword: document.getElementById('chPassword').value,
+                        projectName: document.getElementById('projectName').value.trim(),
                         apiKey: document.getElementById('apiKey').value,
-                        retentionDays: parseInt(document.getElementById('retentionDays').value)
+                        keyExpiryDays: parseInt(document.getElementById('keyExpiryDays').value) || 0,
+                        retentionDays: getRetentionDays()
                     })
                 });
                 const data = await resp.json();

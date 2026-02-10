@@ -12,6 +12,18 @@ public enum LogLevel
     Fatal = 5
 }
 
+public class Project
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? ExpiresAt { get; set; }
+
+    [JsonIgnore]
+    public bool IsExpired => ExpiresAt.HasValue && ExpiresAt.Value < DateTime.UtcNow;
+}
+
 public class LogEntry
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -24,6 +36,8 @@ public class LogEntry
     public string? SpanId { get; set; }
     public string? Host { get; set; }
     public string Environment { get; set; } = "production";
+    public Guid? ProjectId { get; set; }
+    public string? ProjectName { get; set; }
 }
 
 public class LogEntryRequest
@@ -97,6 +111,7 @@ public class LogQueryParams
     public string? Search { get; set; }
     public string? Environment { get; set; }
     public string? TraceId { get; set; }
+    public Guid? ProjectId { get; set; }
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
     public int Page { get; set; } = 1;

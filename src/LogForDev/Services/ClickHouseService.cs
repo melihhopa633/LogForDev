@@ -81,6 +81,32 @@ public class ClickHouseService : IClickHouseService
                 SETTINGS index_granularity = 8192";
             await cmd.ExecuteNonQueryAsync();
 
+            // Create projects table
+            await using var projectsCmd = connection.CreateCommand();
+            projectsCmd.CommandText = @"
+                CREATE TABLE IF NOT EXISTS projects (
+                    id UUID DEFAULT generateUUIDv4(),
+                    name String,
+                    api_key String,
+                    created_at DateTime DEFAULT now(),
+                    expires_at Nullable(DateTime) DEFAULT NULL
+                ) ENGINE = MergeTree() ORDER BY (api_key)";
+            await projectsCmd.ExecuteNonQueryAsync();
+
+            // Add expires_at column if table already existed
+            await using var alterExpCmd = connection.CreateCommand();
+            alterExpCmd.CommandText = "ALTER TABLE projects ADD COLUMN IF NOT EXISTS expires_at Nullable(DateTime) DEFAULT NULL";
+            await alterExpCmd.ExecuteNonQueryAsync();
+
+            // Add project columns to logs table
+            await using var alterCmd1 = connection.CreateCommand();
+            alterCmd1.CommandText = "ALTER TABLE logs ADD COLUMN IF NOT EXISTS project_id UUID DEFAULT toUUID('00000000-0000-0000-0000-000000000000')";
+            await alterCmd1.ExecuteNonQueryAsync();
+
+            await using var alterCmd2 = connection.CreateCommand();
+            alterCmd2.CommandText = "ALTER TABLE logs ADD COLUMN IF NOT EXISTS project_name LowCardinality(String) DEFAULT ''";
+            await alterCmd2.ExecuteNonQueryAsync();
+
             // Create app_logs table for internal application logs
             await using var appLogsCmd = connection.CreateCommand();
             appLogsCmd.CommandText = $@"

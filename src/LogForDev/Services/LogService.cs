@@ -13,6 +13,7 @@ public interface ILogService
     Task<List<string>> GetEnvironmentsAsync();
     Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query);
     Task<TraceTimeline?> GetTraceTimelineAsync(string traceId);
+    Task DeleteLogsAsync(int? olderThanDays = null);
 }
 
 public class LogService : ILogService
@@ -128,5 +129,10 @@ public class LogService : ILogService
             _logger.LogError(ex, "Failed to get trace timeline for {TraceId}", traceId);
             throw;
         }
+    }
+
+    public async Task DeleteLogsAsync(int? olderThanDays = null)
+    {
+        await _repository.DeleteLogsAsync(olderThanDays);
     }
 }

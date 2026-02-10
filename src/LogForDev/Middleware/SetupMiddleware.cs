@@ -17,9 +17,9 @@ public class SetupMiddleware
     {
         var path = context.Request.Path.Value?.ToLowerInvariant() ?? "";
 
-        // Always allow static files, swagger, and setup-related requests
+        // Always allow static files and setup-related requests
         if (path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/lib") ||
-            path.StartsWith("/favicon") || path.StartsWith("/swagger"))
+            path.StartsWith("/favicon"))
         {
             await _next(context);
             return;

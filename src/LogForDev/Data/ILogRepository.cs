@@ -13,4 +13,5 @@ public interface ILogRepository
     Task<List<string>> GetEnvironmentsAsync();
     Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query);
     Task<TraceTimeline?> GetTraceTimelineAsync(string traceId);
+    Task DeleteLogsAsync(int? olderThanDays = null);
 }

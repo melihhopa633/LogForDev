@@ -1,67 +1,12 @@
 using LogForDev.Services;
 using LogForDev.Middleware;
 using LogForDev.Data;
-using Microsoft.OpenApi.Models;
-using System.Reflection;
+using LogForDev.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services
 builder.Services.AddControllersWithViews();
-builder.Services.AddEndpointsApiExplorer();
-
-// Swagger/OpenAPI
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "LogForDev API",
-        Description = "Self-hosted, real-time logging system for developers",
-        Contact = new OpenApiContact
-        {
-            Name = "GitHub",
-            Url = new Uri("https://github.com/melihhopa633/LogForDev")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "MIT License",
-            Url = new Uri("https://opensource.org/licenses/MIT")
-        }
-    });
-
-    // API Key authentication
-    options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-    {
-        Type = SecuritySchemeType.ApiKey,
-        In = ParameterLocation.Header,
-        Name = "X-API-Key",
-        Description = "API key for authentication"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "ApiKey"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-
-    // XML comments
-    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
-    if (File.Exists(xmlPath))
-    {
-        options.IncludeXmlComments(xmlPath);
-    }
-});
 
 // Add LogForDev services
 builder.Services.Configure<LogForDevOptions>(builder.Configuration.GetSection("LogForDev"));
@@ -80,6 +25,15 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<AppLogService>());
 
 // Setup wizard
 builder.Services.AddSingleton<ISetupStateService, SetupStateService>();
+
+// Project service
+builder.Services.AddSingleton<IProjectService, ProjectService>();
+
+// Authentication
+builder.Services.AddAuthentication(ApiKeyAuthenticationOptions.Scheme)
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationOptions.Scheme, null);
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -104,17 +58,17 @@ catch (Exception ex)
     logger.LogWarning("ClickHouse initialization skipped - setup not complete yet");
 }
 
-// Swagger UI - always enabled
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+// Initialize project cache
+try
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "LogForDev API v1");
-    options.RoutePrefix = "swagger";
-    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
-    options.DefaultModelsExpandDepth(2);
-    options.EnableFilter();
-    options.EnableDeepLinking();
-});
+    var projectService = app.Services.GetRequiredService<IProjectService>();
+    await projectService.RefreshCacheAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogWarning(ex, "Project cache initialization skipped");
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -127,6 +81,7 @@ app.UseStaticFiles();
 app.UseMiddleware<SetupMiddleware>();
 app.UseRouting();
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
