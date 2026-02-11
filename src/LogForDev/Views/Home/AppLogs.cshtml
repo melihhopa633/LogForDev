@@ -2,64 +2,113 @@
     ViewData["Title"] = "App Logs";
 }
 
-<div class="mb-6">
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed top-16 right-4 z-[100] space-y-2"></div>
+
+<!-- Header -->
+<div class="mb-4">
     <h1 class="text-2xl font-bold">Application Logs</h1>
     <p class="text-sm text-muted-foreground mt-1">Internal request and system logs for LogForDev</p>
 </div>
 
 <!-- Filters -->
-<div class="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
-    <div class="flex flex-col md:flex-row gap-3 items-end">
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Level</label>
-            <select id="levelFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-w-[140px]">
-                <option value="">All Levels</option>
-                <option value="Information">Information</option>
-                <option value="Warning">Warning</option>
-                <option value="Error">Error</option>
-            </select>
+<div class="rounded-xl border border-border bg-card p-5 mb-4">
+    <!-- Row 1: Level toggles + Time range + Actions -->
+    <div class="flex flex-wrap items-center gap-3">
+        <!-- Level Toggle Buttons -->
+        <div class="flex items-center gap-1.5 mr-1">
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-blue-400 hover:bg-blue-500/10 transition-all" data-level="Information">INF</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-yellow-400 hover:bg-yellow-500/10 transition-all" data-level="Warning">WRN</button>
+            <button class="level-toggle h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-all" data-level="Error">ERR</button>
         </div>
-        <div class="flex flex-col gap-1.5 flex-1 w-full md:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">Search</label>
-            <input type="text" id="searchFilter" placeholder="Search messages..." class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background w-full" />
+
+        <div class="w-px h-6 bg-border hidden lg:block"></div>
+
+        <!-- Time Range -->
+        <div class="flex items-center gap-1.5" id="timeRangeButtons">
+            <button onclick="setTimeRange(1)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="1">1h</button>
+            <button onclick="setTimeRange(6)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="6">6h</button>
+            <button onclick="setTimeRange(24)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="24">24h</button>
+            <button onclick="setTimeRange(168)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors" data-hours="168">7d</button>
+            <button onclick="setTimeRange(0)" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3.5 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors active-time-range" data-hours="0">All</button>
+            <button onclick="toggleCustomRange()" id="customRangeBtn" class="time-range-btn h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </button>
         </div>
-        <button id="refreshBtn" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap">
-            Refresh
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2">
+            <button id="refreshBtn" class="h-9 rounded-lg bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
+                <svg id="refreshIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                Refresh
+            </button>
+            <button id="liveToggle" class="h-9 rounded-lg border border-green-500/50 px-4 text-xs font-medium text-green-500 hover:bg-green-500/10 transition-colors flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                    <span id="liveDot" class="absolute inline-flex h-full w-full rounded-full opacity-0 bg-green-400"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                LIVE
+            </button>
+        </div>
+    </div>
+
+    <!-- Row 2: Search -->
+    <div class="flex flex-col lg:flex-row gap-3 items-center mt-4 pt-4 border-t border-border/50">
+        <div class="relative flex-1 w-full">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="searchFilter" placeholder="Search messages..."
+                class="h-9 rounded-lg border border-input bg-background pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-full" />
+        </div>
+        <button id="clearFilters" class="h-9 rounded-lg border border-border bg-background px-4 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap">
+            Clear
         </button>
-    </div>
-    <!-- Time Range -->
-    <div class="flex flex-col md:flex-row gap-3 items-end border-t border-border pt-3">
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">From</label>
-            <input type="datetime-local" id="fromFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
-        </div>
-        <div class="flex flex-col gap-1.5 w-full md:w-auto">
-            <label class="text-xs font-medium text-muted-foreground">To</label>
-            <input type="datetime-local" id="toFilter" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" />
-        </div>
-        <div class="flex gap-1.5">
-            <button onclick="setTimeRange(1)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">1h</button>
-            <button onclick="setTimeRange(6)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">6h</button>
-            <button onclick="setTimeRange(24)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">24h</button>
-            <button onclick="setTimeRange(168)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-secondary transition-colors">7d</button>
-            <button onclick="setTimeRange(0)" class="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">All</button>
+        <div class="relative">
+            <button onclick="toggleDeleteMenu()" class="h-9 rounded-lg border border-red-500/30 bg-red-500/10 px-4 text-xs font-medium text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Delete
+            </button>
+            <div id="deleteMenu" class="hidden absolute right-0 top-full mt-1 w-56 rounded-lg border border-border bg-card shadow-lg z-50 p-2 space-y-0.5">
+                <button onclick="deleteAppLogs(null)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">Delete All</button>
+                <button onclick="deleteAppLogs(1)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 1 day</button>
+                <button onclick="deleteAppLogs(7)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 7 days</button>
+                <button onclick="deleteAppLogs(15)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 15 days</button>
+                <button onclick="deleteAppLogs(30)" class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-secondary text-foreground transition-colors">Older than 30 days</button>
+            </div>
         </div>
     </div>
+
+    <!-- Custom Date Range (hidden by default) -->
+    <div id="customRangeRow" class="hidden flex-col lg:flex-row gap-3 items-end mt-4 pt-4 border-t border-border/50">
+        <div class="flex flex-col gap-1 w-full lg:w-auto">
+            <label class="text-[11px] font-medium text-muted-foreground">From</label>
+            <input type="datetime-local" id="fromFilter" class="h-9 rounded-lg border border-input bg-background px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+        <div class="flex flex-col gap-1 w-full lg:w-auto">
+            <label class="text-[11px] font-medium text-muted-foreground">To</label>
+            <input type="datetime-local" id="toFilter" class="h-9 rounded-lg border border-input bg-background px-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+    </div>
+
+    <!-- Active Filter Tags -->
+    <div id="activeFilters" class="hidden flex-wrap gap-2 pt-4 mt-4 border-t border-border/50"></div>
 </div>
 
 <!-- Logs Table -->
-<div class="rounded-lg border border-border overflow-hidden mb-6">
+<div class="rounded-xl border border-border overflow-hidden mb-4">
     <div class="overflow-x-auto scrollbar-thin">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-border bg-muted/50">
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[160px]">Timestamp</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[100px]">Level</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[70px]">Method</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[200px]">Path</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[70px]">Status</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[80px]">Duration</th>
-                    <th class="h-10 px-4 text-left font-medium text-muted-foreground">Message</th>
+                    <th class="h-10 px-2 text-left font-medium text-muted-foreground w-[30px]"></th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[160px]">TIMESTAMP</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[80px]">LEVEL</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[70px]">METHOD</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground">PATH</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[70px]">STATUS</th>
+                    <th class="h-10 px-4 text-left font-medium text-muted-foreground w-[80px]">DURATION</th>
                 </tr>
             </thead>
             <tbody id="logsBody">
@@ -72,21 +121,35 @@
 </div>
 
 <!-- Pagination -->
-<div class="flex items-center justify-center gap-4">
-    <button id="prevPage" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-        Previous
-    </button>
-    <span id="pageInfo" class="text-sm text-muted-foreground">Page 1</span>
-    <button id="nextPage" class="h-9 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-secondary transition-colors">
-        Next
-    </button>
+<div class="flex items-center justify-between mb-4">
+    <span id="totalInfo" class="text-xs text-muted-foreground"></span>
+    <div class="flex items-center gap-2">
+        <button id="prevPage" class="h-9 rounded-lg border border-border bg-background px-4 text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <span id="pageInfo" class="text-sm text-muted-foreground font-medium tabular-nums">Page 1</span>
+        <button id="nextPage" class="h-9 rounded-lg border border-border bg-background px-4 text-xs font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+    </div>
 </div>
 
 @section Scripts {
+    <style>
+        .level-toggle.active[data-level="Information"] { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.5); color: #60a5fa; }
+        .level-toggle.active[data-level="Warning"] { background: rgba(234,179,8,0.15); border-color: rgba(234,179,8,0.5); color: #facc15; }
+        .level-toggle.active[data-level="Error"] { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.5); color: #f87171; }
+        .active-time-range { background: rgba(37,99,235,0.15) !important; border-color: rgba(37,99,235,0.5) !important; color: #60a5fa !important; }
+        .expand-arrow { transition: transform 0.2s; }
+        .expand-arrow.open { transform: rotate(90deg); }
+        .log-row:hover { background: rgba(39,39,42,0.5); }
+    </style>
     <script>
         let currentPage = 1;
         let totalPages = 1;
         let totalCount = 0;
+        let liveMode = false;
+        let liveInterval = null;
 
         function escapeHtml(text) {
             if (!text) return '';
@@ -96,7 +159,8 @@
         }
 
         function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleString();
+            const d = new Date(dateStr);
+            return d.toLocaleString('en-US', { month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
         }
 
         function debounce(func, wait) {
@@ -107,22 +171,32 @@
             };
         }
 
-        function levelBadgeClasses(level) {
-            const base = 'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold';
-            switch (level) {
-                case 'Information': return base + ' bg-blue-500/20 text-blue-400';
-                case 'Warning':     return base + ' bg-yellow-500/20 text-yellow-400';
-                case 'Error':       return base + ' bg-red-500/20 text-red-400';
-                default:            return base + ' bg-zinc-700/50 text-zinc-400';
-            }
+        function levelBadge(level) {
+            const map = {
+                'Information': { short: 'INF', cls: 'bg-blue-500/20 text-blue-400' },
+                'Warning':     { short: 'WRN', cls: 'bg-yellow-500/20 text-yellow-400' },
+                'Error':       { short: 'ERR', cls: 'bg-red-500/20 text-red-400' },
+            };
+            const info = map[level] || { short: level, cls: 'bg-zinc-700/50 text-zinc-400' };
+            return `<span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${info.cls}">${info.short}</span>`;
         }
 
-        function statusBadgeClasses(code) {
+        function statusBadge(code) {
             const base = 'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold font-mono';
-            if (code >= 500) return base + ' bg-red-500/20 text-red-400';
-            if (code >= 400) return base + ' bg-yellow-500/20 text-yellow-400';
-            if (code >= 200 && code < 300) return base + ' bg-green-500/20 text-green-400';
-            return base + ' bg-zinc-700/50 text-zinc-400';
+            let cls = 'bg-zinc-700/50 text-zinc-400';
+            if (code >= 500) cls = 'bg-red-500/20 text-red-400';
+            else if (code >= 400) cls = 'bg-yellow-500/20 text-yellow-400';
+            else if (code >= 200 && code < 300) cls = 'bg-green-500/20 text-green-400';
+            return `<span class="${base} ${cls}">${code || '-'}</span>`;
+        }
+
+        function methodBadge(method) {
+            const colors = {
+                'GET': 'text-green-400', 'POST': 'text-blue-400', 'PUT': 'text-yellow-400',
+                'DELETE': 'text-red-400', 'PATCH': 'text-orange-400'
+            };
+            const cls = colors[method] || 'text-zinc-400';
+            return `<span class="font-mono text-xs font-semibold ${cls}">${escapeHtml(method) || '-'}</span>`;
         }
 
         function toLocalISOString(date) {
@@ -130,6 +204,21 @@
             return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
         }
 
+        // --- Level Toggles ---
+        function getSelectedLevels() {
+            return Array.from(document.querySelectorAll('.level-toggle.active')).map(b => b.dataset.level);
+        }
+
+        document.querySelectorAll('.level-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                currentPage = 1;
+                loadLogs();
+                updateFilterTags();
+            });
+        });
+
+        // --- Time Range ---
         function setTimeRange(hours) {
             const fromEl = document.getElementById('fromFilter');
             const toEl = document.getElementById('toFilter');
@@ -142,31 +231,173 @@
                 toEl.value = toLocalISOString(now);
                 fromEl.value = toLocalISOString(from);
             }
+            // Highlight active
+            document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+            const active = document.querySelector(`.time-range-btn[data-hours="${hours}"]`);
+            if (active) active.classList.add('active-time-range');
+            document.getElementById('customRangeBtn').classList.remove('active-time-range');
             currentPage = 1;
             loadLogs();
+            updateFilterTags();
         }
 
+        function toggleCustomRange() {
+            const row = document.getElementById('customRangeRow');
+            const btn = document.getElementById('customRangeBtn');
+            const isHidden = row.classList.contains('hidden');
+            row.classList.toggle('hidden');
+            row.classList.toggle('flex');
+            if (isHidden) {
+                btn.classList.add('active-time-range');
+                document.querySelectorAll('.time-range-btn:not(#customRangeBtn)').forEach(b => b.classList.remove('active-time-range'));
+            }
+        }
+
+        // --- Live Mode ---
+        function toggleLiveMode() {
+            liveMode = !liveMode;
+            const btn = document.getElementById('liveToggle');
+            const dot = document.getElementById('liveDot');
+            if (liveMode) {
+                btn.classList.remove('border-green-500/50', 'text-green-500');
+                btn.classList.add('border-green-400', 'bg-green-500/20', 'text-green-400');
+                dot.classList.add('animate-ping');
+                dot.classList.remove('opacity-0');
+                liveInterval = setInterval(loadLogs, 3000);
+            } else {
+                btn.classList.add('border-green-500/50', 'text-green-500');
+                btn.classList.remove('border-green-400', 'bg-green-500/20', 'text-green-400');
+                dot.classList.remove('animate-ping');
+                dot.classList.add('opacity-0');
+                clearInterval(liveInterval);
+            }
+        }
+
+        // --- Delete Menu ---
+        function toggleDeleteMenu() {
+            document.getElementById('deleteMenu').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('deleteMenu');
+            if (!menu.classList.contains('hidden') && !e.target.closest('[onclick*="toggleDeleteMenu"]') && !e.target.closest('#deleteMenu')) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        async function deleteAppLogs(days) {
+            const msg = days ? `Delete app logs older than ${days} day(s)?` : 'Delete ALL app logs?';
+            if (!confirm(msg)) return;
+            document.getElementById('deleteMenu').classList.add('hidden');
+            try {
+                let url = '/api/logs/app';
+                if (days) url += `?olderThanDays=${days}`;
+                const res = await fetch(url, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Logs deleted successfully', 'success');
+                    currentPage = 1;
+                    loadLogs();
+                } else {
+                    showToast('Failed to delete logs', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to delete logs', 'error');
+            }
+        }
+
+        // --- Filter Tags ---
+        function updateFilterTags() {
+            const container = document.getElementById('activeFilters');
+            const tags = [];
+            const levels = getSelectedLevels();
+            if (levels.length > 0) {
+                tags.push({ label: `Level: ${levels.join(', ')}`, clear: () => { document.querySelectorAll('.level-toggle.active').forEach(b => b.classList.remove('active')); }});
+            }
+            const search = document.getElementById('searchFilter').value;
+            if (search) {
+                tags.push({ label: `Search: "${search}"`, clear: () => { document.getElementById('searchFilter').value = ''; }});
+            }
+            const from = document.getElementById('fromFilter').value;
+            const to = document.getElementById('toFilter').value;
+            if (from || to) {
+                tags.push({ label: 'Custom date range', clear: () => { document.getElementById('fromFilter').value = ''; document.getElementById('toFilter').value = ''; }});
+            }
+            if (tags.length === 0) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                return;
+            }
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            container.innerHTML = tags.map((t, i) => `
+                <span class="inline-flex items-center gap-1.5 rounded-lg bg-secondary/80 border border-border px-3 py-1.5 text-xs font-medium text-foreground">
+                    ${escapeHtml(t.label)}
+                    <button onclick="clearFilterTag(${i})" class="text-muted-foreground hover:text-foreground ml-0.5">&times;</button>
+                </span>
+            `).join('');
+            window._filterTags = tags;
+        }
+
+        window.clearFilterTag = function(index) {
+            if (window._filterTags && window._filterTags[index]) {
+                window._filterTags[index].clear();
+                currentPage = 1;
+                loadLogs();
+                updateFilterTags();
+            }
+        };
+
+        // --- Clear All Filters ---
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            document.querySelectorAll('.level-toggle.active').forEach(b => b.classList.remove('active'));
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('fromFilter').value = '';
+            document.getElementById('toFilter').value = '';
+            document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active-time-range'));
+            document.querySelector('.time-range-btn[data-hours="0"]').classList.add('active-time-range');
+            document.getElementById('customRangeRow').classList.add('hidden');
+            document.getElementById('customRangeRow').classList.remove('flex');
+            document.getElementById('customRangeBtn').classList.remove('active-time-range');
+            currentPage = 1;
+            loadLogs();
+            updateFilterTags();
+        });
+
+        // --- Load Logs ---
         async function loadLogs() {
-            const level = document.getElementById('levelFilter').value;
+            const levels = getSelectedLevels();
             const search = document.getElementById('searchFilter').value;
             const from = document.getElementById('fromFilter').value;
             const to = document.getElementById('toFilter').value;
 
             let url = `/api/logs/app?page=${currentPage}&pageSize=50`;
-            if (level) url += `&level=${level}`;
+            if (levels.length === 1) url += `&level=${levels[0]}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
             if (from) url += `&from=${encodeURIComponent(new Date(from).toISOString())}`;
             if (to) url += `&to=${encodeURIComponent(new Date(to).toISOString())}`;
+
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('animate-spin');
 
             try {
                 const response = await fetch(url);
                 const result = await response.json();
                 totalCount = result.totalCount;
                 totalPages = result.totalPages;
-                renderLogs(result.data);
+
+                // Client-side multi-level filter
+                let logs = result.data;
+                if (levels.length > 1) {
+                    logs = logs.filter(l => levels.includes(l.level));
+                }
+
+                renderLogs(logs);
                 updatePageInfo();
             } catch (error) {
                 console.error('Failed to load app logs:', error);
+                showToast('Failed to load logs', 'error');
+            } finally {
+                refreshIcon.classList.remove('animate-spin');
             }
         }
 
@@ -178,36 +409,106 @@
                 return;
             }
 
-            tbody.innerHTML = logs.map(log => `
-                <tr class="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td class="px-4 py-2.5 font-mono text-xs text-muted-foreground">${formatDate(log.timestamp)}</td>
-                    <td class="px-4 py-2.5"><span class="${levelBadgeClasses(log.level)}">${log.level}</span></td>
-                    <td class="px-4 py-2.5 font-mono text-xs font-semibold">${escapeHtml(log.requestMethod)}</td>
-                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400 truncate max-w-[200px]">${escapeHtml(log.requestPath)}</td>
-                    <td class="px-4 py-2.5"><span class="${statusBadgeClasses(log.statusCode)}">${log.statusCode || '-'}</span></td>
-                    <td class="px-4 py-2.5 font-mono text-xs">${log.durationMs ? log.durationMs.toFixed(1) + 'ms' : '-'}</td>
-                    <td class="px-4 py-2.5 text-sm truncate max-w-[300px]">${escapeHtml(log.message)}</td>
+            tbody.innerHTML = logs.map((log, i) => `
+                <tr class="log-row border-b border-border cursor-pointer transition-colors" onclick="toggleExpand(${i})">
+                    <td class="px-2 py-2.5 text-center">
+                        <svg class="expand-arrow w-3.5 h-3.5 text-muted-foreground inline-block" id="arrow-${i}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">${formatDate(log.timestamp)}</td>
+                    <td class="px-4 py-2.5">${levelBadge(log.level)}</td>
+                    <td class="px-4 py-2.5">${methodBadge(log.requestMethod)}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs text-purple-400 truncate max-w-[400px]">${escapeHtml(log.requestPath)}</td>
+                    <td class="px-4 py-2.5">${statusBadge(log.statusCode)}</td>
+                    <td class="px-4 py-2.5 font-mono text-xs tabular-nums">${log.durationMs ? log.durationMs.toFixed(1) + '<span class="text-muted-foreground ml-0.5">ms</span>' : '-'}</td>
+                </tr>
+                <tr id="expand-${i}" class="hidden">
+                    <td colspan="7" class="px-6 py-4 bg-muted/30 border-b border-border">
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                                <div>
+                                    <span class="text-muted-foreground">Timestamp</span>
+                                    <p class="font-mono mt-0.5">${new Date(log.timestamp).toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <span class="text-muted-foreground">Level</span>
+                                    <p class="mt-0.5">${log.level}</p>
+                                </div>
+                                <div>
+                                    <span class="text-muted-foreground">Method</span>
+                                    <p class="font-mono mt-0.5">${escapeHtml(log.requestMethod) || '-'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-muted-foreground">Status Code</span>
+                                    <p class="font-mono mt-0.5">${log.statusCode || '-'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-muted-foreground">Duration</span>
+                                    <p class="font-mono mt-0.5">${log.durationMs ? log.durationMs.toFixed(2) + ' ms' : '-'}</p>
+                                </div>
+                                <div class="col-span-2 lg:col-span-3">
+                                    <span class="text-muted-foreground">Path</span>
+                                    <p class="font-mono mt-0.5 text-purple-400 break-all">${escapeHtml(log.requestPath) || '-'}</p>
+                                </div>
+                            </div>
+                            ${log.message ? `
+                            <div>
+                                <span class="text-xs text-muted-foreground">Message</span>
+                                <pre class="mt-1 p-3 rounded-lg bg-background border border-border text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">${escapeHtml(log.message)}</pre>
+                            </div>` : ''}
+                            <div class="flex gap-2">
+                                <button onclick="event.stopPropagation(); copyJson(${i})" class="h-7 rounded-md border border-border bg-background px-3 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">Copy JSON</button>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             `).join('');
+
+            window._currentLogs = logs;
+        }
+
+        function toggleExpand(index) {
+            const row = document.getElementById(`expand-${index}`);
+            const arrow = document.getElementById(`arrow-${index}`);
+            row.classList.toggle('hidden');
+            arrow.classList.toggle('open');
+        }
+
+        function copyJson(index) {
+            const log = window._currentLogs[index];
+            navigator.clipboard.writeText(JSON.stringify(log, null, 2));
+            showToast('Copied to clipboard', 'success');
         }
 
         function updatePageInfo() {
-            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages} (${totalCount.toLocaleString()} logs)`;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('totalInfo').textContent = `${totalCount.toLocaleString()} total logs`;
             document.getElementById('prevPage').disabled = currentPage <= 1;
             document.getElementById('nextPage').disabled = currentPage >= totalPages;
         }
 
+        // --- Toast ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const colors = { success: 'border-green-500/50 bg-green-500/10 text-green-400', error: 'border-red-500/50 bg-red-500/10 text-red-400', info: 'border-blue-500/50 bg-blue-500/10 text-blue-400' };
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-lg border ${colors[type] || colors.info} text-sm font-medium shadow-lg animate-slide-in`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // --- Event Listeners ---
         document.getElementById('refreshBtn').addEventListener('click', loadLogs);
-        document.getElementById('levelFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
-        document.getElementById('searchFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); }, 500));
-        document.getElementById('fromFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
-        document.getElementById('toFilter').addEventListener('change', () => { currentPage = 1; loadLogs(); });
+        document.getElementById('liveToggle').addEventListener('click', toggleLiveMode);
+        document.getElementById('searchFilter').addEventListener('keyup', debounce(() => { currentPage = 1; loadLogs(); updateFilterTags(); }, 500));
+        document.getElementById('fromFilter')?.addEventListener('change', () => { currentPage = 1; loadLogs(); updateFilterTags(); });
+        document.getElementById('toFilter')?.addEventListener('change', () => { currentPage = 1; loadLogs(); updateFilterTags(); });
 
         document.getElementById('prevPage').addEventListener('click', () => {
             if (currentPage > 1) { currentPage--; loadLogs(); }
         });
         document.getElementById('nextPage').addEventListener('click', () => {
-            currentPage++; loadLogs();
+            if (currentPage < totalPages) { currentPage++; loadLogs(); }
         });
 
         loadLogs();

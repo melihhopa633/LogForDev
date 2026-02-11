@@ -291,4 +291,22 @@ public class LogsController : ControllerBase
             return StatusCode(500, new { error = "Internal server error" });
         }
     }
+
+    [HttpDelete("app")]
+    [AllowAnonymous]
+    public async Task<ActionResult> DeleteAppLogs([FromQuery] int? olderThanDays = null)
+    {
+        try
+        {
+            var appLogService = HttpContext.RequestServices.GetRequiredService<IAppLogService>();
+            await appLogService.DeleteLogsAsync(olderThanDays);
+            var msg = olderThanDays.HasValue ? $"App logs older than {olderThanDays} days deleted" : "All app logs deleted";
+            return Ok(new { success = true, message = msg });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete app logs");
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
 }

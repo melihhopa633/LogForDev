@@ -9,6 +9,7 @@ public interface IAppLogService
 {
     void Enqueue(AppLogEntry log);
     Task<PagedResult<AppLogEntry>> GetLogsAsync(AppLogQueryParams query);
+    Task DeleteLogsAsync(int? olderThanDays = null);
 }
 
 public class AppLogService : BackgroundService, IAppLogService
@@ -76,6 +77,19 @@ public class AppLogService : BackgroundService, IAppLogService
             Page = query.Page,
             PageSize = query.PageSize
         };
+    }
+
+    public async Task DeleteLogsAsync(int? olderThanDays = null)
+    {
+        if (olderThanDays.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-olderThanDays.Value).ToString("yyyy-MM-dd HH:mm:ss");
+            await _clickHouse.ExecuteAsync($"ALTER TABLE app_logs DELETE WHERE timestamp < '{cutoff}'");
+        }
+        else
+        {
+            await _clickHouse.ExecuteAsync("TRUNCATE TABLE app_logs");
+        }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
