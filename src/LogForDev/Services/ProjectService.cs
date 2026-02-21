@@ -170,7 +170,10 @@ public class ProjectService : IProjectService
                 "SELECT id, name, api_key, created_at, expires_at FROM projects",
                 MapProject);
 
-            var newEntries = projects.ToDictionary(p => p.ApiKey, p => p);
+            // Use index assignment to handle ClickHouse eventual-consistency duplicates
+            var newEntries = new Dictionary<string, Project>();
+            foreach (var p in projects)
+                newEntries[p.ApiKey] = p;
 
             // Remove keys that no longer exist — cache is never fully empty during swap
             foreach (var key in _cache.Keys.Where(k => !newEntries.ContainsKey(k)).ToList())
