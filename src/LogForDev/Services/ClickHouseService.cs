@@ -10,18 +10,23 @@ public interface IClickHouseService
     Task InitializeAsync();
     Task<(bool Success, string? Error)> TestConnectionAsync();
     Task<ClickHouseConnection> GetConnectionAsync();
-    Task ExecuteAsync(string sql, object? parameters = null);
-    Task<List<T>> QueryAsync<T>(string sql, Func<System.Data.IDataReader, T> mapper);
+    Task ExecuteAsync(string sql, object? parameters = null, CancellationToken cancellationToken = default);
+    Task<List<T>> QueryAsync<T>(string sql, Func<System.Data.IDataReader, T> mapper, CancellationToken cancellationToken = default);
 }
 
 public class ClickHouseService : IClickHouseService
 {
     private readonly ClickHouseOptions _options;
+    private readonly LogForDevOptions _logForDevOptions;
     private readonly ILogger<ClickHouseService> _logger;
 
-    public ClickHouseService(IOptions<ClickHouseOptions> options, ILogger<ClickHouseService> logger)
+    public ClickHouseService(
+        IOptions<ClickHouseOptions> options,
+        IOptions<LogForDevOptions> logForDevOptions,
+        ILogger<ClickHouseService> logger)
     {
         _options = options.Value;
+        _logForDevOptions = logForDevOptions.Value;
         _logger = logger;
     }
 
@@ -47,6 +52,8 @@ public class ClickHouseService : IClickHouseService
     {
         try
         {
+            var retentionDays = _logForDevOptions.RetentionDays > 0 ? _logForDevOptions.RetentionDays : 30;
+
             // Connect to default DB first to create our database
             await using var defaultConn = new ClickHouseConnection(_options.DefaultConnectionString);
             await defaultConn.OpenAsync();
@@ -77,9 +84,15 @@ public class ClickHouseService : IClickHouseService
                 ENGINE = MergeTree()
                 PARTITION BY toYYYYMM(timestamp)
                 ORDER BY (app_name, level, timestamp)
-                TTL created_at + INTERVAL 30 DAY
+                TTL created_at + INTERVAL {retentionDays} DAY
                 SETTINGS index_granularity = 8192";
             await cmd.ExecuteNonQueryAsync();
+
+            // Update TTL on existing logs table
+            await using var alterLogsTtlCmd = connection.CreateCommand();
+            alterLogsTtlCmd.CommandText = $"ALTER TABLE logs MODIFY TTL created_at + INTERVAL {retentionDays} DAY";
+            try { await alterLogsTtlCmd.ExecuteNonQueryAsync(); }
+            catch { /* table may not exist yet on first run */ }
 
             // Create projects table
             await using var projectsCmd = connection.CreateCommand();
@@ -126,9 +139,15 @@ public class ClickHouseService : IClickHouseService
                 ENGINE = MergeTree()
                 PARTITION BY toYYYYMM(timestamp)
                 ORDER BY (level, timestamp)
-                TTL created_at + INTERVAL 30 DAY
+                TTL created_at + INTERVAL {retentionDays} DAY
                 SETTINGS index_granularity = 8192";
             await appLogsCmd.ExecuteNonQueryAsync();
+
+            // Update TTL on existing app_logs table
+            await using var alterAppLogsTtlCmd = connection.CreateCommand();
+            alterAppLogsTtlCmd.CommandText = $"ALTER TABLE app_logs MODIFY TTL created_at + INTERVAL {retentionDays} DAY";
+            try { await alterAppLogsTtlCmd.ExecuteNonQueryAsync(); }
+            catch { /* table may not exist yet on first run */ }
 
             // Create users table for authentication
             await using var usersCmd = connection.CreateCommand();
@@ -162,23 +181,23 @@ public class ClickHouseService : IClickHouseService
         return connection;
     }
 
-    public async Task ExecuteAsync(string sql, object? parameters = null)
+    public async Task ExecuteAsync(string sql, object? parameters = null, CancellationToken cancellationToken = default)
     {
         await using var connection = await GetConnectionAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        await command.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task<List<T>> QueryAsync<T>(string sql, Func<System.Data.IDataReader, T> mapper)
+    public async Task<List<T>> QueryAsync<T>(string sql, Func<System.Data.IDataReader, T> mapper, CancellationToken cancellationToken = default)
     {
         var results = new List<T>();
         await using var connection = await GetConnectionAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        await using var reader = await command.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        while (await reader.ReadAsync())
+        while (await reader.ReadAsync(cancellationToken))
         {
             results.Add(mapper(reader));
         }

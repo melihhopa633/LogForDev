@@ -16,7 +16,7 @@ public class LogRepository : ILogRepository
         _logger = logger;
     }
 
-    public async Task<Guid> InsertAsync(LogEntry log)
+    public async Task<Guid> InsertAsync(LogEntry log, CancellationToken cancellationToken = default)
     {
         var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
         var sql = $@"
@@ -25,22 +25,22 @@ public class LogRepository : ILogRepository
                 '{log.Id}',
                 now64(3),
                 '{log.Level}',
-                '{EscapeString(log.AppName)}',
-                '{EscapeString(log.Message)}',
-                '{EscapeString(log.Metadata ?? "{}")}',
-                '{EscapeString(log.TraceId ?? "")}',
-                '{EscapeString(log.SpanId ?? "")}',
-                '{EscapeString(log.Host ?? "")}',
-                '{EscapeString(log.Environment)}',
+                '{ClickHouseStringHelper.Escape(log.AppName)}',
+                '{ClickHouseStringHelper.Escape(log.Message)}',
+                '{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}',
+                '{ClickHouseStringHelper.Escape(log.TraceId ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.Host ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.Environment)}',
                 '{projectId}',
-                '{EscapeString(log.ProjectName ?? "")}'
+                '{ClickHouseStringHelper.Escape(log.ProjectName ?? "")}'
             )";
 
-        await _clickHouse.ExecuteAsync(sql);
+        await _clickHouse.ExecuteAsync(sql, cancellationToken: cancellationToken);
         return log.Id;
     }
 
-    public async Task<int> InsertBatchAsync(IEnumerable<LogEntry> logs)
+    public async Task<int> InsertBatchAsync(IEnumerable<LogEntry> logs, CancellationToken cancellationToken = default)
     {
         var logList = logs.ToList();
         if (!logList.Any()) return 0;
@@ -51,33 +51,31 @@ public class LogRepository : ILogRepository
         var values = logList.Select(log =>
         {
             var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
-            return $"('{log.Id}', now64(3), '{log.Level}', '{EscapeString(log.AppName)}', '{EscapeString(log.Message)}', " +
-                $"'{EscapeString(log.Metadata ?? "{}")}', '{EscapeString(log.TraceId ?? "")}', '{EscapeString(log.SpanId ?? "")}', " +
-                $"'{EscapeString(log.Host ?? "")}', '{EscapeString(log.Environment)}', " +
-                $"'{projectId}', '{EscapeString(log.ProjectName ?? "")}')";
+            return $"('{log.Id}', now64(3), '{log.Level}', '{ClickHouseStringHelper.Escape(log.AppName)}', '{ClickHouseStringHelper.Escape(log.Message)}', " +
+                $"'{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}', '{ClickHouseStringHelper.Escape(log.TraceId ?? "")}', '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}', " +
+                $"'{ClickHouseStringHelper.Escape(log.Host ?? "")}', '{ClickHouseStringHelper.Escape(log.Environment)}', " +
+                $"'{projectId}', '{ClickHouseStringHelper.Escape(log.ProjectName ?? "")}')";
         });
 
         sql.AppendLine(string.Join(",\n", values));
 
-        await _clickHouse.ExecuteAsync(sql.ToString());
+        await _clickHouse.ExecuteAsync(sql.ToString(), cancellationToken: cancellationToken);
         return logList.Count;
     }
 
-    public async Task<PagedResult<LogEntry>> GetPagedAsync(LogQueryParams query)
+    public async Task<PagedResult<LogEntry>> GetPagedAsync(LogQueryParams query, CancellationToken cancellationToken = default)
     {
         var queryBuilder = BuildQueryFromParams(query);
 
-        // Count query
-        var totalCount = await CountAsync(query);
+        var totalCount = await CountAsync(query, cancellationToken);
 
-        // Data query
         var dataSql = queryBuilder
             .Select("id", "timestamp", "level", "app_name", "message", "metadata", "trace_id", "span_id", "host", "environment", "project_id", "project_name")
             .OrderByDesc("timestamp")
             .Paginate(query.Page, query.PageSize)
             .BuildSelect();
 
-        var data = await _clickHouse.QueryAsync(dataSql, MapLogEntry);
+        var data = await _clickHouse.QueryAsync(dataSql, MapLogEntry, cancellationToken);
 
         return new PagedResult<LogEntry>
         {
@@ -88,33 +86,28 @@ public class LogRepository : ILogRepository
         };
     }
 
-    public async Task<long> CountAsync(LogQueryParams query)
+    public async Task<long> CountAsync(LogQueryParams query, CancellationToken cancellationToken = default)
     {
         var queryBuilder = BuildQueryFromParams(query);
         var countSql = queryBuilder.BuildCount();
-        var result = await _clickHouse.QueryAsync(countSql, r => Convert.ToInt64(r.GetValue(0)));
+        var result = await _clickHouse.QueryAsync(countSql, r => Convert.ToInt64(r.GetValue(0)), cancellationToken);
         return result.FirstOrDefault();
     }
 
-    public async Task<LogStats> GetStatsAsync()
+    public async Task<LogStats> GetStatsAsync(CancellationToken cancellationToken = default)
     {
-        // Total logs in last 24 hours
         var totalSql = $"SELECT count() FROM {TableName} WHERE timestamp > now() - INTERVAL 24 HOUR";
-        var totalLogs = await _clickHouse.QueryAsync(totalSql, r => Convert.ToInt64(r.GetValue(0)));
+        var totalLogs = await _clickHouse.QueryAsync(totalSql, r => Convert.ToInt64(r.GetValue(0)), cancellationToken);
 
-        // Error count
         var errorSql = $"SELECT count() FROM {TableName} WHERE timestamp > now() - INTERVAL 24 HOUR AND level = 'Error'";
-        var errorCount = await _clickHouse.QueryAsync(errorSql, r => Convert.ToInt64(r.GetValue(0)));
+        var errorCount = await _clickHouse.QueryAsync(errorSql, r => Convert.ToInt64(r.GetValue(0)), cancellationToken);
 
-        // Warning count
         var warningSql = $"SELECT count() FROM {TableName} WHERE timestamp > now() - INTERVAL 24 HOUR AND level = 'Warning'";
-        var warningCount = await _clickHouse.QueryAsync(warningSql, r => Convert.ToInt64(r.GetValue(0)));
+        var warningCount = await _clickHouse.QueryAsync(warningSql, r => Convert.ToInt64(r.GetValue(0)), cancellationToken);
 
-        // Logs per minute (last hour)
         var rpmSql = $"SELECT count() / 60.0 FROM {TableName} WHERE timestamp > now() - INTERVAL 1 HOUR";
-        var logsPerMinute = await _clickHouse.QueryAsync(rpmSql, r => Convert.ToDouble(r.GetValue(0)));
+        var logsPerMinute = await _clickHouse.QueryAsync(rpmSql, r => Convert.ToDouble(r.GetValue(0)), cancellationToken);
 
-        // Top apps
         var topAppsSql = $@"
             SELECT app_name, count() as cnt, countIf(level = 'Error') as errors
             FROM {TableName}
@@ -127,7 +120,7 @@ public class LogRepository : ILogRepository
             AppName = r.GetString(0),
             LogCount = Convert.ToInt64(r.GetValue(1)),
             ErrorCount = Convert.ToInt64(r.GetValue(2))
-        });
+        }, cancellationToken);
 
         return new LogStats
         {
@@ -139,16 +132,123 @@ public class LogRepository : ILogRepository
         };
     }
 
-    public async Task<List<string>> GetAppNamesAsync()
+    public async Task<List<string>> GetAppNamesAsync(CancellationToken cancellationToken = default)
     {
         var sql = $"SELECT DISTINCT app_name FROM {TableName} ORDER BY app_name";
-        return await _clickHouse.QueryAsync(sql, r => r.GetString(0));
+        return await _clickHouse.QueryAsync(sql, r => r.GetString(0), cancellationToken);
     }
 
-    public async Task<List<string>> GetEnvironmentsAsync()
+    public async Task<List<string>> GetEnvironmentsAsync(CancellationToken cancellationToken = default)
     {
         var sql = $"SELECT DISTINCT environment FROM {TableName} WHERE environment != '' ORDER BY environment";
-        return await _clickHouse.QueryAsync(sql, r => r.GetString(0));
+        return await _clickHouse.QueryAsync(sql, r => r.GetString(0), cancellationToken);
+    }
+
+    public async Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query, CancellationToken cancellationToken = default)
+    {
+        var sql = $@"
+            SELECT
+                replaceRegexpAll(substring(message, 1, 100), '[0-9]+', '*') as pattern,
+                count() as cnt,
+                level,
+                app_name,
+                min(timestamp) as first_seen,
+                max(timestamp) as last_seen,
+                any(message) as sample_message
+            FROM {TableName}
+            WHERE timestamp > now() - INTERVAL {query.Hours} HOUR";
+
+        if (query.Level.HasValue)
+        {
+            sql += $" AND level = '{query.Level.Value}'";
+        }
+
+        if (!string.IsNullOrEmpty(query.Levels))
+        {
+            var levelList = query.Levels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var quotedLevels = string.Join(",", levelList.Select(l => $"'{l}'"));
+            sql += $" AND level IN ({quotedLevels})";
+        }
+
+        if (!string.IsNullOrEmpty(query.AppName))
+        {
+            sql += $" AND app_name = '{ClickHouseStringHelper.Escape(query.AppName)}'";
+        }
+
+        sql += $@"
+            GROUP BY pattern, level, app_name
+            HAVING cnt >= {query.MinCount}
+            ORDER BY cnt DESC
+            LIMIT {query.Limit}";
+
+        return await _clickHouse.QueryAsync(sql, r => new LogPattern
+        {
+            Pattern = r.GetString(0),
+            Count = Convert.ToInt64(r.GetValue(1)),
+            Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
+            AppName = r.GetString(3),
+            FirstSeen = r.GetDateTime(4),
+            LastSeen = r.GetDateTime(5),
+            SampleMessage = r.GetString(6)
+        }, cancellationToken);
+    }
+
+    public async Task<TraceTimeline?> GetTraceTimelineAsync(string traceId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(traceId))
+            return null;
+
+        var sql = $@"
+            SELECT id, timestamp, level, app_name, message, metadata
+            FROM {TableName}
+            WHERE trace_id = '{ClickHouseStringHelper.Escape(traceId)}'
+            ORDER BY timestamp ASC
+            LIMIT 500";
+
+        var logs = await _clickHouse.QueryAsync(sql, r => new TraceLogEntry
+        {
+            Id = r.GetGuid(0),
+            Timestamp = r.GetDateTime(1),
+            Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
+            AppName = r.GetString(3),
+            Message = r.GetString(4),
+            Metadata = r.IsDBNull(5) ? null : r.GetString(5)
+        }, cancellationToken);
+
+        if (!logs.Any())
+            return null;
+
+        var firstTimestamp = logs.First().Timestamp;
+        var lastTimestamp = logs.Last().Timestamp;
+
+        foreach (var log in logs)
+        {
+            log.OffsetMs = (log.Timestamp - firstTimestamp).TotalMilliseconds;
+        }
+
+        return new TraceTimeline
+        {
+            TraceId = traceId,
+            Logs = logs,
+            TotalDurationMs = (lastTimestamp - firstTimestamp).TotalMilliseconds,
+            Services = logs.Select(l => l.AppName).Distinct().ToList(),
+            HasErrors = logs.Any(l => l.Level >= Models.LogLevel.Error)
+        };
+    }
+
+    public async Task DeleteLogsAsync(int? olderThanDays = null, CancellationToken cancellationToken = default)
+    {
+        string sql;
+        if (olderThanDays.HasValue && olderThanDays.Value > 0)
+        {
+            sql = $"ALTER TABLE {TableName} DELETE WHERE timestamp < now() - INTERVAL {olderThanDays.Value} DAY";
+        }
+        else
+        {
+            sql = $"TRUNCATE TABLE {TableName}";
+        }
+        await _clickHouse.ExecuteAsync(sql, cancellationToken: cancellationToken);
+        _logger.LogInformation("Logs deleted: {Mode}", olderThanDays.HasValue ? $"older than {olderThanDays} days" : "all");
     }
 
     private ClickHouseQueryBuilder BuildQueryFromParams(LogQueryParams query)
@@ -233,125 +333,5 @@ public class LogRepository : ILogRepository
             ProjectId = projectId,
             ProjectName = reader.IsDBNull(11) ? null : reader.GetString(11)
         };
-    }
-
-    private static string EscapeString(string input)
-    {
-        if (string.IsNullOrEmpty(input))
-            return input;
-
-        return input
-            .Replace("\\", "\\\\")
-            .Replace("'", "\\'");
-    }
-
-    public async Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query)
-    {
-        // ClickHouse aggregation query to find similar log patterns
-        // Groups by: first 50 chars of message (normalized) + level + app_name
-        var sql = $@"
-            SELECT
-                replaceRegexpAll(substring(message, 1, 100), '[0-9]+', '*') as pattern,
-                count() as cnt,
-                level,
-                app_name,
-                min(timestamp) as first_seen,
-                max(timestamp) as last_seen,
-                any(message) as sample_message
-            FROM {TableName}
-            WHERE timestamp > now() - INTERVAL {query.Hours} HOUR";
-
-        if (query.Level.HasValue)
-        {
-            sql += $" AND level = '{query.Level.Value}'";
-        }
-
-        if (!string.IsNullOrEmpty(query.Levels))
-        {
-            var levelList = query.Levels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var quotedLevels = string.Join(",", levelList.Select(l => $"'{l}'"));
-            sql += $" AND level IN ({quotedLevels})";
-        }
-
-        if (!string.IsNullOrEmpty(query.AppName))
-        {
-            sql += $" AND app_name = '{EscapeString(query.AppName)}'";
-        }
-
-        sql += $@"
-            GROUP BY pattern, level, app_name
-            HAVING cnt >= {query.MinCount}
-            ORDER BY cnt DESC
-            LIMIT {query.Limit}";
-
-        return await _clickHouse.QueryAsync(sql, r => new LogPattern
-        {
-            Pattern = r.GetString(0),
-            Count = Convert.ToInt64(r.GetValue(1)),
-            Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
-            AppName = r.GetString(3),
-            FirstSeen = r.GetDateTime(4),
-            LastSeen = r.GetDateTime(5),
-            SampleMessage = r.GetString(6)
-        });
-    }
-
-    public async Task<TraceTimeline?> GetTraceTimelineAsync(string traceId)
-    {
-        if (string.IsNullOrEmpty(traceId))
-            return null;
-
-        var sql = $@"
-            SELECT id, timestamp, level, app_name, message, metadata
-            FROM {TableName}
-            WHERE trace_id = '{EscapeString(traceId)}'
-            ORDER BY timestamp ASC
-            LIMIT 500";
-
-        var logs = await _clickHouse.QueryAsync(sql, r => new TraceLogEntry
-        {
-            Id = r.GetGuid(0),
-            Timestamp = r.GetDateTime(1),
-            Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
-            AppName = r.GetString(3),
-            Message = r.GetString(4),
-            Metadata = r.IsDBNull(5) ? null : r.GetString(5)
-        });
-
-        if (!logs.Any())
-            return null;
-
-        var firstTimestamp = logs.First().Timestamp;
-        var lastTimestamp = logs.Last().Timestamp;
-
-        // Calculate offset from first log
-        foreach (var log in logs)
-        {
-            log.OffsetMs = (log.Timestamp - firstTimestamp).TotalMilliseconds;
-        }
-
-        return new TraceTimeline
-        {
-            TraceId = traceId,
-            Logs = logs,
-            TotalDurationMs = (lastTimestamp - firstTimestamp).TotalMilliseconds,
-            Services = logs.Select(l => l.AppName).Distinct().ToList(),
-            HasErrors = logs.Any(l => l.Level >= Models.LogLevel.Error)
-        };
-    }
-
-    public async Task DeleteLogsAsync(int? olderThanDays = null)
-    {
-        string sql;
-        if (olderThanDays.HasValue && olderThanDays.Value > 0)
-        {
-            sql = $"ALTER TABLE {TableName} DELETE WHERE timestamp < now() - INTERVAL {olderThanDays.Value} DAY";
-        }
-        else
-        {
-            sql = $"TRUNCATE TABLE {TableName}";
-        }
-        await _clickHouse.ExecuteAsync(sql);
-        _logger.LogInformation("Logs deleted: {Mode}", olderThanDays.HasValue ? $"older than {olderThanDays} days" : "all");
     }
 }

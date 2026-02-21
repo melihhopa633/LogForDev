@@ -1,3 +1,5 @@
+using LogForDev.Core;
+
 namespace LogForDev.Middleware;
 
 public class AuthenticationMiddleware
@@ -7,12 +9,11 @@ public class AuthenticationMiddleware
 
     private static readonly HashSet<string> PublicPaths = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/login",
-        "/api/auth/login",
-        "/api/auth/logout",
-        "/api/logs",
-        "/setup",
-        "/api/setup"
+        AppConstants.Paths.Login,
+        AppConstants.Paths.ApiAuth + "/login",
+        AppConstants.Paths.ApiAuth + "/logout",
+        AppConstants.Paths.Setup,
+        AppConstants.Paths.ApiSetup
     };
 
     public AuthenticationMiddleware(RequestDelegate next, ILogger<AuthenticationMiddleware> logger)

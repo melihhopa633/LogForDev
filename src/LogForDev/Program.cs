@@ -2,6 +2,7 @@ using LogForDev.Services;
 using LogForDev.Middleware;
 using LogForDev.Data;
 using LogForDev.Authentication;
+using LogForDev.Core;
 using Microsoft.AspNetCore.DataProtection;
 using Serilog;
 
@@ -24,7 +25,6 @@ builder.Services.Configure<LogForDevOptions>(builder.Configuration.GetSection("L
 builder.Services.Configure<ClickHouseOptions>(builder.Configuration.GetSection("ClickHouse"));
 builder.Services.AddSingleton<IClickHouseService, ClickHouseService>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
-builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<LogBufferService>();
 builder.Services.AddSingleton<ILogBufferService>(sp => sp.GetRequiredService<LogBufferService>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<LogBufferService>());
@@ -43,6 +43,9 @@ builder.Services.AddSingleton<IProjectService, ProjectService>();
 // User service
 builder.Services.AddSingleton<IUserService, UserService>();
 
+// Setup orchestrator
+builder.Services.AddScoped<ISetupOrchestrator, SetupOrchestrator>();
+
 // Data Protection for cookie encryption
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("./keys"))
@@ -58,7 +61,12 @@ builder.Services.AddAuthentication(options =>
     CookieAuthenticationOptions.Scheme, null)
 .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
     ApiKeyAuthenticationOptions.Scheme, null);
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AppConstants.Auth.DashboardOnlyPolicy, policy =>
+        policy.AddAuthenticationSchemes(CookieAuthenticationOptions.Scheme)
+              .RequireAuthenticatedUser());
+});
 
 var app = builder.Build();
 

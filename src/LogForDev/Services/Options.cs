@@ -3,6 +3,7 @@ namespace LogForDev.Services;
 public class LogForDevOptions
 {
     public int RetentionDays { get; set; } = 30;
+    public bool TestMode { get; set; } = false;
 }
 
 public class ClickHouseOptions

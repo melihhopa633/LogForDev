@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using LogForDev.Data;
 using LogForDev.Models;
 
 namespace LogForDev.Services;
@@ -76,8 +77,8 @@ public class LogBufferService : BackgroundService, ILogBufferService
         try
         {
             using var scope = _scopeFactory.CreateScope();
-            var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
-            await logService.InsertBatchAsync(batch);
+            var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
+            await logRepository.InsertBatchAsync(batch);
             _logger.LogDebug("Flushed {Count} logs to ClickHouse", batch.Count);
         }
         catch (Exception ex)

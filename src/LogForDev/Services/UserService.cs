@@ -1,9 +1,6 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Data;
 using ClickHouse.Client.ADO;
-using ClickHouse.Client.ADO.Parameters;
-using Dapper;
 using LogForDev.Models;
 using Microsoft.Extensions.Options;
 using OtpNet;
@@ -26,11 +23,16 @@ public interface IUserService
 public class UserService : IUserService
 {
     private readonly ClickHouseOptions _clickHouseOptions;
+    private readonly LogForDevOptions _options;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(IOptions<ClickHouseOptions> clickHouseOptions, ILogger<UserService> logger)
+    public UserService(
+        IOptions<ClickHouseOptions> clickHouseOptions,
+        IOptions<LogForDevOptions> logForDevOptions,
+        ILogger<UserService> logger)
     {
         _clickHouseOptions = clickHouseOptions.Value;
+        _options = logForDevOptions.Value;
         _logger = logger;
     }
 
@@ -264,10 +266,9 @@ public class UserService : IUserService
     {
         try
         {
-            // Test bypass: Accept "000000" for testing purposes
-            if (code == "000000")
+            if (_options.TestMode && code == "000000")
             {
-                _logger.LogWarning("TOTP test bypass used with code 000000");
+                _logger.LogWarning("TOTP test bypass used — TestMode is enabled");
                 return true;
             }
 

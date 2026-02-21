@@ -68,7 +68,7 @@
                         type="email"
                         id="email"
                         name="email"
-                        value="melih@admin.com"
+                        value="@(ViewBag.TestMode == true ? "test@admin.com" : "")"
                         autocomplete="username"
                         required
                         class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -83,7 +83,7 @@
                             type="password"
                             id="password"
                             name="password"
-                            value="1"
+                            value="@(ViewBag.TestMode == true ? "testpassword" : "")"
                             autocomplete="current-password"
                             required
                             class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring pr-10"
@@ -107,14 +107,17 @@
                         type="text"
                         id="totpCode"
                         name="totpCode"
-                        value="000000"
+                        value="@(ViewBag.TestMode == true ? "000000" : "")"
                         pattern="[0-9]{6}"
                         inputmode="numeric"
                         maxlength="6"
                         required
                         class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono tracking-widest"
                         placeholder="000000" />
-                    <p class="text-xs text-muted-foreground mt-1">Test için 000000 kullanabilirsiniz</p>
+                    @if (ViewBag.TestMode == true)
+                    {
+                        <p class="text-xs text-yellow-500 mt-1">⚠️ Test modu aktif — 000000 kullanılabilir</p>
+                    }
                 </div>
 
                 <!-- Error Message -->

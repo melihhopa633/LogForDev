@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using LogForDev.Data;
 using LogForDev.Services;
 using LogForDev.Models;
 using LogForDev.Authentication;
@@ -9,22 +10,22 @@ namespace LogForDev.Controllers;
 [Authorize(AuthenticationSchemes = CookieAuthenticationOptions.Scheme)]
 public class HomeController : Controller
 {
-    private readonly ILogService _logService;
+    private readonly ILogRepository _logRepository;
     private readonly IProjectService _projectService;
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(ILogService logService, IProjectService projectService, ILogger<HomeController> logger)
+    public HomeController(ILogRepository logRepository, IProjectService projectService, ILogger<HomeController> logger)
     {
-        _logService = logService;
+        _logRepository = logRepository;
         _projectService = projectService;
         _logger = logger;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         try
         {
-            var stats = await _logService.GetStatsAsync();
+            var stats = await _logRepository.GetStatsAsync(cancellationToken);
             ViewBag.Stats = stats;
         }
         catch (Exception ex)
@@ -45,7 +46,7 @@ public class HomeController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Projects()
+    public async Task<IActionResult> Projects(CancellationToken cancellationToken)
     {
         try
         {

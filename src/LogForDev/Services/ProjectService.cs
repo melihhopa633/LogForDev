@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using LogForDev.Data;
 using LogForDev.Models;
 
 namespace LogForDev.Services;
@@ -18,6 +19,7 @@ public class ProjectService : IProjectService
     private readonly IClickHouseService _clickHouse;
     private readonly ILogger<ProjectService> _logger;
     private readonly ConcurrentDictionary<string, Project> _cache = new();
+    private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private DateTime _lastRefresh = DateTime.MinValue;
     private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(5);
 
@@ -48,7 +50,7 @@ public class ProjectService : IProjectService
         try
         {
             var projects = await _clickHouse.QueryAsync(
-                $"SELECT id, name, api_key, created_at, expires_at FROM projects WHERE api_key = '{EscapeString(apiKey)}' LIMIT 1",
+                $"SELECT id, name, api_key, created_at, expires_at FROM projects WHERE api_key = '{ClickHouseStringHelper.Escape(apiKey)}' LIMIT 1",
                 MapProject);
 
             var project = projects.FirstOrDefault();
@@ -86,7 +88,7 @@ public class ProjectService : IProjectService
             : "NULL";
 
         var sql = $@"INSERT INTO projects (id, name, api_key, created_at, expires_at)
-                     VALUES ('{project.Id}', '{EscapeString(project.Name)}', '{EscapeString(project.ApiKey)}', now(), {expiresAtSql})";
+                     VALUES ('{project.Id}', '{ClickHouseStringHelper.Escape(project.Name)}', '{ClickHouseStringHelper.Escape(project.ApiKey)}', now(), {expiresAtSql})";
 
         await _clickHouse.ExecuteAsync(sql);
         _cache[apiKey] = project;
@@ -139,7 +141,7 @@ public class ProjectService : IProjectService
     {
         try
         {
-            var sql = $"ALTER TABLE projects UPDATE name = '{EscapeString(name)}' WHERE id = '{projectId}'";
+            var sql = $"ALTER TABLE projects UPDATE name = '{ClickHouseStringHelper.Escape(name)}' WHERE id = '{projectId}'";
             await _clickHouse.ExecuteAsync(sql);
 
             // Update cache
@@ -161,23 +163,33 @@ public class ProjectService : IProjectService
 
     public async Task RefreshCacheAsync()
     {
+        await _refreshLock.WaitAsync();
         try
         {
             var projects = await _clickHouse.QueryAsync(
                 "SELECT id, name, api_key, created_at, expires_at FROM projects",
                 MapProject);
 
-            _cache.Clear();
-            foreach (var p in projects)
-            {
-                _cache[p.ApiKey] = p;
-            }
+            var newEntries = projects.ToDictionary(p => p.ApiKey, p => p);
+
+            // Remove keys that no longer exist — cache is never fully empty during swap
+            foreach (var key in _cache.Keys.Where(k => !newEntries.ContainsKey(k)).ToList())
+                _cache.TryRemove(key, out _);
+
+            // Add or update current entries
+            foreach (var (key, value) in newEntries)
+                _cache[key] = value;
+
             _lastRefresh = DateTime.UtcNow;
             _logger.LogDebug("Project cache refreshed with {Count} projects", projects.Count);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to refresh project cache");
+        }
+        finally
+        {
+            _refreshLock.Release();
         }
     }
 
@@ -199,13 +211,4 @@ public class ProjectService : IProjectService
         };
     }
 
-    private static string EscapeString(string input)
-    {
-        if (string.IsNullOrEmpty(input))
-            return input;
-
-        return input
-            .Replace("\\", "\\\\")
-            .Replace("'", "\\'");
-    }
 }

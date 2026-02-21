@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using LogForDev.Core;
 using LogForDev.Models;
 using LogForDev.Services;
 using LogForDev.Authentication;
@@ -11,27 +13,28 @@ public class AuthController : Controller
 {
     private readonly IUserService _userService;
     private readonly IDataProtectionProvider _dataProtectionProvider;
+    private readonly LogForDevOptions _options;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         IUserService userService,
         IDataProtectionProvider dataProtectionProvider,
+        IOptions<LogForDevOptions> logForDevOptions,
         ILogger<AuthController> logger)
     {
         _userService = userService;
         _dataProtectionProvider = dataProtectionProvider;
+        _options = logForDevOptions.Value;
         _logger = logger;
     }
 
     [HttpGet("/login")]
     public IActionResult Login()
     {
-        // If already authenticated, redirect to home
         if (User.Identity?.IsAuthenticated == true)
-        {
             return Redirect("/");
-        }
 
+        ViewBag.TestMode = _options.TestMode;
         return View();
     }
 
@@ -67,7 +70,7 @@ public class AuthController : Controller
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
             };
 
-            var protector = _dataProtectionProvider.CreateProtector("Auth.Cookie");
+            var protector = _dataProtectionProvider.CreateProtector(AppConstants.Auth.DataProtectorPurpose);
             var cookieJson = JsonSerializer.Serialize(cookieData);
             var encryptedCookie = protector.Protect(cookieJson);
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using LogForDev.Core;
 using LogForDev.Models;
 using LogForDev.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -9,8 +10,7 @@ namespace LogForDev.Authentication;
 
 public class ApiKeyAuthenticationOptions : AuthenticationSchemeOptions
 {
-    public const string Scheme = "ApiKey";
-    public const string BrowserScheme = "Browser";
+    public const string Scheme = AppConstants.Auth.ApiKeyScheme;
 }
 
 public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationOptions>
@@ -59,7 +59,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
         var principal = new ClaimsPrincipal(identity);
 
         // Store the full Project object in HttpContext.Items for easy access
-        Context.Items["Project"] = project;
+        Context.Items[AppConstants.Database.HttpContextProjectKey] = project;
 
         return AuthenticateResult.Success(
             new AuthenticationTicket(principal, ApiKeyAuthenticationOptions.Scheme));

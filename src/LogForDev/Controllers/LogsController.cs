@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using LogForDev.Core;
+using LogForDev.Data;
 using LogForDev.Models;
 using LogForDev.Services;
 using LogForDev.Extensions;
@@ -11,20 +13,23 @@ namespace LogForDev.Controllers;
 [Authorize]
 public class LogsController : ControllerBase
 {
-    private readonly ILogService _logService;
+    private readonly ILogRepository _logRepository;
     private readonly ILogBufferService _buffer;
     private readonly IProjectService _projectService;
+    private readonly IAppLogService _appLogService;
     private readonly ILogger<LogsController> _logger;
 
     public LogsController(
-        ILogService logService,
+        ILogRepository logRepository,
         ILogBufferService buffer,
         IProjectService projectService,
+        IAppLogService appLogService,
         ILogger<LogsController> logger)
     {
-        _logService = logService;
+        _logRepository = logRepository;
         _buffer = buffer;
         _projectService = projectService;
+        _appLogService = appLogService;
         _logger = logger;
     }
 
@@ -89,11 +94,11 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<LogEntry>>> GetLogs([FromQuery] LogQueryParams query)
+    public async Task<ActionResult<PagedResult<LogEntry>>> GetLogs([FromQuery] LogQueryParams query, CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _logService.GetLogsAsync(query);
+            var result = await _logRepository.GetPagedAsync(query, cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -104,11 +109,11 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("stats")]
-    public async Task<ActionResult<LogStats>> GetStats()
+    public async Task<ActionResult<LogStats>> GetStats(CancellationToken cancellationToken)
     {
         try
         {
-            var stats = await _logService.GetStatsAsync();
+            var stats = await _logRepository.GetStatsAsync(cancellationToken);
             return Ok(stats);
         }
         catch (Exception ex)
@@ -119,11 +124,11 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("apps")]
-    public async Task<ActionResult<List<string>>> GetApps()
+    public async Task<ActionResult<List<string>>> GetApps(CancellationToken cancellationToken)
     {
         try
         {
-            var apps = await _logService.GetAppNamesAsync();
+            var apps = await _logRepository.GetAppNamesAsync(cancellationToken);
             return Ok(apps);
         }
         catch (Exception ex)
@@ -134,11 +139,11 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("environments")]
-    public async Task<ActionResult<List<string>>> GetEnvironments()
+    public async Task<ActionResult<List<string>>> GetEnvironments(CancellationToken cancellationToken)
     {
         try
         {
-            var envs = await _logService.GetEnvironmentsAsync();
+            var envs = await _logRepository.GetEnvironmentsAsync(cancellationToken);
             return Ok(envs);
         }
         catch (Exception ex)
@@ -149,7 +154,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("projects")]
-    [AllowAnonymous]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<List<Project>>> GetProjects()
     {
         try
@@ -165,11 +170,11 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("patterns")]
-    public async Task<ActionResult<List<LogPattern>>> GetPatterns([FromQuery] LogPatternQueryParams query)
+    public async Task<ActionResult<List<LogPattern>>> GetPatterns([FromQuery] LogPatternQueryParams query, CancellationToken cancellationToken)
     {
         try
         {
-            var patterns = await _logService.GetPatternsAsync(query);
+            var patterns = await _logRepository.GetPatternsAsync(query, cancellationToken);
             return Ok(patterns);
         }
         catch (Exception ex)
@@ -180,11 +185,11 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("trace/{traceId}")]
-    public async Task<ActionResult<TraceTimeline>> GetTraceTimeline(string traceId)
+    public async Task<ActionResult<TraceTimeline>> GetTraceTimeline(string traceId, CancellationToken cancellationToken)
     {
         try
         {
-            var timeline = await _logService.GetTraceTimelineAsync(traceId);
+            var timeline = await _logRepository.GetTraceTimelineAsync(traceId, cancellationToken);
             if (timeline == null)
                 return NotFound(new { error = "Trace not found" });
 
@@ -198,12 +203,12 @@ public class LogsController : ControllerBase
     }
 
     [HttpDelete]
-    [AllowAnonymous]
-    public async Task<ActionResult> DeleteLogs([FromQuery] int? olderThanDays = null)
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
+    public async Task<ActionResult> DeleteLogs([FromQuery] int? olderThanDays, CancellationToken cancellationToken)
     {
         try
         {
-            await _logService.DeleteLogsAsync(olderThanDays);
+            await _logRepository.DeleteLogsAsync(olderThanDays, cancellationToken);
             var msg = olderThanDays.HasValue ? $"Logs older than {olderThanDays} days deleted" : "All logs deleted";
             return Ok(new { success = true, message = msg });
         }
@@ -215,7 +220,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpPost("projects")]
-    [AllowAnonymous]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult> CreateProject([FromBody] CreateProjectRequest request)
     {
         try
@@ -235,7 +240,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpPut("projects/{id}")]
-    [AllowAnonymous]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult> UpdateProject(Guid id, [FromBody] UpdateProjectRequest request)
     {
         try
@@ -257,7 +262,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpDelete("projects/{id}")]
-    [AllowAnonymous]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult> DeleteProject(Guid id)
     {
         try
@@ -276,13 +281,12 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("app")]
-    [AllowAnonymous]
-    public async Task<ActionResult<PagedResult<AppLogEntry>>> GetAppLogs([FromQuery] AppLogQueryParams query)
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
+    public async Task<ActionResult<PagedResult<AppLogEntry>>> GetAppLogs([FromQuery] AppLogQueryParams query, CancellationToken cancellationToken)
     {
         try
         {
-            var appLogService = HttpContext.RequestServices.GetRequiredService<IAppLogService>();
-            var result = await appLogService.GetLogsAsync(query);
+            var result = await _appLogService.GetLogsAsync(query, cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -293,13 +297,12 @@ public class LogsController : ControllerBase
     }
 
     [HttpDelete("app")]
-    [AllowAnonymous]
-    public async Task<ActionResult> DeleteAppLogs([FromQuery] int? olderThanDays = null)
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
+    public async Task<ActionResult> DeleteAppLogs([FromQuery] int? olderThanDays, CancellationToken cancellationToken)
     {
         try
         {
-            var appLogService = HttpContext.RequestServices.GetRequiredService<IAppLogService>();
-            await appLogService.DeleteLogsAsync(olderThanDays);
+            await _appLogService.DeleteLogsAsync(olderThanDays, cancellationToken);
             var msg = olderThanDays.HasValue ? $"App logs older than {olderThanDays} days deleted" : "All app logs deleted";
             return Ok(new { success = true, message = msg });
         }

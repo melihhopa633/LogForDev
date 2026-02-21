@@ -1,3 +1,4 @@
+using LogForDev.Data;
 using LogForDev.Models;
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -8,8 +9,8 @@ namespace LogForDev.Services;
 public interface IAppLogService
 {
     void Enqueue(AppLogEntry log);
-    Task<PagedResult<AppLogEntry>> GetLogsAsync(AppLogQueryParams query);
-    Task DeleteLogsAsync(int? olderThanDays = null);
+    Task<PagedResult<AppLogEntry>> GetLogsAsync(AppLogQueryParams query, CancellationToken cancellationToken = default);
+    Task DeleteLogsAsync(int? olderThanDays = null, CancellationToken cancellationToken = default);
 }
 
 public class AppLogService : BackgroundService, IAppLogService
@@ -28,15 +29,15 @@ public class AppLogService : BackgroundService, IAppLogService
 
     public void Enqueue(AppLogEntry log) => _queue.Enqueue(log);
 
-    public async Task<PagedResult<AppLogEntry>> GetLogsAsync(AppLogQueryParams query)
+    public async Task<PagedResult<AppLogEntry>> GetLogsAsync(AppLogQueryParams query, CancellationToken cancellationToken = default)
     {
         var where = new StringBuilder("WHERE 1=1");
 
         if (!string.IsNullOrEmpty(query.Level))
-            where.AppendLine($" AND level = '{EscapeString(query.Level)}'");
+            where.AppendLine($" AND level = '{ClickHouseStringHelper.Escape(query.Level)}'");
 
         if (!string.IsNullOrEmpty(query.Search))
-            where.AppendLine($" AND message ILIKE '%{EscapeString(query.Search)}%'");
+            where.AppendLine($" AND message ILIKE '%{ClickHouseStringHelper.Escape(query.Search)}%'");
 
         if (query.From.HasValue)
             where.AppendLine($" AND timestamp >= '{query.From.Value:yyyy-MM-dd HH:mm:ss}'");
@@ -47,7 +48,7 @@ public class AppLogService : BackgroundService, IAppLogService
         var whereClause = where.ToString();
 
         var countSql = $"SELECT count() FROM app_logs {whereClause}";
-        var countResult = await _clickHouse.QueryAsync(countSql, r => Convert.ToInt64(r.GetValue(0)));
+        var countResult = await _clickHouse.QueryAsync(countSql, r => Convert.ToInt64(r.GetValue(0)), cancellationToken);
         var totalCount = countResult.FirstOrDefault();
 
         var dataSql = $@"SELECT id, timestamp, level, category, message, exception,
@@ -68,7 +69,7 @@ public class AppLogService : BackgroundService, IAppLogService
             RequestPath = r.IsDBNull(7) ? null : r.GetString(7),
             StatusCode = Convert.ToInt32(r.GetValue(8)),
             DurationMs = Convert.ToDouble(r.GetValue(9))
-        });
+        }, cancellationToken);
 
         return new PagedResult<AppLogEntry>
         {
@@ -79,16 +80,16 @@ public class AppLogService : BackgroundService, IAppLogService
         };
     }
 
-    public async Task DeleteLogsAsync(int? olderThanDays = null)
+    public async Task DeleteLogsAsync(int? olderThanDays = null, CancellationToken cancellationToken = default)
     {
         if (olderThanDays.HasValue)
         {
             var cutoff = DateTime.UtcNow.AddDays(-olderThanDays.Value).ToString("yyyy-MM-dd HH:mm:ss");
-            await _clickHouse.ExecuteAsync($"ALTER TABLE app_logs DELETE WHERE timestamp < '{cutoff}'");
+            await _clickHouse.ExecuteAsync($"ALTER TABLE app_logs DELETE WHERE timestamp < '{cutoff}'", cancellationToken: cancellationToken);
         }
         else
         {
-            await _clickHouse.ExecuteAsync("TRUNCATE TABLE app_logs");
+            await _clickHouse.ExecuteAsync("TRUNCATE TABLE app_logs", cancellationToken: cancellationToken);
         }
     }
 
@@ -118,9 +119,9 @@ public class AppLogService : BackgroundService, IAppLogService
             sb.AppendLine("INSERT INTO app_logs (id, timestamp, level, category, message, exception, request_method, request_path, status_code, duration_ms) VALUES");
 
             var values = batch.Select(log =>
-                $"('{log.Id}', now64(3), '{EscapeString(log.Level)}', '{EscapeString(log.Category)}', " +
-                $"'{EscapeString(log.Message)}', '{EscapeString(log.Exception ?? "")}', " +
-                $"'{EscapeString(log.RequestMethod ?? "")}', '{EscapeString(log.RequestPath ?? "")}', " +
+                $"('{log.Id}', now64(3), '{ClickHouseStringHelper.Escape(log.Level)}', '{ClickHouseStringHelper.Escape(log.Category)}', " +
+                $"'{ClickHouseStringHelper.Escape(log.Message)}', '{ClickHouseStringHelper.Escape(log.Exception ?? "")}', " +
+                $"'{ClickHouseStringHelper.Escape(log.RequestMethod ?? "")}', '{ClickHouseStringHelper.Escape(log.RequestPath ?? "")}', " +
                 $"{log.StatusCode}, {log.DurationMs.ToString("F2", CultureInfo.InvariantCulture)})");
 
             sb.AppendLine(string.Join(",\n", values));
@@ -134,10 +135,4 @@ public class AppLogService : BackgroundService, IAppLogService
         }
     }
 
-    private static string EscapeString(string input)
-    {
-        return input
-            .Replace("\\", "\\\\")
-            .Replace("'", "\\'");
-    }
 }

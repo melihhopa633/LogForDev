@@ -1,38 +1,30 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using LogForDev.Services;
 using LogForDev.Models;
 using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace LogForDev.Controllers;
 
 public class SetupController : Controller
 {
     private readonly ISetupStateService _setupState;
-    private readonly IClickHouseService _clickHouseService;
     private readonly ILogBufferService _buffer;
-    private readonly IProjectService _projectService;
-    private readonly IUserService _userService;
+    private readonly ISetupOrchestrator _orchestrator;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<SetupController> _logger;
 
     public SetupController(
         ISetupStateService setupState,
-        IClickHouseService clickHouseService,
         ILogBufferService buffer,
-        IProjectService projectService,
-        IUserService userService,
+        ISetupOrchestrator orchestrator,
         IConfiguration configuration,
         IWebHostEnvironment env,
         ILogger<SetupController> logger)
     {
         _setupState = setupState;
-        _clickHouseService = clickHouseService;
         _buffer = buffer;
-        _projectService = projectService;
-        _userService = userService;
+        _orchestrator = orchestrator;
         _configuration = configuration;
         _env = env;
         _logger = logger;
@@ -125,129 +117,16 @@ public class SetupController : Controller
     {
         try
         {
-            // Update appsettings.json
-            var appSettingsPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
-            var json = await System.IO.File.ReadAllTextAsync(appSettingsPath);
-            var doc = JsonDocument.Parse(json);
-
-            using var stream = new MemoryStream();
-            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
-            {
-                writer.WriteStartObject();
-                foreach (var property in doc.RootElement.EnumerateObject())
-                {
-                    if (property.Name == "ClickHouse")
-                    {
-                        writer.WritePropertyName("ClickHouse");
-                        writer.WriteStartObject();
-                        writer.WriteString("Host", request.ClickHouseHost ?? "localhost");
-                        writer.WriteNumber("Port", request.ClickHousePort > 0 ? request.ClickHousePort : 8123);
-                        writer.WriteString("Database", request.ClickHouseDatabase ?? "logfordev");
-                        writer.WriteString("Username", request.ClickHouseUsername ?? "");
-                        writer.WriteString("Password", request.ClickHousePassword ?? "");
-                        writer.WriteEndObject();
-                    }
-                    else if (property.Name == "LogForDev")
-                    {
-                        writer.WritePropertyName("LogForDev");
-                        writer.WriteStartObject();
-                        writer.WriteNumber("RetentionDays", request.RetentionDays >= 0 ? request.RetentionDays : 30);
-                        writer.WriteEndObject();
-                    }
-                    else
-                    {
-                        property.WriteTo(writer);
-                    }
-                }
-                writer.WriteEndObject();
-            }
-
-            var updatedJson = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-            await System.IO.File.WriteAllTextAsync(appSettingsPath, updatedJson);
-
-            // Initialize database with new settings
-            try
-            {
-                var options = new ClickHouseOptions
-                {
-                    Host = request.ClickHouseHost ?? "localhost",
-                    Port = request.ClickHousePort > 0 ? request.ClickHousePort : 8123,
-                    Database = request.ClickHouseDatabase ?? "logfordev",
-                    Username = request.ClickHouseUsername,
-                    Password = request.ClickHousePassword
-                };
-
-                using var connection = new ClickHouse.Client.ADO.ClickHouseConnection(options.DefaultConnectionString);
-                await connection.OpenAsync();
-
-                using var createDbCmd = connection.CreateCommand();
-                createDbCmd.CommandText = $"CREATE DATABASE IF NOT EXISTS {options.Database}";
-                await createDbCmd.ExecuteNonQueryAsync();
-
-                // Re-initialize tables (including projects table)
-                await _clickHouseService.InitializeAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Database initialization during setup completion failed, will retry on restart");
-            }
-
-            // Create the first project
-            if (!string.IsNullOrEmpty(request.ProjectName) && !string.IsNullOrEmpty(request.ApiKey))
-            {
-                try
-                {
-                    int? expiryDays = request.KeyExpiryDays > 0 ? request.KeyExpiryDays : null;
-                    await _projectService.CreateProjectAsync(request.ProjectName, request.ApiKey, expiryDays);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to create initial project during setup");
-                }
-            }
-
-            // Create admin user with TOTP
-            string? qrCodeDataUri = null;
-            string? totpSecret = null;
-
-            if (!string.IsNullOrEmpty(request.AdminEmail) && !string.IsNullOrEmpty(request.AdminPassword))
-            {
-                try
-                {
-                    // Build connection string with new credentials
-                    var options = new ClickHouseOptions
-                    {
-                        Host = request.ClickHouseHost ?? "localhost",
-                        Port = request.ClickHousePort > 0 ? request.ClickHousePort : 8123,
-                        Database = request.ClickHouseDatabase ?? "logfordev",
-                        Username = request.ClickHouseUsername,
-                        Password = request.ClickHousePassword
-                    };
-
-                    var user = await _userService.CreateUserAsync(
-                        request.AdminEmail,
-                        request.AdminPassword,
-                        options.ConnectionString);
-                    qrCodeDataUri = _userService.GenerateQrCodeDataUri(request.AdminEmail, user.TotpSecret);
-                    totpSecret = user.TotpSecret;
-                    _logger.LogInformation("Admin user created during setup: {Email}", request.AdminEmail);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to create admin user during setup");
-                    return Ok(new { success = false, message = $"Admin kullanici olusturulamadi: {ex.Message}" });
-                }
-            }
-
-            // Mark setup as complete
-            _setupState.CompleteSetup();
+            var result = await _orchestrator.CompleteAsync(request, _env.ContentRootPath);
+            if (!result.Success)
+                return Ok(new { success = false, message = result.Message });
 
             return Ok(new
             {
                 success = true,
-                message = "Kurulum tamamlandi!",
-                qrCodeDataUri = qrCodeDataUri,
-                totpSecret = totpSecret
+                message = result.Message,
+                qrCodeDataUri = result.QrCodeDataUri,
+                totpSecret = result.TotpSecret
             });
         }
         catch (Exception ex)
@@ -256,33 +135,4 @@ public class SetupController : Controller
             return Ok(new { success = false, message = $"Kurulum tamamlanamadi: {ex.Message}" });
         }
     }
-}
-
-public class ConnectionTestRequest
-{
-    public string? Host { get; set; }
-    public int Port { get; set; }
-    public string? Database { get; set; }
-    public string? Username { get; set; }
-    public string? Password { get; set; }
-}
-
-public class TestLogRequest
-{
-    public string? ApiKey { get; set; }
-}
-
-public class SetupCompleteRequest
-{
-    public string? ClickHouseHost { get; set; }
-    public int ClickHousePort { get; set; }
-    public string? ClickHouseDatabase { get; set; }
-    public string? ClickHouseUsername { get; set; }
-    public string? ClickHousePassword { get; set; }
-    public string? ProjectName { get; set; }
-    public string? ApiKey { get; set; }
-    public int KeyExpiryDays { get; set; }
-    public int RetentionDays { get; set; }
-    public string? AdminEmail { get; set; }
-    public string? AdminPassword { get; set; }
 }

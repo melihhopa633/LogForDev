@@ -174,11 +174,11 @@ public class ClickHouseQueryBuilder
         var escapedValue = clause.Operator.ToUpper() switch
         {
             "IN" when clause.Value is IEnumerable<object> values =>
-                $"('{string.Join("','", values.Select(v => EscapeString(v?.ToString() ?? "")))}')",
+                $"('{string.Join("','", values.Select(v => ClickHouseStringHelper.Escape(v?.ToString() ?? "")))}')",
             "ILIKE" =>
-                $"'%{EscapeString(clause.Value?.ToString() ?? "")}%'",
+                $"'%{ClickHouseStringHelper.Escape(clause.Value?.ToString() ?? "")}%'",
             _ =>
-                $"'{EscapeString(clause.Value?.ToString() ?? "")}'",
+                $"'{ClickHouseStringHelper.Escape(clause.Value?.ToString() ?? "")}'",
         };
 
         return clause.Operator.ToUpper() switch
@@ -187,16 +187,6 @@ public class ClickHouseQueryBuilder
             "ILIKE" => $"{clause.Column} ILIKE {escapedValue}",
             _ => $"{clause.Column} {clause.Operator} {escapedValue}",
         };
-    }
-
-    private static string EscapeString(string input)
-    {
-        if (string.IsNullOrEmpty(input))
-            return input;
-
-        return input
-            .Replace("\\", "\\\\")
-            .Replace("'", "\\'");
     }
 
     private class WhereClause

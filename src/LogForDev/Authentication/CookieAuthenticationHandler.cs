@@ -4,14 +4,15 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
+using LogForDev.Core;
 using LogForDev.Services;
 
 namespace LogForDev.Authentication;
 
 public class CookieAuthenticationOptions : AuthenticationSchemeOptions
 {
-    public const string Scheme = "Cookie";
-    public const string CookieName = ".LogForDev.Auth";
+    public const string Scheme = AppConstants.Auth.CookieScheme;
+    public const string CookieName = AppConstants.Auth.CookieName;
 }
 
 public class CookieAuthenticationHandler : AuthenticationHandler<CookieAuthenticationOptions>
@@ -42,7 +43,7 @@ public class CookieAuthenticationHandler : AuthenticationHandler<CookieAuthentic
         try
         {
             // Decrypt cookie
-            var protector = _dataProtectionProvider.CreateProtector("Auth.Cookie");
+            var protector = _dataProtectionProvider.CreateProtector(AppConstants.Auth.DataProtectorPurpose);
             var cookieJson = protector.Unprotect(encryptedCookie);
             var cookieData = JsonSerializer.Deserialize<CookieData>(cookieJson);
 

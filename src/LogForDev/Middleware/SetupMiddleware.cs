@@ -1,3 +1,4 @@
+using LogForDev.Core;
 using LogForDev.Services;
 
 namespace LogForDev.Middleware;
@@ -25,8 +26,8 @@ public class SetupMiddleware
             return;
         }
 
-        var isSetupRoute = path.StartsWith("/setup") || path.StartsWith("/api/setup");
-        var isAuthRoute = path.StartsWith("/login") || path.StartsWith("/api/auth");
+        var isSetupRoute = path.StartsWith(AppConstants.Paths.Setup) || path.StartsWith(AppConstants.Paths.ApiSetup);
+        var isAuthRoute = path.StartsWith(AppConstants.Paths.Login) || path.StartsWith(AppConstants.Paths.ApiAuth);
 
         if (!_setupState.IsSetupComplete())
         {
@@ -40,7 +41,7 @@ public class SetupMiddleware
         else
         {
             // Setup done - redirect /setup page to dashboard
-            if (path == "/setup")
+            if (path == AppConstants.Paths.Setup)
             {
                 context.Response.Redirect("/");
                 return;
