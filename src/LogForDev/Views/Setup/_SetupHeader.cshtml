@@ -1,0 +1,57 @@
+<!-- Header -->
+<div class="text-center mb-8 animate-fade-up">
+    <div class="flex items-center justify-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight">LogForDev</h1>
+    </div>
+    <p class="text-sm text-muted-foreground">Kurulum Sihirbaz&#305;</p>
+    <p id="stepCounter" class="text-xs text-muted-foreground mt-1">Ad&#305;m 1 / 6</p>
+</div>
+
+<!-- Step Indicator (Connected Circle Stepper) -->
+<div class="flex items-start justify-center mb-8 animate-fade-up" style="animation-delay:0.1s">
+    <div class="flex items-start">
+        <!-- Step 1 -->
+        <div class="flex flex-col items-center">
+            <button onclick="goToStep(1)" id="stepBtn1" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-primary text-white stepper-pulse ring-2 ring-primary/30 ring-offset-2 ring-offset-background" aria-label="Ad&#305;m 1">1</button>
+            <span class="text-[10px] sm:text-xs text-primary font-medium mt-2 transition-colors">Veritaban&#305;</span>
+        </div>
+        <div id="line1" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
+        <!-- Step 2 -->
+        <div class="flex flex-col items-center">
+            <button onclick="goToStep(2)" id="stepBtn2" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 2">2</button>
+            <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Admin</span>
+        </div>
+        <div id="line2" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
+        <!-- Step 3 -->
+        <div class="flex flex-col items-center">
+            <button onclick="goToStep(3)" id="stepBtn3" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 3">3</button>
+            <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Proje</span>
+        </div>
+        <div id="line3" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
+        <!-- Step 4 -->
+        <div class="flex flex-col items-center">
+            <button onclick="goToStep(4)" id="stepBtn4" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 4">4</button>
+            <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">TOTP</span>
+        </div>
+        <div id="line4" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
+        <!-- Step 5 -->
+        <div class="flex flex-col items-center">
+            <button onclick="goToStep(5)" id="stepBtn5" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 5">5</button>
+            <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Test</span>
+        </div>
+        <div id="line5" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
+        <!-- Step 6 -->
+        <div class="flex flex-col items-center">
+            <button onclick="goToStep(6)" id="stepBtn6" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 6">6</button>
+            <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Bitir</span>
+        </div>
+    </div>
+</div>

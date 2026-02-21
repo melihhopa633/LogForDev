@@ -1,0 +1,46 @@
+<!-- Step 2: Admin User -->
+<div id="step2" class="step-panel p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
+        <h2 class="text-lg font-semibold">Y&#246;netici Hesab&#305;</h2>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 ml-11">Dashboard'a eri&#351;im i&#231;in y&#246;netici hesab&#305; olu&#351;turun.</p>
+
+    <div class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium mb-2">E-posta <span class="text-red-400">*</span></label>
+            <input type="email" id="adminEmail" value="melih@@admin.com" placeholder="admin@@example.com" class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+            <p class="text-xs text-muted-foreground mt-1.5">Giri&#351; yaparken kullanaca&#287;&#305;n&#305;z e-posta</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-2">&#350;ifre <span class="text-red-400">*</span></label>
+            <div class="relative">
+                <input type="password" id="adminPassword" value="1" placeholder="&#350;ifrenizi giriniz" class="w-full h-10 px-3 pr-10 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+                <button type="button" onclick="togglePasswordField('adminPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" tabindex="-1">
+                    <svg class="w-4 h-4 eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg class="w-4 h-4 eye-closed hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1.5">&#304;stedi&#287;iniz herhangi bir &#351;ifre kullanabilirsiniz</p>
+        </div>
+    </div>
+
+    <div class="flex justify-between mt-8">
+        <button onclick="goToStep(1)" class="px-6 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Geri
+        </button>
+        <button onclick="goToStep(3)" class="btn-glow px-6 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            &#304;leri
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+    </div>
+</div>

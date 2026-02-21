@@ -1,0 +1,56 @@
+<!-- Step 5: Test Log -->
+<div id="step5" class="step-panel p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+        </div>
+        <h2 class="text-lg font-semibold">&#304;lk Log G&#246;nderme</h2>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 ml-11">Kurulumunuzu test edin. A&#351;a&#287;&#305;daki curl komutunu kullanarak veya butona t&#305;klayarak test logu g&#246;nderin.</p>
+
+    <div class="space-y-5">
+        <!-- Terminal-style curl example -->
+        <div>
+            <label class="block text-sm font-medium mb-2">curl &#214;rne&#287;i</label>
+            <div class="rounded-xl border border-border/60 overflow-hidden" style="background-color:#0c0c10; box-shadow: 0 12px 40px -8px rgba(0,0,0,0.4), 0 0 20px -4px rgba(59,130,246,0.05);">
+                <!-- macOS title bar -->
+                <div class="flex items-center gap-2 px-4 h-9 border-b border-border/40">
+                    <div class="w-2.5 h-2.5 rounded-full" style="background:#ff5f57"></div>
+                    <div class="w-2.5 h-2.5 rounded-full" style="background:#febc2e"></div>
+                    <div class="w-2.5 h-2.5 rounded-full" style="background:#28c840"></div>
+                    <span class="ml-2 text-[11px] text-muted-foreground font-mono">terminal &mdash; curl</span>
+                    <button onclick="copyCurl()" class="ml-auto p-1 hover:bg-white/5 rounded transition-colors" title="Kopyala">
+                        <svg class="w-3.5 h-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Content -->
+                <pre id="curlExample" class="p-4 text-[12px] text-green-400 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed"></pre>
+            </div>
+        </div>
+
+        <!-- Send Test Log -->
+        <div class="flex items-center gap-3">
+            <button onclick="sendTestLog()" id="btnTestLog" class="btn-glow px-5 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Test Logu G&#246;nder
+            </button>
+            <div id="testLogResult" class="text-sm"></div>
+        </div>
+    </div>
+
+    <div class="flex justify-between mt-8">
+        <button onclick="goToStep(4)" class="px-6 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Geri
+        </button>
+        <button onclick="goToStep(6)" class="btn-glow px-6 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            &#304;leri
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+    </div>
+</div>

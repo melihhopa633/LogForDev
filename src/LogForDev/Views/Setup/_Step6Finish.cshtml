@@ -1,0 +1,70 @@
+<!-- Step 6: Finish -->
+<div id="step6" class="step-panel p-6 sm:p-8">
+    <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/10 border-2 border-green-500/30 mb-4 animate-scale-check">
+            <svg class="w-8 h-8 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold mb-1">Kurulum Tamamland&#305;!</h2>
+        <p class="text-sm text-muted-foreground">LogForDev kullan&#305;ma haz&#305;r! Dashboard'un temel &#246;zelliklerine g&#246;z at&#305;n.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+        <div class="feature-card border border-border rounded-lg p-4 cursor-default">
+            <div class="flex items-center gap-2.5 mb-2">
+                <div class="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-sm">Ger&#231;ek Zamanl&#305; Dashboard</h3>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">Loglar&#305;n&#305;z&#305; canl&#305; olarak izleyin, filtreleyin ve analiz edin.</p>
+        </div>
+        <div class="feature-card border border-border rounded-lg p-4 cursor-default">
+            <div class="flex items-center gap-2.5 mb-2">
+                <div class="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-sm">Geli&#351;mi&#351; Arama</h3>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">Seviye, uygulama, ortam ve tarih aral&#305;&#287;&#305; ile filtreleme.</p>
+        </div>
+        <div class="feature-card border border-border rounded-lg p-4 cursor-default">
+            <div class="flex items-center gap-2.5 mb-2">
+                <div class="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-sm">REST API</h3>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">Herhangi bir dilden log g&#246;nderin.</p>
+        </div>
+        <div class="feature-card border border-border rounded-lg p-4 cursor-default">
+            <div class="flex items-center gap-2.5 mb-2">
+                <div class="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-sm">Proje Bazl&#305; Y&#246;netim</h3>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">Her proje i&#231;in ayr&#305; API key ve filtreleme imkan&#305;.</p>
+        </div>
+    </div>
+
+    <div class="flex justify-between">
+        <button onclick="goToStep(5)" class="px-6 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Geri
+        </button>
+        <button onclick="redirectToLogin()" class="btn-glow px-8 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            Giri&#351; Sayfas&#305;na Git
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+    </div>
+</div>

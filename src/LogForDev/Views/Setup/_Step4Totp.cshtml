@@ -1,0 +1,58 @@
+<!-- Step 4: TOTP Setup -->
+<div id="step4" class="step-panel p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+        </div>
+        <h2 class="text-lg font-semibold">&#304;ki Fakt&#246;rl&#252; Kimlik Do&#287;rulama</h2>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 ml-11">Google Authenticator veya benzeri bir uygulama ile dashboard eri&#351;imini g&#252;venli hale getirin.</p>
+
+    <div class="space-y-5">
+        <!-- QR Code -->
+        <div class="text-center">
+            <div class="inline-block p-5 bg-white rounded-xl" style="box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                <img id="qrCodeImage" src="" alt="QR Code" class="mx-auto" style="max-width: 200px;" />
+            </div>
+        </div>
+
+        <!-- Warning card -->
+        <div class="p-3.5 rounded-lg border" style="border-color:rgba(234,179,8,0.25); background:rgba(234,179,8,0.05);">
+            <div class="flex items-start gap-2.5">
+                <svg class="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <p class="text-xs text-yellow-500/90 leading-relaxed">Bu QR kodu &#351;imdi taray&#305;n. Sonradan tekrar g&#246;sterilmeyecektir. Yedek olarak a&#351;a&#287;&#305;daki manuel kodu kaydedin.</p>
+            </div>
+        </div>
+
+        <!-- Manual Entry Code -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Manuel Giri&#351; Kodu (Yedek)</label>
+            <div class="flex gap-2">
+                <input type="text" id="manualCode" readonly class="flex-1 h-10 px-3 text-sm rounded-lg border border-border text-foreground font-mono focus:outline-none transition-all" style="background-color:#1c1c1f" />
+                <button onclick="copyManualCode()" class="px-4 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Kopyala
+                </button>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1.5">Giri&#351; yaparken bu kodu kullanacaks&#305;n&#305;z (test i&#231;in 000000 da ge&#231;erli)</p>
+        </div>
+    </div>
+
+    <div class="flex justify-between mt-8">
+        <button onclick="goToStep(3)" class="px-6 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Geri
+        </button>
+        <button onclick="goToStep(5)" class="btn-glow px-6 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            &#304;leri
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+    </div>
+</div>

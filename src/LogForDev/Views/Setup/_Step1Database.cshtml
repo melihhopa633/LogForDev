@@ -1,0 +1,73 @@
+@{
+    var host = ViewBag.ClickHouseHost as string ?? "";
+    var port = ViewBag.ClickHousePort;
+    var database = ViewBag.ClickHouseDatabase as string ?? "";
+    var username = ViewBag.ClickHouseUsername as string ?? "";
+    var password = ViewBag.ClickHousePassword as string ?? "";
+}
+
+<!-- Step 1: Database -->
+<div id="step1" class="step-panel active p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+        </div>
+        <h2 class="text-lg font-semibold">Veritaban&#305; Ba&#287;lant&#305;s&#305;</h2>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 ml-11">ClickHouse veritaban&#305; ba&#287;lant&#305; bilgilerini yap&#305;land&#305;r&#305;n.</p>
+
+    <div class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Host</label>
+                <input type="text" id="chHost" value="@host" class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">Port</label>
+                <input type="number" id="chPort" value="@port" class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-2">Veritaban&#305;</label>
+            <input type="text" id="chDatabase" value="@database" class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Kullan&#305;c&#305; Ad&#305;</label>
+                <input type="text" id="chUsername" value="@username" class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">&#350;ifre</label>
+                <div class="relative">
+                    <input type="password" id="chPassword" value="@password" class="w-full h-10 px-3 pr-10 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+                    <button type="button" onclick="togglePasswordField('chPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" tabindex="-1">
+                        <svg class="w-4 h-4 eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg class="w-4 h-4 eye-closed hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Connection -->
+        <div class="flex items-center gap-3">
+            <button onclick="testConnection()" id="btnTestConn" class="btn-glow px-4 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Ba&#287;lant&#305;y&#305; Test Et
+            </button>
+            <div id="connResult" class="text-sm"></div>
+        </div>
+    </div>
+
+    <div class="flex justify-end mt-8">
+        <button onclick="goToStep(2)" class="btn-glow px-6 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            &#304;leri
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+    </div>
+</div>

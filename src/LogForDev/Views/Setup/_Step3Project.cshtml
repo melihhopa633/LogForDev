@@ -1,0 +1,103 @@
+@{
+    var retentionDays = (int)(ViewBag.RetentionDays ?? 30);
+}
+
+<!-- Step 3: Project Settings -->
+<div id="step3" class="step-panel p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+        </div>
+        <h2 class="text-lg font-semibold">Proje Ayarlar&#305;</h2>
+    </div>
+    <p class="text-sm text-muted-foreground mb-6 ml-11">&#304;lk projenizi olu&#351;turun ve log saklama s&#252;resini belirleyin.</p>
+
+    <div class="space-y-4">
+        <!-- Project Name -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Proje Ad&#305; <span class="text-red-400">*</span></label>
+            <input type="text" id="projectName" value="test-project" placeholder="&#246;rne&#287;in: backend, mobile, web-app" class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+        </div>
+
+        <!-- API Key -->
+        <div>
+            <label class="block text-sm font-medium mb-2">API Key</label>
+            <div class="flex gap-2">
+                <input type="text" id="apiKey" class="flex-1 h-10 px-3 text-sm rounded-lg border border-border text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" readonly />
+                <button onclick="copyApiKey()" class="px-3 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center" title="Kopyala">
+                    <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+                <button onclick="generateKey()" class="px-4 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all whitespace-nowrap">
+                    Yeniden Olu&#351;tur
+                </button>
+            </div>
+        </div>
+
+        <!-- API Key Expiry -->
+        <div>
+            <label class="block text-sm font-medium mb-2">API Key Ge&#231;erlilik S&#252;resi</label>
+            <div class="flex items-center gap-2">
+                <input type="number" id="keyExpiryDays" value="0" min="0" class="w-28 h-10 px-3 text-sm rounded-lg border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+                <span class="text-sm text-muted-foreground">g&#252;n</span>
+                <span class="text-xs text-muted-foreground ml-1">(0 = s&#252;resiz)</span>
+            </div>
+        </div>
+
+        <!-- Retention -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Log Saklama S&#252;resi</label>
+            <div class="flex items-center gap-3">
+                <select id="retentionMode" onchange="toggleRetentionInput()" class="h-10 px-3 text-sm rounded-lg border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f">
+                    <option value="0">S&#305;n&#305;rs&#305;z (silme)</option>
+                    <option value="7">7 g&#252;n</option>
+                    <option value="15">15 g&#252;n</option>
+                    <option value="30" selected>30 g&#252;n</option>
+                    <option value="60">60 g&#252;n</option>
+                    <option value="90">90 g&#252;n</option>
+                    <option value="180">180 g&#252;n</option>
+                    <option value="365">365 g&#252;n</option>
+                    <option value="custom">&#214;zel...</option>
+                </select>
+                <div id="customRetentionWrap" class="hidden flex items-center gap-2">
+                    <input type="number" id="retentionDaysCustom" value="30" min="1" class="w-24 h-10 px-3 text-sm rounded-lg border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all" style="background-color:#1c1c1f" />
+                    <span class="text-sm text-muted-foreground">g&#252;n</span>
+                </div>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1.5">0 = s&#305;n&#305;rs&#305;z saklama, loglar otomatik silinmez</p>
+        </div>
+    </div>
+
+    <div class="flex justify-between mt-8">
+        <button onclick="goToStep(2)" class="px-6 h-10 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Geri
+        </button>
+        <button onclick="finalizeSetup()" id="btnFinalize" class="btn-glow px-8 h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Kurulumu Ba&#351;lat
+        </button>
+    </div>
+</div>
+
+<script>
+    // Set retention dropdown from server-side value
+    (function () {
+        const savedRetention = @retentionDays;
+        document.addEventListener('DOMContentLoaded', function () {
+            const select = document.getElementById('retentionMode');
+            const predefined = ['0', '7', '15', '30', '60', '90', '180', '365'];
+            if (predefined.includes(String(savedRetention))) {
+                select.value = String(savedRetention);
+            } else {
+                select.value = 'custom';
+                document.getElementById('retentionDaysCustom').value = savedRetention;
+                toggleRetentionInput();
+            }
+        });
+    })();
+</script>

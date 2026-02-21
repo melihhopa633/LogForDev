@@ -1,0 +1,130 @@
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    background: '#09090b',
+                    foreground: '#fafafa',
+                    card: { DEFAULT: '#111113', foreground: '#fafafa' },
+                    primary: { DEFAULT: '#3b82f6', foreground: '#fafafa' },
+                    secondary: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
+                    muted: { DEFAULT: '#1c1c1f', foreground: '#71717a' },
+                    accent: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
+                    destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
+                    border: '#27272a',
+                    input: '#1c1c1f',
+                    ring: '#3b82f6',
+                },
+                borderRadius: {
+                    lg: '0.5rem',
+                    md: 'calc(0.5rem - 2px)',
+                    sm: 'calc(0.5rem - 4px)',
+                },
+            }
+        }
+    }
+</script>
+<style>
+    body { font-feature-settings: "rlig" 1, "calt" 1; }
+
+    /* Dot grid background */
+    .dot-grid {
+        background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+        background-size: 24px 24px;
+    }
+
+    /* Step panel transitions */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+    .slide-forward { animation: slideFromRight 0.35s ease-out; }
+    .slide-back { animation: slideFromLeft 0.35s ease-out; }
+    @@keyframes slideFromRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes slideFromLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Fade up animation */
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp 0.5s ease-out both; }
+
+    /* Spinner */
+    .spinner {
+        border: 2px solid #27272a;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Button glow */
+    .btn-glow:hover:not(:disabled) {
+        box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Scale check animation */
+    @@keyframes scaleCheck {
+        0% { transform: scale(0); opacity: 0; }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-scale-check { animation: scaleCheck 0.5s ease-out both; }
+
+    /* Stepper pulse */
+    @@keyframes pulse-ring {
+        0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+        70% { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
+        100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    }
+    .stepper-pulse { animation: pulse-ring 2s ease-out infinite; }
+
+    /* Stepper check pop */
+    @@keyframes stepComplete {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+    .stepper-complete-anim { animation: stepComplete 0.3s ease-out; }
+
+    /* Autofill fix for Chrome dark mode */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+        -webkit-text-fill-color: #fafafa !important;
+        -webkit-box-shadow: 0 0 0 100px #1c1c1f inset !important;
+        border-color: #27272a !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+
+    /* Toast animations */
+    @@keyframes toast-in {
+        from { opacity: 0; transform: translateX(calc(100% + 1rem)); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes toast-out {
+        from { opacity: 1; transform: translateX(0); }
+        to   { opacity: 0; transform: translateX(calc(100% + 1rem)); }
+    }
+    .toast-enter { animation: toast-in 0.35s cubic-bezier(0.21,1.02,0.73,1) forwards; }
+    .toast-exit  { animation: toast-out 0.25s ease-in forwards; }
+
+    /* Feature card hover */
+    .feature-card { transition: all 0.2s ease; }
+    .feature-card:hover {
+        border-color: rgba(59,130,246,0.3);
+        background-color: rgba(59,130,246,0.03);
+        transform: translateY(-1px);
+    }
+</style>
