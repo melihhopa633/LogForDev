@@ -8,11 +8,13 @@ public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly IAppLogService _appLogService;
+    private readonly ILogger<RequestLoggingMiddleware> _logger;
 
-    public RequestLoggingMiddleware(RequestDelegate next, IAppLogService appLogService)
+    public RequestLoggingMiddleware(RequestDelegate next, IAppLogService appLogService, ILogger<RequestLoggingMiddleware> logger)
     {
         _next = next;
         _appLogService = appLogService;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -48,6 +50,13 @@ public class RequestLoggingMiddleware
             if (exception != null) level = "Error";
 
             var message = $"{method} {path} -> {statusCode} ({sw.ElapsedMilliseconds}ms)";
+
+            if (statusCode >= 500 || exception != null)
+                _logger.LogError(exception != null ? new Exception(exception) : null, "{Message}", message);
+            else if (statusCode >= 400)
+                _logger.LogWarning("{Message}", message);
+            else
+                _logger.LogInformation("{Message}", message);
 
             _appLogService.Enqueue(new AppLogEntry
             {

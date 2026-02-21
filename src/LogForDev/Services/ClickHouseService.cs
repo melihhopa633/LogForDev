@@ -130,6 +130,22 @@ public class ClickHouseService : IClickHouseService
                 SETTINGS index_granularity = 8192";
             await appLogsCmd.ExecuteNonQueryAsync();
 
+            // Create users table for authentication
+            await using var usersCmd = connection.CreateCommand();
+            usersCmd.CommandText = @"
+                CREATE TABLE IF NOT EXISTS users (
+                    id UUID DEFAULT generateUUIDv4(),
+                    email LowCardinality(String),
+                    password_hash String,
+                    totp_secret String,
+                    totp_enabled UInt8 DEFAULT 1,
+                    created_at DateTime DEFAULT now(),
+                    last_login_at Nullable(DateTime) DEFAULT NULL,
+                    failed_login_attempts UInt8 DEFAULT 0,
+                    locked_until Nullable(DateTime) DEFAULT NULL
+                ) ENGINE = MergeTree() ORDER BY (email)";
+            await usersCmd.ExecuteNonQueryAsync();
+
             _logger.LogInformation("ClickHouse initialized successfully");
         }
         catch (Exception ex)

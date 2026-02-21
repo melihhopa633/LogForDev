@@ -2,8 +2,19 @@ using LogForDev.Services;
 using LogForDev.Middleware;
 using LogForDev.Data;
 using LogForDev.Authentication;
+using Microsoft.AspNetCore.DataProtection;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, services, lc) => lc
+    .ReadFrom.Configuration(ctx.Configuration)
+    .ReadFrom.Services(services)
+    .WriteTo.Console());
 
 // Add services
 builder.Services.AddControllersWithViews();
@@ -29,10 +40,24 @@ builder.Services.AddSingleton<ISetupStateService, SetupStateService>();
 // Project service
 builder.Services.AddSingleton<IProjectService, ProjectService>();
 
-// Authentication
-builder.Services.AddAuthentication(ApiKeyAuthenticationOptions.Scheme)
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
-        ApiKeyAuthenticationOptions.Scheme, null);
+// User service
+builder.Services.AddSingleton<IUserService, UserService>();
+
+// Data Protection for cookie encryption
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("./keys"))
+    .SetApplicationName("LogForDev");
+
+// Dual authentication (Cookie for dashboard, ApiKey for log ingestion)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationOptions.Scheme;
+    options.DefaultChallengeScheme = CookieAuthenticationOptions.Scheme;
+})
+.AddScheme<CookieAuthenticationOptions, CookieAuthenticationHandler>(
+    CookieAuthenticationOptions.Scheme, null)
+.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+    ApiKeyAuthenticationOptions.Scheme, null);
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -78,10 +103,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseSerilogRequestLogging();
 app.UseMiddleware<SetupMiddleware>();
 app.UseRouting();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseAuthentication();
+app.UseMiddleware<AuthenticationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(

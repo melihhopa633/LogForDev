@@ -29,18 +29,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // 1) Browser (same-origin) requests - always allowed
-        var referer = Request.Headers["Referer"].ToString();
-        var host = $"{Request.Scheme}://{Request.Host}";
-        if (!string.IsNullOrEmpty(referer) && referer.StartsWith(host))
-        {
-            var browserIdentity = new ClaimsIdentity(ApiKeyAuthenticationOptions.BrowserScheme);
-            browserIdentity.AddClaim(new Claim(ClaimTypes.AuthenticationMethod, "browser"));
-            return AuthenticateResult.Success(
-                new AuthenticationTicket(new ClaimsPrincipal(browserIdentity), ApiKeyAuthenticationOptions.Scheme));
-        }
-
-        // 2) Extract API key from header or query string
+        // Extract API key from header or query string
         string? apiKey = null;
 
         if (Request.Headers.TryGetValue("X-API-Key", out var headerKey))
@@ -51,12 +40,12 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
         if (string.IsNullOrEmpty(apiKey))
             return AuthenticateResult.NoResult();
 
-        // 3) Validate against ProjectService
+        // Validate against ProjectService
         var project = await _projectService.ValidateApiKeyAsync(apiKey);
         if (project == null)
             return AuthenticateResult.Fail("Invalid or expired API key");
 
-        // 4) Build claims principal with project info
+        // Build claims principal with project info
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, project.Id.ToString()),

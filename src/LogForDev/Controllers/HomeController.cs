@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using LogForDev.Services;
 using LogForDev.Models;
+using LogForDev.Authentication;
 
 namespace LogForDev.Controllers;
 
+[Authorize(AuthenticationSchemes = CookieAuthenticationOptions.Scheme)]
 public class HomeController : Controller
 {
     private readonly ILogService _logService;

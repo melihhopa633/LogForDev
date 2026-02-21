@@ -1,0 +1,222 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Giriş Yap - LogForDev</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#09090b',
+                        foreground: '#fafafa',
+                        card: { DEFAULT: '#09090b', foreground: '#fafafa' },
+                        primary: { DEFAULT: '#2563eb', foreground: '#fafafa' },
+                        secondary: { DEFAULT: '#27272a', foreground: '#fafafa' },
+                        muted: { DEFAULT: '#27272a', foreground: '#a1a1aa' },
+                        accent: { DEFAULT: '#27272a', foreground: '#fafafa' },
+                        destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
+                        border: '#27272a',
+                        input: '#27272a',
+                        ring: '#2563eb',
+                    },
+                    borderRadius: {
+                        lg: '0.5rem',
+                        md: 'calc(0.5rem - 2px)',
+                        sm: 'calc(0.5rem - 4px)',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-feature-settings: "rlig" 1, "calt" 1; }
+        .spinner { border: 2px solid #27272a; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; display: inline-block; }
+        @@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-background text-foreground min-h-screen flex items-center justify-center antialiased p-4">
+    <div class="w-full max-w-md">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-2 mb-3">
+                <svg class="w-9 h-9 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <h1 class="text-2xl font-bold">LogForDev</h1>
+            </div>
+            <p class="text-muted-foreground">Giriş Yap</p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="border border-border rounded-lg bg-card p-6">
+            <form id="loginForm" class="space-y-4">
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-medium mb-1.5">E-posta</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="melih@admin.com"
+                        autocomplete="username"
+                        required
+                        class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        placeholder="admin@example.com" />
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label class="block text-sm font-medium mb-1.5">Şifre</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value="1"
+                            autocomplete="current-password"
+                            required
+                            class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring pr-10"
+                            placeholder="••••••••" />
+                        <button
+                            type="button"
+                            onclick="togglePassword()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                            <svg id="eyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TOTP Code -->
+                <div>
+                    <label class="block text-sm font-medium mb-1.5">Doğrulama Kodu</label>
+                    <input
+                        type="text"
+                        id="totpCode"
+                        name="totpCode"
+                        value="000000"
+                        pattern="[0-9]{6}"
+                        inputmode="numeric"
+                        maxlength="6"
+                        required
+                        class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono tracking-widest"
+                        placeholder="000000" />
+                    <p class="text-xs text-muted-foreground mt-1">Test için 000000 kullanabilirsiniz</p>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p class="text-sm text-destructive" id="errorText"></p>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    id="submitBtn"
+                    class="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Giriş Yap</span>
+                    <span id="submitSpinner" class="spinner hidden ml-2"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function setLoading(loading) {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+
+            if (loading) {
+                submitBtn.disabled = true;
+                submitText.textContent = 'Giriş yapılıyor...';
+                submitSpinner.classList.remove('hidden');
+            } else {
+                submitBtn.disabled = false;
+                submitText.textContent = 'Giriş Yap';
+                submitSpinner.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            setLoading(true);
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const totpCode = document.getElementById('totpCode').value.trim();
+
+            // Validate TOTP code format
+            if (!/^\d{6}$/.test(totpCode)) {
+                showError('Doğrulama kodu 6 haneli olmalıdır');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password, totpCode })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    showError(data.error || 'Giriş başarısız oldu');
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Bir hata oluştu. Lütfen tekrar deneyin.');
+                setLoading(false);
+            }
+        });
+
+        // Auto-focus email field
+        document.getElementById('email').focus();
+    </script>
+</body>
+</html>

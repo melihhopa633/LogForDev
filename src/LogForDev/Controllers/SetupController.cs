@@ -13,6 +13,7 @@ public class SetupController : Controller
     private readonly IClickHouseService _clickHouseService;
     private readonly ILogBufferService _buffer;
     private readonly IProjectService _projectService;
+    private readonly IUserService _userService;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<SetupController> _logger;
@@ -22,6 +23,7 @@ public class SetupController : Controller
         IClickHouseService clickHouseService,
         ILogBufferService buffer,
         IProjectService projectService,
+        IUserService userService,
         IConfiguration configuration,
         IWebHostEnvironment env,
         ILogger<SetupController> logger)
@@ -30,6 +32,7 @@ public class SetupController : Controller
         _clickHouseService = clickHouseService;
         _buffer = buffer;
         _projectService = projectService;
+        _userService = userService;
         _configuration = configuration;
         _env = env;
         _logger = logger;
@@ -203,10 +206,49 @@ public class SetupController : Controller
                 }
             }
 
+            // Create admin user with TOTP
+            string? qrCodeDataUri = null;
+            string? totpSecret = null;
+
+            if (!string.IsNullOrEmpty(request.AdminEmail) && !string.IsNullOrEmpty(request.AdminPassword))
+            {
+                try
+                {
+                    // Build connection string with new credentials
+                    var options = new ClickHouseOptions
+                    {
+                        Host = request.ClickHouseHost ?? "localhost",
+                        Port = request.ClickHousePort > 0 ? request.ClickHousePort : 8123,
+                        Database = request.ClickHouseDatabase ?? "logfordev",
+                        Username = request.ClickHouseUsername,
+                        Password = request.ClickHousePassword
+                    };
+
+                    var user = await _userService.CreateUserAsync(
+                        request.AdminEmail,
+                        request.AdminPassword,
+                        options.ConnectionString);
+                    qrCodeDataUri = _userService.GenerateQrCodeDataUri(request.AdminEmail, user.TotpSecret);
+                    totpSecret = user.TotpSecret;
+                    _logger.LogInformation("Admin user created during setup: {Email}", request.AdminEmail);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to create admin user during setup");
+                    return Ok(new { success = false, message = $"Admin kullanici olusturulamadi: {ex.Message}" });
+                }
+            }
+
             // Mark setup as complete
             _setupState.CompleteSetup();
 
-            return Ok(new { success = true, message = "Kurulum tamamlandi!" });
+            return Ok(new
+            {
+                success = true,
+                message = "Kurulum tamamlandi!",
+                qrCodeDataUri = qrCodeDataUri,
+                totpSecret = totpSecret
+            });
         }
         catch (Exception ex)
         {
@@ -241,4 +283,6 @@ public class SetupCompleteRequest
     public string? ApiKey { get; set; }
     public int KeyExpiryDays { get; set; }
     public int RetentionDays { get; set; }
+    public string? AdminEmail { get; set; }
+    public string? AdminPassword { get; set; }
 }

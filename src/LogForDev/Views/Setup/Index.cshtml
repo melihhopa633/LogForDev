@@ -63,29 +63,44 @@
         </div>
 
         <!-- Step Indicators -->
-        <div class="flex items-center justify-center gap-2 mb-8">
-            <button onclick="goToStep(1)" id="stepBtn1" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary text-primary-foreground">
-                <span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
-                Veritabani
+        <div class="flex items-center justify-center gap-1 mb-8">
+            <button onclick="goToStep(1)" id="stepBtn1" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-primary text-primary-foreground">
+                <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
+                <span class="hidden sm:inline">Veritabanı</span>
             </button>
-            <div class="w-8 h-px bg-border"></div>
-            <button onclick="goToStep(2)" id="stepBtn2" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-secondary text-muted-foreground">
-                <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">2</span>
-                Test
+            <div class="w-4 h-px bg-border"></div>
+            <button onclick="goToStep(2)" id="stepBtn2" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">2</span>
+                <span class="hidden sm:inline">Admin</span>
             </button>
-            <div class="w-8 h-px bg-border"></div>
-            <button onclick="goToStep(3)" id="stepBtn3" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-secondary text-muted-foreground">
-                <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">3</span>
-                Bitir
+            <div class="w-4 h-px bg-border"></div>
+            <button onclick="goToStep(3)" id="stepBtn3" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">3</span>
+                <span class="hidden sm:inline">TOTP</span>
+            </button>
+            <div class="w-4 h-px bg-border"></div>
+            <button onclick="goToStep(4)" id="stepBtn4" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">4</span>
+                <span class="hidden sm:inline">Proje</span>
+            </button>
+            <div class="w-4 h-px bg-border"></div>
+            <button onclick="goToStep(5)" id="stepBtn5" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">5</span>
+                <span class="hidden sm:inline">Test</span>
+            </button>
+            <div class="w-4 h-px bg-border"></div>
+            <button onclick="goToStep(6)" id="stepBtn6" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-secondary text-muted-foreground">
+                <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">6</span>
+                <span class="hidden sm:inline">Bitir</span>
             </button>
         </div>
 
         <!-- Card -->
         <div class="border border-border rounded-lg bg-card">
-            <!-- Step 1: Database & Project -->
+            <!-- Step 1: Database -->
             <div id="step1" class="step-panel active p-6">
-                <h2 class="text-lg font-semibold mb-1">Veritabani & Proje Ayarlari</h2>
-                <p class="text-sm text-muted-foreground mb-6">ClickHouse baglanti bilgilerini yapilandirin ve ilk projenizi olusturun.</p>
+                <h2 class="text-lg font-semibold mb-1">Veritabanı Bağlantısı</h2>
+                <p class="text-sm text-muted-foreground mb-6">ClickHouse veritabanı bağlantı bilgilerini yapılandırın.</p>
 
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -127,59 +142,9 @@
                     <!-- Test Connection -->
                     <div class="flex items-center gap-3">
                         <button onclick="testConnection()" id="btnTestConn" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
-                            Baglantiyi Test Et
+                            Bağlantıyı Test Et
                         </button>
                         <span id="connResult" class="text-sm"></span>
-                    </div>
-
-                    <div class="border-t border-border my-2"></div>
-
-                    <!-- Project -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1.5">Proje Adi <span class="text-red-400">*</span></label>
-                        <input type="text" id="projectName" placeholder="ornegin: backend, mobile, web-app" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1.5">API Key</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="apiKey" class="flex-1 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring" readonly />
-                            <button onclick="generateKey()" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors whitespace-nowrap">
-                                Yeniden Olustur
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1.5">API Key Gecerlilik Suresi</label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="keyExpiryDays" value="0" min="0" class="w-28 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                            <span class="text-sm text-muted-foreground">gun</span>
-                            <span class="text-xs text-muted-foreground ml-1">(0 = suresiz)</span>
-                        </div>
-                    </div>
-
-                    <!-- Retention -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1.5">Log Saklama Suresi</label>
-                        <div class="flex items-center gap-3">
-                            <select id="retentionMode" onchange="toggleRetentionInput()" class="px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                                <option value="0">Sinirsiz (sil)</option>
-                                <option value="7">7 gun</option>
-                                <option value="15">15 gun</option>
-                                <option value="30" selected>30 gun</option>
-                                <option value="60">60 gun</option>
-                                <option value="90">90 gun</option>
-                                <option value="180">180 gun</option>
-                                <option value="365">365 gun</option>
-                                <option value="custom">Ozel...</option>
-                            </select>
-                            <div id="customRetentionWrap" class="hidden flex items-center gap-2">
-                                <input type="number" id="retentionDaysCustom" value="30" min="1" class="w-24 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                                <span class="text-sm text-muted-foreground">gun</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-muted-foreground mt-1">0 = sinirsiz saklama, loglar otomatik silinmez</p>
                     </div>
                 </div>
 
@@ -190,8 +155,142 @@
                 </div>
             </div>
 
-            <!-- Step 2: Test Log -->
+            <!-- Step 2: Admin User -->
             <div id="step2" class="step-panel p-6">
+                <h2 class="text-lg font-semibold mb-1">Yönetici Hesabı</h2>
+                <p class="text-sm text-muted-foreground mb-6">Dashboard'a erişim için yönetici hesabı oluşturun.</p>
+
+                <div class="space-y-4">
+                    <!-- Admin Email -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">E-posta <span class="text-red-400">*</span></label>
+                        <input type="email" id="adminEmail" value="melih@admin.com" placeholder="admin@example.com" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        <p class="text-xs text-muted-foreground mt-1">Giriş yaparken kullanacağınız e-posta</p>
+                    </div>
+
+                    <!-- Admin Password -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Şifre <span class="text-red-400">*</span></label>
+                        <input type="password" id="adminPassword" value="1" placeholder="Şifrenizi giriniz" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                        <p class="text-xs text-muted-foreground mt-1">İstediğiniz herhangi bir şifre kullanabilirsiniz</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(1)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                        &larr; Geri
+                    </button>
+                    <button onclick="goToStep(3)" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        İleri &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Project Settings -->
+            <div id="step3" class="step-panel p-6">
+                <h2 class="text-lg font-semibold mb-1">Proje Ayarları</h2>
+                <p class="text-sm text-muted-foreground mb-6">İlk projenizi oluşturun ve log saklama süresini belirleyin.</p>
+
+                <div class="space-y-4">
+                    <!-- Project Name -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Proje Adı <span class="text-red-400">*</span></label>
+                        <input type="text" id="projectName" value="test-project" placeholder="örneğin: backend, mobile, web-app" class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+
+                    <!-- API Key -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">API Key</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="apiKey" class="flex-1 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring" readonly />
+                            <button onclick="generateKey()" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors whitespace-nowrap">
+                                Yeniden Oluştur
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- API Key Expiry -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">API Key Geçerlilik Süresi</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="keyExpiryDays" value="0" min="0" class="w-28 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <span class="text-sm text-muted-foreground">gün</span>
+                            <span class="text-xs text-muted-foreground ml-1">(0 = süresiz)</span>
+                        </div>
+                    </div>
+
+                    <!-- Retention -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Log Saklama Süresi</label>
+                        <div class="flex items-center gap-3">
+                            <select id="retentionMode" onchange="toggleRetentionInput()" class="px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                                <option value="0">Sınırsız (silme)</option>
+                                <option value="7">7 gün</option>
+                                <option value="15">15 gün</option>
+                                <option value="30" selected>30 gün</option>
+                                <option value="60">60 gün</option>
+                                <option value="90">90 gün</option>
+                                <option value="180">180 gün</option>
+                                <option value="365">365 gün</option>
+                                <option value="custom">Özel...</option>
+                            </select>
+                            <div id="customRetentionWrap" class="hidden flex items-center gap-2">
+                                <input type="number" id="retentionDaysCustom" value="30" min="1" class="w-24 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                                <span class="text-sm text-muted-foreground">gün</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-muted-foreground mt-1">0 = sınırsız saklama, loglar otomatik silinmez</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(2)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                        &larr; Geri
+                    </button>
+                    <button onclick="finalizeSetup()" id="btnFinalize" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        Kurulumu Başlat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: TOTP Setup -->
+            <div id="step4" class="step-panel p-6">
+                <h2 class="text-lg font-semibold mb-1">İki Faktörlü Kimlik Doğrulama (TOTP)</h2>
+                <p class="text-sm text-muted-foreground mb-6">Google Authenticator veya benzeri bir uygulama ile dashboard erişimini güvenli hale getirin.</p>
+
+                <div class="space-y-4">
+                    <!-- QR Code -->
+                    <div class="text-center">
+                        <div class="inline-block p-4 bg-white rounded-lg">
+                            <img id="qrCodeImage" src="" alt="QR Code" class="mx-auto" style="max-width: 200px;" />
+                        </div>
+                    </div>
+
+                    <!-- Manual Entry Code (Backup) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Manuel Giriş Kodu (Yedek)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="manualCode" readonly class="flex-1 px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground font-mono focus:outline-none" />
+                            <button onclick="copyManualCode()" class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors whitespace-nowrap">
+                                Kopyala
+                            </button>
+                        </div>
+                        <p class="text-xs text-muted-foreground mt-1">Giriş yaparken bu kodu kullanacaksınız (test için 000000 da geçerli)</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(3)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                        &larr; Geri
+                    </button>
+                    <button onclick="goToStep(5)" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        İleri &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Test Log -->
+            <div id="step5" class="step-panel p-6">
                 <h2 class="text-lg font-semibold mb-1">Ilk Log Gonderme</h2>
                 <p class="text-sm text-muted-foreground mb-6">Kurulumunuzu test edin. Asagidaki curl komutunu kullanarak veya butona tiklayarak test logu gonderin.</p>
 
@@ -220,18 +319,18 @@
                 </div>
 
                 <div class="flex justify-between mt-6">
-                    <button onclick="goToStep(1)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                    <button onclick="goToStep(4)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
                         &larr; Geri
                     </button>
-                    <button onclick="goToStep(3)" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
-                        Ileri &rarr;
+                    <button onclick="goToStep(6)" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        İleri &rarr;
                     </button>
                 </div>
             </div>
 
-            <!-- Step 3: Finish -->
-            <div id="step3" class="step-panel p-6">
-                <h2 class="text-lg font-semibold mb-1">Kurulumu Tamamla</h2>
+            <!-- Step 6: Finish -->
+            <div id="step6" class="step-panel p-6">
+                <h2 class="text-lg font-semibold mb-1">Kurulum Tamamlandı!</h2>
                 <p class="text-sm text-muted-foreground mb-6">LogForDev kullanima hazir! Dashboard'un temel ozelliklerine goz atin.</p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -274,11 +373,11 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <button onclick="goToStep(2)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
+                    <button onclick="goToStep(5)" class="px-6 py-2 bg-secondary hover:bg-secondary/80 text-sm font-medium rounded-md transition-colors">
                         &larr; Geri
                     </button>
-                    <button onclick="completeSetup()" id="btnComplete" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
-                        Kurulumu Tamamla
+                    <button onclick="redirectToLogin()" class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors">
+                        Giriş Sayfasına Git &rarr;
                     </button>
                 </div>
             </div>
@@ -336,31 +435,20 @@
         });
 
         function goToStep(step) {
-            // Validate project name before leaving step 1
-            if (currentStep === 1 && step > 1) {
-                const projectName = document.getElementById('projectName').value.trim();
-                if (!projectName) {
-                    document.getElementById('projectName').focus();
-                    document.getElementById('projectName').classList.add('ring-2', 'ring-red-500');
-                    setTimeout(() => document.getElementById('projectName').classList.remove('ring-2', 'ring-red-500'), 2000);
-                    return;
-                }
-            }
-
             currentStep = step;
             document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('step' + step).classList.add('active');
 
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 6; i++) {
                 const btn = document.getElementById('stepBtn' + i);
                 if (i <= step) {
-                    btn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary text-primary-foreground';
+                    btn.className = 'flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-primary text-primary-foreground';
                 } else {
-                    btn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-secondary text-muted-foreground';
+                    btn.className = 'flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-secondary text-muted-foreground';
                 }
             }
 
-            if (step === 2) updateCurlExample();
+            if (step === 5) updateCurlExample();
         }
 
         function updateCurlExample() {
@@ -447,8 +535,33 @@
             btn.disabled = false;
         }
 
-        async function completeSetup() {
-            const btn = document.getElementById('btnComplete');
+        async function finalizeSetup() {
+            const btn = document.getElementById('btnFinalize');
+            const adminEmail = document.getElementById('adminEmail').value.trim();
+            const adminPassword = document.getElementById('adminPassword').value;
+            const projectName = document.getElementById('projectName').value.trim();
+
+            // Validate project name
+            if (!projectName) {
+                alert('Proje adı boş olamaz');
+                document.getElementById('projectName').focus();
+                return;
+            }
+
+            // Validate admin email
+            if (!adminEmail || !adminEmail.includes('@@')) {
+                alert('Geçerli bir e-posta adresi giriniz');
+                document.getElementById('adminEmail').focus();
+                return;
+            }
+
+            // Validate admin password
+            if (!adminPassword || adminPassword.trim().length === 0) {
+                alert('Şifre boş olamaz');
+                document.getElementById('adminPassword').focus();
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Kaydediliyor...';
 
@@ -465,22 +578,37 @@
                         projectName: document.getElementById('projectName').value.trim(),
                         apiKey: document.getElementById('apiKey').value,
                         keyExpiryDays: parseInt(document.getElementById('keyExpiryDays').value) || 0,
-                        retentionDays: getRetentionDays()
+                        retentionDays: getRetentionDays(),
+                        adminEmail: adminEmail,
+                        adminPassword: adminPassword
                     })
                 });
                 const data = await resp.json();
-                if (data.success) {
-                    window.location.href = '/';
+                if (data.success && data.qrCodeDataUri) {
+                    // Store QR code data for step 4
+                    document.getElementById('qrCodeImage').src = data.qrCodeDataUri;
+                    document.getElementById('manualCode').value = data.totpSecret;
+                    // Go to step 4 (TOTP QR)
+                    goToStep(4);
                 } else {
-                    alert(data.message);
+                    alert(data.message || 'Kurulum tamamlanamadi');
                     btn.disabled = false;
-                    btn.textContent = 'Kurulumu Tamamla';
+                    btn.innerHTML = 'Kurulumu Başlat';
                 }
             } catch (e) {
-                alert('Kurulum tamamlanamadi');
+                alert('Kurulum tamamlanamadi: ' + e.message);
                 btn.disabled = false;
-                btn.textContent = 'Kurulumu Tamamla';
+                btn.innerHTML = 'Ileri &rarr;';
             }
+        }
+
+        function copyManualCode() {
+            const text = document.getElementById('manualCode').value;
+            navigator.clipboard.writeText(text);
+        }
+
+        function redirectToLogin() {
+            window.location.href = '/login';
         }
     </script>
 </body>

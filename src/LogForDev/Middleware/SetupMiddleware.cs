@@ -26,11 +26,12 @@ public class SetupMiddleware
         }
 
         var isSetupRoute = path.StartsWith("/setup") || path.StartsWith("/api/setup");
+        var isAuthRoute = path.StartsWith("/login") || path.StartsWith("/api/auth");
 
         if (!_setupState.IsSetupComplete())
         {
-            // Setup not done - redirect non-setup requests to /setup
-            if (!isSetupRoute)
+            // Setup not done - redirect non-setup/non-auth requests to /setup
+            if (!isSetupRoute && !isAuthRoute)
             {
                 context.Response.Redirect("/setup");
                 return;
