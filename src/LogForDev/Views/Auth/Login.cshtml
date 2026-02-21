@@ -16,15 +16,15 @@
                     colors: {
                         background: '#09090b',
                         foreground: '#fafafa',
-                        card: { DEFAULT: '#09090b', foreground: '#fafafa' },
-                        primary: { DEFAULT: '#2563eb', foreground: '#fafafa' },
-                        secondary: { DEFAULT: '#27272a', foreground: '#fafafa' },
-                        muted: { DEFAULT: '#27272a', foreground: '#a1a1aa' },
-                        accent: { DEFAULT: '#27272a', foreground: '#fafafa' },
+                        card: { DEFAULT: '#111113', foreground: '#fafafa' },
+                        primary: { DEFAULT: '#3b82f6', foreground: '#fafafa' },
+                        secondary: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
+                        muted: { DEFAULT: '#1c1c1f', foreground: '#71717a' },
+                        accent: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
                         destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
                         border: '#27272a',
-                        input: '#27272a',
-                        ring: '#2563eb',
+                        input: '#1c1c1f',
+                        ring: '#3b82f6',
                     },
                     borderRadius: {
                         lg: '0.5rem',
@@ -37,147 +37,148 @@
     </script>
     <style>
         body { font-feature-settings: "rlig" 1, "calt" 1; }
-        .spinner { border: 2px solid #27272a; border-top: 2px solid #2563eb; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; display: inline-block; }
-        @@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .spinner {
+            border: 2px solid #27272a;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+
+        .log-entry {
+            opacity: 0;
+            animation: fadeSlide 0.4s ease-out forwards;
+        }
+        @@keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeUp 0.5s ease-out both; }
+
+        @@keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .cursor-blink { animation: blink 1.1s step-end infinite; }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #fafafa !important;
+            -webkit-box-shadow: 0 0 0 100px #1c1c1f inset !important;
+            border-color: #27272a !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .totp-box:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .btn-glow:hover:not(:disabled) {
+            box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+        }
+
+        .dot-grid {
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
     </style>
 </head>
-<body class="bg-background text-foreground min-h-screen flex items-center justify-center antialiased p-4">
-    <div class="w-full max-w-md">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="flex items-center justify-center gap-2 mb-3">
-                <svg class="w-9 h-9 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
-                </svg>
-                <h1 class="text-2xl font-bold">LogForDev</h1>
-            </div>
-            <p class="text-muted-foreground">Giriş Yap</p>
-        </div>
+<body class="bg-background text-foreground min-h-screen antialiased">
 
-        <!-- Login Form -->
-        <div class="border border-border rounded-lg bg-card p-6">
-            <form id="loginForm" class="space-y-4">
-                <!-- Email -->
-                <div>
-                    <label class="block text-sm font-medium mb-1.5">E-posta</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value="@(ViewBag.TestMode == true ? "test@admin.com" : "")"
-                        autocomplete="username"
-                        required
-                        class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        placeholder="admin@example.com" />
-                </div>
-
-                <!-- Password -->
-                <div>
-                    <label class="block text-sm font-medium mb-1.5">Şifre</label>
-                    <div class="relative">
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value="@(ViewBag.TestMode == true ? "testpassword" : "")"
-                            autocomplete="current-password"
-                            required
-                            class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring pr-10"
-                            placeholder="••••••••" />
-                        <button
-                            type="button"
-                            onclick="togglePassword()"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                            <svg id="eyeIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- TOTP Code -->
-                <div>
-                    <label class="block text-sm font-medium mb-1.5">Doğrulama Kodu</label>
-                    <input
-                        type="text"
-                        id="totpCode"
-                        name="totpCode"
-                        value="@(ViewBag.TestMode == true ? "000000" : "")"
-                        pattern="[0-9]{6}"
-                        inputmode="numeric"
-                        maxlength="6"
-                        required
-                        class="w-full px-3 py-2 bg-input border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono tracking-widest"
-                        placeholder="000000" />
-                    @if (ViewBag.TestMode == true)
-                    {
-                        <p class="text-xs text-yellow-500 mt-1">⚠️ Test modu aktif — 000000 kullanılabilir</p>
-                    }
-                </div>
-
-                <!-- Error Message -->
-                <div id="errorMessage" class="hidden p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                    <p class="text-sm text-destructive" id="errorText"></p>
-                </div>
-
-                <!-- Submit Button -->
-                <button
-                    type="submit"
-                    id="submitBtn"
-                    class="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span id="submitText">Giriş Yap</span>
-                    <span id="submitSpinner" class="spinner hidden ml-2"></span>
-                </button>
-            </form>
-        </div>
+    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+        @await Html.PartialAsync("_LoginBranding")
+        @await Html.PartialAsync("_LoginForm")
     </div>
 
     <script>
+        // Password toggle
         function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
-
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            const pw = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
             } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+                pw.type = 'password';
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
             }
         }
 
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            errorText.textContent = message;
-            errorDiv.classList.remove('hidden');
+        // TOTP 6-box logic
+        const totpBoxes = document.querySelectorAll('.totp-box');
+        const totpHidden = document.getElementById('totpCode');
+
+        function syncTotp() {
+            totpHidden.value = Array.from(totpBoxes).map(b => b.value).join('');
+        }
+
+        totpBoxes.forEach((box, i) => {
+            box.addEventListener('input', () => {
+                box.value = box.value.replace(/\D/g, '').slice(-1);
+                if (box.value && i < 5) totpBoxes[i + 1].focus();
+                syncTotp();
+            });
+
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !box.value && i > 0) {
+                    totpBoxes[i - 1].focus();
+                    totpBoxes[i - 1].value = '';
+                    syncTotp();
+                }
+                if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); totpBoxes[i - 1].focus(); }
+                if (e.key === 'ArrowRight' && i < 5) { e.preventDefault(); totpBoxes[i + 1].focus(); }
+            });
+
+            box.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                text.split('').forEach((ch, j) => { if (totpBoxes[j]) totpBoxes[j].value = ch; });
+                if (text.length > 0) totpBoxes[Math.min(text.length, 5)].focus();
+                syncTotp();
+            });
+
+            box.addEventListener('focus', () => box.select());
+        });
+
+        // Test mode pre-fill
+        @if (ViewBag.TestMode == true)
+        {
+            <text>
+            '000000'.split('').forEach((c, i) => { totpBoxes[i].value = c; });
+            syncTotp();
+            </text>
+        }
+
+        // Error/loading helpers
+        function showError(msg) {
+            document.getElementById('errorText').textContent = msg;
+            document.getElementById('errorMessage').classList.remove('hidden');
         }
 
         function hideError() {
             document.getElementById('errorMessage').classList.add('hidden');
         }
 
-        function setLoading(loading) {
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
-            const submitSpinner = document.getElementById('submitSpinner');
-
-            if (loading) {
-                submitBtn.disabled = true;
-                submitText.textContent = 'Giriş yapılıyor...';
-                submitSpinner.classList.remove('hidden');
-            } else {
-                submitBtn.disabled = false;
-                submitText.textContent = 'Giriş Yap';
-                submitSpinner.classList.add('hidden');
-            }
+        function setLoading(on) {
+            const btn = document.getElementById('submitBtn');
+            document.getElementById('submitText').textContent = on ? 'Giriş yapılıyor...' : 'Giriş Yap';
+            document.getElementById('submitSpinner').classList.toggle('hidden', !on);
+            btn.disabled = on;
         }
 
+        // Form submit
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideError();
@@ -185,9 +186,9 @@
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const totpCode = document.getElementById('totpCode').value.trim();
+            const totpCode = totpHidden.value.trim();
+            const rememberMe = document.getElementById('rememberMe').checked;
 
-            // Validate TOTP code format
             if (!/^\d{6}$/.test(totpCode)) {
                 showError('Doğrulama kodu 6 haneli olmalıdır');
                 setLoading(false);
@@ -195,30 +196,36 @@
             }
 
             try {
-                const response = await fetch('/api/auth/login', {
+                const res = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password, totpCode })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, totpCode, rememberMe })
                 });
-
-                const data = await response.json();
-
+                const data = await res.json();
                 if (data.success) {
-                    window.location.href = '/';
+                    // Hidden form trick: Chrome'un şifre kaydetme diyaloğunu tetikler
+                    const f = document.createElement('form');
+                    f.method = 'GET';
+                    f.action = '/';
+                    const u = document.createElement('input');
+                    u.type = 'email'; u.name = 'email'; u.value = email; u.autocomplete = 'username';
+                    const p = document.createElement('input');
+                    p.type = 'password'; p.name = 'password'; p.value = password; p.autocomplete = 'current-password';
+                    f.appendChild(u); f.appendChild(p);
+                    document.body.appendChild(f);
+                    f.submit();
                 } else {
                     showError(data.error || 'Giriş başarısız oldu');
                     setLoading(false);
                 }
-            } catch (error) {
-                console.error('Login error:', error);
+            } catch (err) {
+                console.error('Login error:', err);
                 showError('Bir hata oluştu. Lütfen tekrar deneyin.');
                 setLoading(false);
             }
         });
 
-        // Auto-focus email field
+        // Auto-focus
         document.getElementById('email').focus();
     </script>
 </body>

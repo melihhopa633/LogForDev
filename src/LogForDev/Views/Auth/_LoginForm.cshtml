@@ -1,0 +1,136 @@
+<!-- Right Panel: Login Form -->
+<div class="flex items-center justify-center p-4 sm:p-8 relative">
+
+    <!-- Subtle glow -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[350px] pointer-events-none"
+         style="background: radial-gradient(ellipse at center, rgba(59,130,246,0.04) 0%, transparent 60%);"></div>
+
+    <div class="relative z-10 w-full max-w-[400px] animate-fade-up">
+
+        <!-- Mobile: Logo + subtitle -->
+        <div class="text-center mb-8 lg:hidden">
+            <div class="inline-flex items-center gap-2.5 mb-3">
+                <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-semibold tracking-tight">LogForDev</span>
+            </div>
+            <p class="text-sm text-muted-foreground">Hesabınıza giriş yapın</p>
+        </div>
+
+        <!-- Desktop: Heading -->
+        <div class="hidden lg:block mb-8">
+            <h1 class="text-2xl font-bold tracking-tight">Giriş Yap</h1>
+            <p class="text-sm text-muted-foreground mt-1.5">LogForDev hesabınıza giriş yapın</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-card border border-border rounded-xl p-6 sm:p-8">
+            <form id="loginForm" class="space-y-5">
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-foreground mb-2">E-posta</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="@(ViewBag.TestMode == true ? "melih@admin.com" : "")"
+                        autocomplete="username"
+                        required
+                        class="w-full h-10 px-3 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                        style="background-color:#1c1c1f"
+                        placeholder="admin@@example.com" />
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-foreground mb-2">Şifre</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value="@(ViewBag.TestMode == true ? "1" : "")"
+                            autocomplete="current-password"
+                            required
+                            class="w-full h-10 px-3 pr-10 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                            style="background-color:#1c1c1f"
+                            placeholder="••••••••" />
+                        <button
+                            type="button"
+                            onclick="togglePassword()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabindex="-1">
+                            <svg id="eyeIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TOTP Code -->
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-1.5">Doğrulama Kodu</label>
+                    <p class="text-xs text-muted-foreground mb-3">Authenticator uygulamanızdaki 6 haneli kod</p>
+                    <div class="flex items-center justify-center gap-2" id="totpContainer">
+                        <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 1" />
+                        <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 2" />
+                        <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 3" />
+                        <span class="text-muted-foreground select-none px-0.5">–</span>
+                        <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 4" />
+                        <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 5" />
+                        <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 6" />
+                    </div>
+                    <input type="hidden" id="totpCode" name="totpCode" value="@(ViewBag.TestMode == true ? "000000" : "")" />
+                    @if (ViewBag.TestMode == true)
+                    {
+                        <p class="text-xs text-yellow-500 mt-2.5 text-center">Test modu aktif — 000000 kullanılabilir</p>
+                    }
+                </div>
+
+                <!-- Remember Me -->
+                <div class="flex items-center gap-2.5">
+                    <input
+                        type="checkbox"
+                        id="rememberMe"
+                        name="rememberMe"
+                        class="w-4 h-4 rounded border border-border accent-primary cursor-pointer" />
+                    <label for="rememberMe" class="text-sm text-muted-foreground cursor-pointer select-none">Beni hatırla <span class="text-xs">(30 gün)</span></label>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p class="text-sm text-destructive" id="errorText"></p>
+                </div>
+
+                <!-- Submit -->
+                <button
+                    type="submit"
+                    id="submitBtn"
+                    class="btn-glow w-full h-10 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <span id="submitText">Giriş Yap</span>
+                    <span id="submitSpinner" class="spinner hidden"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer badges -->
+        <div class="flex items-center justify-center gap-3 mt-6 text-xs text-muted-foreground">
+            <span class="inline-flex items-center gap-1.5">
+                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                2FA Korumalı
+            </span>
+            <span class="w-px h-3 bg-border"></span>
+            <span>Self-hosted</span>
+            <span class="w-px h-3 bg-border"></span>
+            <span>MIT License</span>
+        </div>
+    </div>
+</div>

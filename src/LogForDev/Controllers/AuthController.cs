@@ -75,13 +75,16 @@ public class AuthController : Controller
             var encryptedCookie = protector.Protect(cookieJson);
 
             // Set cookie
-            Response.Cookies.Append(CookieAuthenticationOptions.CookieName, encryptedCookie, new CookieOptions
+            var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
-            });
+            };
+            if (request.RememberMe)
+                cookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
+
+            Response.Cookies.Append(CookieAuthenticationOptions.CookieName, encryptedCookie, cookieOptions);
 
             _logger.LogInformation("User logged in successfully: {Email}", user.Email);
 

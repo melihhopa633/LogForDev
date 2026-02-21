@@ -2,9 +2,6 @@
     ViewData["Title"] = "App Logs";
 }
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-16 right-4 z-[100] space-y-2"></div>
-
 <!-- Header -->
 <div class="mb-4">
     <h1 class="text-2xl font-bold">Application Logs</h1>
@@ -484,17 +481,6 @@
             document.getElementById('totalInfo').textContent = `${totalCount.toLocaleString()} total logs`;
             document.getElementById('prevPage').disabled = currentPage <= 1;
             document.getElementById('nextPage').disabled = currentPage >= totalPages;
-        }
-
-        // --- Toast ---
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const colors = { success: 'border-green-500/50 bg-green-500/10 text-green-400', error: 'border-red-500/50 bg-red-500/10 text-red-400', info: 'border-blue-500/50 bg-blue-500/10 text-blue-400' };
-            const toast = document.createElement('div');
-            toast.className = `px-4 py-3 rounded-lg border ${colors[type] || colors.info} text-sm font-medium shadow-lg animate-slide-in`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
         // --- Event Listeners ---

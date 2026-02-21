@@ -2,819 +2,1211 @@
     ViewData["Title"] = "Documentation";
 }
 
-<div class="flex flex-col lg:flex-row gap-8">
+<style>
+    .doc-code { position: relative; }
+    .doc-code pre {
+        margin: 0;
+        padding: 1rem 1.25rem;
+        padding-right: 3rem;
+        overflow-x: auto;
+        font-size: 0.75rem;
+        line-height: 1.7;
+        border-radius: 0.5rem;
+        border: 1px solid #27272a;
+        background: #111113 !important;
+        color: #e4e4e7;
+    }
+    .copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.35rem;
+        border-radius: 0.375rem;
+        color: #71717a;
+        background: transparent;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s;
+        z-index: 2;
+    }
+    .copy-btn:hover { color: #fafafa; background: #27272a; border-color: #3f3f46; }
+    .copy-btn.copied { color: #4ade80; }
+
+    .lang-tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; }
+    .lang-tab {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #71717a;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .lang-tab:hover { color: #a1a1aa; }
+    .lang-tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+    .lang-panel { display: none; }
+    .lang-panel.active { display: block; }
+
+    .method-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        letter-spacing: 0.025em;
+    }
+    .method-post { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8125rem;
+        color: #71717a;
+        border-radius: 0.375rem;
+        transition: all 0.15s;
+        text-decoration: none;
+        border-left: 2px solid transparent;
+    }
+    .sidebar-link:hover { color: #d4d4d8; background: rgba(39,39,42,0.5); }
+    .sidebar-link.active { color: #fafafa; border-left-color: #3b82f6; background: rgba(59,130,246,0.08); }
+    .sidebar-group { font-size: 0.6875rem; font-weight: 600; color: #52525b; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.5rem 0.75rem; margin-top: 1rem; }
+    .sidebar-group:first-child { margin-top: 0; }
+
+    .param-table { width: 100%; font-size: 0.8125rem; border-collapse: collapse; }
+    .param-table th { text-align: left; padding: 0.625rem 0.75rem; font-weight: 500; color: #71717a; background: rgba(28,28,31,0.5); border-bottom: 1px solid #27272a; font-size: 0.75rem; }
+    .param-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid rgba(39,39,42,0.5); color: #a1a1aa; vertical-align: top; }
+    .param-table tr:last-child td { border-bottom: none; }
+    .param-name { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.75rem; color: #e4e4e7; background: rgba(28,28,31,0.8); padding: 0.125rem 0.375rem; border-radius: 0.25rem; }
+    .param-required { color: #f87171; font-size: 0.625rem; font-weight: 600; margin-left: 0.375rem; }
+    .param-optional { color: #52525b; font-size: 0.625rem; margin-left: 0.375rem; }
+    .param-type { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.6875rem; color: #3b82f6; }
+
+    .endpoint-card { border: 1px solid #27272a; border-radius: 0.5rem; overflow: hidden; background: #111113; }
+    .endpoint-header { display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem 1rem; border-bottom: 1px solid #27272a; background: rgba(28,28,31,0.3); }
+    .endpoint-path { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.8125rem; color: #d4d4d8; }
+
+    .callout { padding: 0.875rem 1rem; border-radius: 0.5rem; font-size: 0.8125rem; line-height: 1.6; }
+    .callout-info { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); color: #93c5fd; }
+    .callout-warn { background: rgba(234,179,8,0.06); border: 1px solid rgba(234,179,8,0.2); color: #fde68a; }
+
+    .level-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; display: inline-block; }
+    .section-anchor { scroll-margin-top: 5rem; }
+
+    .try-input {
+        width: 100%;
+        height: 2.25rem;
+        padding: 0 0.75rem;
+        font-size: 0.8125rem;
+        border-radius: 0.375rem;
+        border: 1px solid #27272a;
+        background: #1c1c1f;
+        color: #fafafa;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+    .try-input:focus { border-color: #3b82f6; }
+    .try-input::placeholder { color: #52525b; }
+    .try-select {
+        height: 2.25rem;
+        padding: 0 0.5rem;
+        font-size: 0.8125rem;
+        border-radius: 0.375rem;
+        border: 1px solid #27272a;
+        background: #1c1c1f;
+        color: #fafafa;
+        outline: none;
+        cursor: pointer;
+    }
+    .try-btn {
+        height: 2.25rem;
+        padding: 0 1rem;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        border-radius: 0.375rem;
+        border: none;
+        background: #3b82f6;
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+    }
+    .try-btn:hover { background: #2563eb; }
+</style>
+
+<div class="flex gap-0">
+
     <!-- Sidebar -->
-    <aside class="lg:w-56 flex-shrink-0">
-        <div class="lg:sticky lg:top-20 space-y-1">
-            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contents</p>
-            <a href="#quick-start" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Quick Start</a>
-            <a href="#authentication" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Authentication</a>
-            <a href="#send-log" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Send a Log</a>
-            <a href="#send-batch" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Send Batch Logs</a>
-            <a href="#query-logs" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Query Logs</a>
-            <a href="#error-responses" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Error Responses</a>
-            <a href="#log-levels" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Log Levels</a>
-            <a href="#configuration" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Configuration</a>
-            <a href="#sdk-examples" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">SDK Examples</a>
-            <a href="#best-practices" class="block px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">Best Practices</a>
-        </div>
+    <aside class="hidden lg:block w-56 shrink-0">
+        <nav class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pb-8 pr-4 -ml-2" id="docSidebar">
+            <div class="sidebar-group">Getting Started</div>
+            <a href="#introduction" class="sidebar-link active" data-section="introduction">Introduction</a>
+            <a href="#authentication" class="sidebar-link" data-section="authentication">Authentication</a>
+            <a href="#quick-start" class="sidebar-link" data-section="quick-start">Quick Start</a>
+
+            <div class="sidebar-group">Sending Logs</div>
+            <a href="#send-log" class="sidebar-link" data-section="send-log">Send a Log</a>
+            <a href="#send-batch" class="sidebar-link" data-section="send-batch">Batch Logs</a>
+            <a href="#log-levels" class="sidebar-link" data-section="log-levels">Log Levels</a>
+            <a href="#error-responses" class="sidebar-link" data-section="error-responses">Error Responses</a>
+
+            <div class="sidebar-group">Integration</div>
+            <a href="#examples" class="sidebar-link" data-section="examples">Code Examples</a>
+            <a href="#playground" class="sidebar-link" data-section="playground">API Playground</a>
+            <a href="#best-practices" class="sidebar-link" data-section="best-practices">Best Practices</a>
+        </nav>
     </aside>
 
     <!-- Content -->
-    <div class="flex-1 max-w-3xl space-y-12">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight">API Documentation</h1>
-            <p class="mt-2 text-lg text-muted-foreground">LogForDev provides a simple REST API to send and query logs from any application.</p>
-        </div>
+    <div class="flex-1 min-w-0 max-w-4xl space-y-14 pb-20">
 
-        <!-- Quick Start -->
-        <section id="quick-start" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Quick Start</h2>
-            <p class="text-sm text-muted-foreground">Base URL: <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">http://your-server:5000</code></p>
-            <p class="text-sm text-muted-foreground">All API endpoints require authentication via API key.</p>
+        <!-- Introduction -->
+        <section id="introduction" class="section-anchor">
+            <h1 class="text-2xl font-bold tracking-tight">Integration Guide</h1>
+            <p class="mt-2 text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                LogForDev'e uygulamanızı entegre edin ve loglarınızı tek bir yerden takip edin.
+                SDK gerekmez &mdash; sadece bir HTTP isteği yeterli.
+            </p>
 
-            <!-- Try It Section -->
-            <div class="rounded-lg border border-border bg-muted/30 p-4">
-                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Try it now</p>
-                <div class="space-y-3">
-                    <div class="flex gap-2">
-                        <input type="text" id="tryApiKey" placeholder="Enter your API key"
-                            class="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono" />
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <span class="text-sm font-medium">3 Adımda Entegre Et</span>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="tryMessage" placeholder="Log message..." value="Hello from LogForDev!"
-                            class="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                        <select id="tryLevel" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                            <option value="info">Info</option>
-                            <option value="debug">Debug</option>
-                            <option value="warning">Warning</option>
-                            <option value="error">Error</option>
-                        </select>
-                        <button onclick="sendTestLog()" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap">
-                            Send Log
-                        </button>
+                    <p class="text-xs text-muted-foreground">Proje oluştur, API key al, POST isteği gönder. Hepsi bu.</p>
+                </div>
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        <span class="text-sm font-medium">Her Dilde Çalışır</span>
                     </div>
-                    <pre id="tryResult" class="hidden rounded-lg border border-border bg-background p-3 font-mono text-xs overflow-x-auto"></pre>
+                    <p class="text-xs text-muted-foreground">Python, Node.js, Go, C#, Java, PHP, Ruby &mdash; HTTP konuşan her dil.</p>
+                </div>
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span class="text-sm font-medium">API Key ile Güvenli</span>
+                    </div>
+                    <p class="text-xs text-muted-foreground">Her proje kendi API key'ine sahip. Loglar projeye otomatik bağlanır.</p>
                 </div>
             </div>
-
-            <p class="text-sm text-muted-foreground pt-2">Or use curl:</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">curl -X POST http://localhost:5000/api/logs \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "level": "info",
-    "message": "Hello LogForDev!",
-    "appName": "my-app"
-  }'</code></pre>
         </section>
 
         <!-- Authentication -->
-        <section id="authentication" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Authentication</h2>
-            <p class="text-sm text-muted-foreground">Include your API key in the request header:</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">X-API-Key: your-api-key</code></pre>
+        <section id="authentication" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">1. API Key Alın</h2>
+            <p class="text-sm text-muted-foreground">
+                LogForDev'e log göndermek için bir API key'e ihtiyacınız var.
+                <a href="/Home/Projects" class="text-primary hover:underline">Projects</a> sayfasından yeni bir proje oluşturduğunuzda otomatik olarak bir API key üretilir.
+            </p>
 
-            <div class="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 mt-4">
-                <p class="text-sm text-yellow-400">
-                    <strong>Where to get your API key?</strong><br>
-                    The API key is configured via the <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs border border-border">LOGFORDEV__APIKEY</code> environment variable
-                    or in <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs border border-border">appsettings.json</code>.
-                    Default value is <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs border border-border">change-me-in-production</code>.
-                </p>
+            <div class="callout callout-info">
+                <strong>Projects &rarr; Create Project</strong> butonuna tıklayın. Proje adı girin. API key'iniz <code class="font-mono text-xs bg-black/20 px-1 rounded">lfdev_</code> ile başlayan bir string olacak. Bu key'i kopyalayın ve uygulamanızda kullanın.
             </div>
 
-            <p class="text-sm text-muted-foreground mt-4">Alternative: Query parameter (not recommended for production)</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">GET /api/logs?apiKey=your-api-key</code></pre>
+            <p class="text-sm text-muted-foreground mt-4">API key'i her istekte header olarak gönderin:</p>
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre>X-API-Key: lfdev_your-api-key-here</pre>
+            </div>
         </section>
 
-        <!-- Send a Log -->
-        <section id="send-log" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Send a Log</h2>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center rounded-md bg-blue-500 px-2.5 py-0.5 text-xs font-semibold text-black">POST</span>
-                <code class="font-mono text-sm text-muted-foreground">/api/logs</code>
+        <!-- Quick Start -->
+        <section id="quick-start" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">2. İlk Logunuzu Gönderin</h2>
+            <p class="text-sm text-muted-foreground">Tek bir cURL komutu ile ilk logunuzu gönderin:</p>
+
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre>curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "level": "info",
+    "message": "Hello from LogForDev!",
+    "appName": "my-app"
+  }'</pre>
             </div>
 
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Request Body</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
-  "level": "info",                    // Required: trace, debug, info, warning, error, fatal
-  "message": "User logged in",        // Required: Log message
-  "appName": "auth-service",          // Required: Your application name
-  "metadata": {                       // Optional: Additional structured data
-    "userId": 123,
-    "ip": "192.168.1.1"
-  },
-  "traceId": "abc-123",               // Optional: Distributed tracing ID
-  "spanId": "span-456",               // Optional: Span ID for tracing
-  "environment": "production",        // Optional: Environment (production, staging, development)
-  "host": "server-1"                  // Optional: Server hostname (auto-detected if not provided)
-}</code></pre>
-
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Success Response (200)</p>
-            <pre class="rounded-lg border border-green-500/30 bg-green-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-green-400">{
+            <p class="text-sm text-muted-foreground">Başarılı yanıt:</p>
+            <div class="doc-code">
+                <pre><span style="color:#4ade80">{
   "success": true,
   "id": "550e8400-e29b-41d4-a716-446655440000"
-}</code></pre>
+}</span></pre>
+            </div>
+
+            <p class="text-sm text-muted-foreground">Hepsi bu kadar. Logunuz artık <a href="/" class="text-primary hover:underline">Dashboard</a>'da görünür.</p>
         </section>
 
-        <!-- Send Batch -->
-        <section id="send-batch" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Send Batch Logs</h2>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center rounded-md bg-blue-500 px-2.5 py-0.5 text-xs font-semibold text-black">POST</span>
-                <code class="font-mono text-sm text-muted-foreground">/api/logs/batch</code>
-            </div>
-            <p class="text-sm text-muted-foreground">Send multiple logs in a single request for better performance.</p>
+        <!-- ═══════════════ SENDING LOGS ═══════════════ -->
+        <div class="border-t border-border pt-2">
+            <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Log Gönderme</h3>
+        </div>
 
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Request Body</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
+        <!-- POST /api/logs -->
+        <section id="send-log" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">Tek Log Gönder</h2>
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/api/logs</span>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p class="text-sm text-muted-foreground">Uygulamanızdan tek bir log kaydı gönderir.</p>
+                    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Request Body</h4>
+                    <div class="rounded-lg border border-border overflow-hidden">
+                        <table class="param-table">
+                            <thead><tr><th>Alan</th><th>Tip</th><th>Açıklama</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">level</span><span class="param-required">ZORUNLU</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Log seviyesi: <code>trace</code>, <code>debug</code>, <code>info</code>, <code>warning</code>, <code>error</code>, <code>fatal</code></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">message</span><span class="param-required">ZORUNLU</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Log mesajı</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">appName</span><span class="param-required">ZORUNLU</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Uygulamanızın veya servisinizin adı</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">metadata</span><span class="param-optional">opsiyonel</span></td>
+                                    <td><span class="param-type">object</span></td>
+                                    <td>Ek bilgiler (userId, orderId, duration vb.)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">traceId</span><span class="param-optional">opsiyonel</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Dağıtık izleme ID'si &mdash; bir isteği tüm servisler boyunca takip etmek için</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">spanId</span><span class="param-optional">opsiyonel</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Span ID &mdash; traceId ile birlikte kullanılır</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">environment</span><span class="param-optional">opsiyonel</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Ortam adı. Varsayılan: <code>production</code></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">host</span><span class="param-optional">opsiyonel</span></td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td>Sunucu adı. Gönderilmezse istemci IP'si kullanılır</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tam Örnek</h4>
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "level": "error",
+    "message": "Payment processing failed",
+    "appName": "payment-service",
+    "environment": "production",
+    "metadata": {
+      "orderId": 4521,
+      "amount": 29.99,
+      "error": "insufficient_funds"
+    },
+    "traceId": "req-abc-123",
+    "spanId": "span-456"
+  }'</pre>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Başarılı <span class="text-green-400">200</span></h4>
+                            <div class="doc-code"><pre><span style="color:#4ade80">{
+  "success": true,
+  "id": "550e8400-e29b-41d4-..."
+}</span></pre></div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Hata <span class="text-red-400">400</span></h4>
+                            <div class="doc-code"><pre><span style="color:#f87171">{
+  "success": false,
+  "error": "Invalid log level"
+}</span></pre></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- POST /api/logs/batch -->
+        <section id="send-batch" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">Toplu Log Gönder</h2>
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/api/logs/batch</span>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p class="text-sm text-muted-foreground">Birden fazla logu tek bir istekle gönderin. Yüksek trafik uygulamalar için önerilir.</p>
+
+                    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Request Body</h4>
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>{
   "logs": [
     {
       "level": "info",
-      "message": "Request started",
-      "appName": "api-gateway",
-      "traceId": "trace-001"
+      "message": "Sipariş alındı",
+      "appName": "order-service",
+      "traceId": "trace-001",
+      "metadata": { "orderId": 789 }
     },
     {
       "level": "debug",
-      "message": "Processing payment",
+      "message": "Ödeme işleniyor",
       "appName": "payment-service",
       "traceId": "trace-001"
     },
     {
       "level": "info",
-      "message": "Request completed",
-      "appName": "api-gateway",
+      "message": "Sipariş tamamlandı (145ms)",
+      "appName": "order-service",
       "traceId": "trace-001"
     }
   ]
-}</code></pre>
+}</pre>
+                    </div>
 
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Success Response (200)</p>
-            <pre class="rounded-lg border border-green-500/30 bg-green-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-green-400">{
+                    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Yanıt <span class="text-green-400">200</span></h4>
+                    <div class="doc-code"><pre><span style="color:#4ade80">{
   "success": true,
   "count": 3
-}</code></pre>
-        </section>
+}</span></pre></div>
 
-        <!-- Query Logs -->
-        <section id="query-logs" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Query Logs</h2>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center rounded-md bg-green-500 px-2.5 py-0.5 text-xs font-semibold text-black">GET</span>
-                <code class="font-mono text-sm text-muted-foreground">/api/logs</code>
-            </div>
-
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Query Parameters</p>
-            <div class="rounded-lg border border-border overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-border bg-muted/50">
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Parameter</th>
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Type</th>
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">level</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Single level: Trace, Debug, Info, Warning, Error, Fatal</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">levels</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Multiple levels (comma-separated): "Error,Warning"</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">appName</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Filter by application name</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">environment</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Filter by environment</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">search</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Search in message content (case-insensitive)</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">traceId</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">string</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Filter by trace ID</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">from</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">datetime</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Start date (ISO 8601): 2024-01-01T00:00:00Z</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">to</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">datetime</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">End date (ISO 8601): 2024-01-31T23:59:59Z</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">page</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">integer</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Page number (default: 1)</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">pageSize</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">integer</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Results per page (default: 50, max: 1000)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Example</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">GET /api/logs?levels=Error,Warning&appName=payment-service&page=1&pageSize=20</code></pre>
-
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Response (200)</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
-  "data": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "timestamp": "2024-01-15T10:30:00.000Z",
-      "level": 4,           // 0=Trace, 1=Debug, 2=Info, 3=Warning, 4=Error, 5=Fatal
-      "appName": "payment-service",
-      "message": "Payment failed: insufficient funds",
-      "metadata": "{\"orderId\": 123}",
-      "traceId": "trace-001",
-      "spanId": null,
-      "host": "server-1",
-      "environment": "production"
-    }
-  ],
-  "totalCount": 1523,
-  "page": 1,
-  "pageSize": 20,
-  "totalPages": 77
-}</code></pre>
-        </section>
-
-        <!-- Error Responses -->
-        <section id="error-responses" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Error Responses</h2>
-            <p class="text-sm text-muted-foreground">All error responses follow a consistent format:</p>
-
-            <div class="space-y-4">
-                <div>
-                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">401 Unauthorized</p>
-                    <p class="text-sm text-muted-foreground mb-2">Missing or invalid API key</p>
-                    <pre class="rounded-lg border border-red-500/30 bg-red-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-red-400">{
-  "success": false,
-  "error": "Invalid API key"
-}</code></pre>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">400 Bad Request</p>
-                    <p class="text-sm text-muted-foreground mb-2">Invalid request body or parameters</p>
-                    <pre class="rounded-lg border border-red-500/30 bg-red-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-red-400">{
-  "success": false,
-  "error": "Invalid log level. Valid values: Trace, Debug, Info, Warning, Error, Fatal"
-}</code></pre>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">500 Internal Server Error</p>
-                    <p class="text-sm text-muted-foreground mb-2">Server-side error (database connection, etc.)</p>
-                    <pre class="rounded-lg border border-red-500/30 bg-red-500/5 p-4 overflow-x-auto"><code class="font-mono text-xs text-red-400">{
-  "success": false,
-  "error": "Internal server error"
-}</code></pre>
+                    <div class="callout callout-info">
+                        <strong>Performans ipucu:</strong> Logları lokal olarak biriktirin ve 100&ndash;500'lük gruplar halinde gönderin. Bu, HTTP overhead'ini 10&ndash;50x azaltır.
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- Log Levels -->
-        <section id="log-levels" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Log Levels</h2>
+        <section id="log-levels" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">Log Seviyeleri</h2>
+            <p class="text-sm text-muted-foreground">Log gönderirken <code class="font-mono text-xs bg-muted px-1 rounded">level</code> alanında aşağıdaki değerlerden birini kullanın (büyük/küçük harf fark etmez):</p>
             <div class="rounded-lg border border-border overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-border bg-muted/50">
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Level</th>
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Value</th>
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Description</th>
-                        </tr>
-                    </thead>
+                <table class="param-table">
+                    <thead><tr><th>Seviye</th><th>Kullanım</th><th>Ne Zaman Kullanmalı?</th></tr></thead>
                     <tbody>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-zinc-700/50 px-2 py-0.5 text-xs font-semibold text-zinc-400">Trace</span></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">0</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Most detailed information, typically only enabled during development</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-400">Debug</span></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">1</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Detailed information useful for debugging</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-green-500/20 px-2 py-0.5 text-xs font-semibold text-green-400">Info</span></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">2</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">General operational information</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-yellow-500/20 px-2 py-0.5 text-xs font-semibold text-yellow-400">Warning</span></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">3</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Warning events that might need attention</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-400">Error</span></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">4</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Error events that might still allow the application to continue</td>
+                        <tr>
+                            <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#71717a"></span><span class="text-zinc-400 text-xs font-semibold">trace</span></span></td>
+                            <td><code class="font-mono text-xs">"level": "trace"</code></td>
+                            <td>En detaylı bilgi, sadece geliştirme ortamında</td>
                         </tr>
                         <tr>
-                            <td class="px-4 py-2.5"><span class="inline-flex items-center rounded-md bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">Fatal</span></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">5</td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Critical errors that cause the application to crash</td>
+                            <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#60a5fa"></span><span class="text-blue-400 text-xs font-semibold">debug</span></span></td>
+                            <td><code class="font-mono text-xs">"level": "debug"</code></td>
+                            <td>Hata ayıklama bilgileri, sorunu araştırırken</td>
+                        </tr>
+                        <tr>
+                            <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#4ade80"></span><span class="text-green-400 text-xs font-semibold">info</span></span></td>
+                            <td><code class="font-mono text-xs">"level": "info"</code></td>
+                            <td>Normal operasyonel bilgi (kullanıcı girişi, istek tamamlandı vb.)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#facc15"></span><span class="text-yellow-400 text-xs font-semibold">warning</span></span></td>
+                            <td><code class="font-mono text-xs">"level": "warning"</code></td>
+                            <td>Dikkat gerektiren durumlar (disk dolmak üzere, rate limit yaklaşıyor)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#f87171"></span><span class="text-red-400 text-xs font-semibold">error</span></span></td>
+                            <td><code class="font-mono text-xs">"level": "error"</code></td>
+                            <td>Hatalar (uygulama çalışmaya devam ediyor ama bir şey ters gitti)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#ef4444"></span><span class="text-red-500 text-xs font-semibold">fatal</span></span></td>
+                            <td><code class="font-mono text-xs">"level": "fatal"</code></td>
+                            <td>Kritik hatalar (uygulama çöktü veya çalışamaz durumda)</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Configuration -->
-        <section id="configuration" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Configuration</h2>
-            <p class="text-sm text-muted-foreground">LogForDev can be configured via environment variables or <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground border border-border">appsettings.json</code>.</p>
+        <!-- Error Responses -->
+        <section id="error-responses" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">Hata Yanıtları</h2>
+            <p class="text-sm text-muted-foreground">Tüm hata yanıtları aynı JSON formatını kullanır:</p>
 
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Environment Variables</p>
-            <div class="rounded-lg border border-border overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-border bg-muted/50">
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Variable</th>
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Description</th>
-                            <th class="h-10 px-4 text-left font-medium text-muted-foreground">Default</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">CLICKHOUSE__HOST</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">ClickHouse server host</td>
-                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">localhost</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">CLICKHOUSE__PORT</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">ClickHouse HTTP port</td>
-                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">8123</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">CLICKHOUSE__DATABASE</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Database name</td>
-                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">logfordev</td>
-                        </tr>
-                        <tr class="border-b border-border">
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">LOGFORDEV__APIKEY</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">API key for authentication</td>
-                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">change-me-in-production</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-2.5"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">LOGFORDEV__RETENTIONDAYS</code></td>
-                            <td class="px-4 py-2.5 text-muted-foreground">Log retention period in days</td>
-                            <td class="px-4 py-2.5 text-muted-foreground font-mono text-xs">30</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">appsettings.json</p>
-            <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">{
-  "ClickHouse": {
-    "Host": "localhost",
-    "Port": 8123,
-    "Database": "logfordev",
-    "Username": "default",
-    "Password": ""
-  },
-  "LogForDev": {
-    "ApiKey": "your-secure-api-key-here",
-    "RetentionDays": 30
-  }
-}</code></pre>
-        </section>
-
-        <!-- SDK Examples -->
-        <section id="sdk-examples" class="space-y-6">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">SDK Examples</h2>
-            <p class="text-sm text-muted-foreground">Production-ready examples with error handling and retry logic.</p>
-
-            <!-- Python -->
             <div class="space-y-3">
-                <h3 class="text-base font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center text-xs">🐍</span>
-                    Python
-                </h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">import requests
-from typing import Optional, Dict, Any
+                <div class="rounded-lg border border-border overflow-hidden">
+                    <div class="px-4 py-2.5 bg-muted/30 border-b border-border flex items-center gap-2">
+                        <span class="text-xs font-bold text-red-400">401</span>
+                        <span class="text-xs text-muted-foreground">API key eksik veya geçersiz</span>
+                    </div>
+                    <div class="doc-code"><pre><span style="color:#f87171">{ "success": false, "error": "Missing or invalid API key" }</span></pre></div>
+                </div>
+
+                <div class="rounded-lg border border-border overflow-hidden">
+                    <div class="px-4 py-2.5 bg-muted/30 border-b border-border flex items-center gap-2">
+                        <span class="text-xs font-bold text-yellow-400">400</span>
+                        <span class="text-xs text-muted-foreground">Geçersiz istek (eksik alan veya yanlış değer)</span>
+                    </div>
+                    <div class="doc-code"><pre><span style="color:#facc15">{ "success": false, "error": "Invalid log level. Valid: Trace, Debug, Info, Warning, Error, Fatal" }</span></pre></div>
+                </div>
+
+                <div class="rounded-lg border border-border overflow-hidden">
+                    <div class="px-4 py-2.5 bg-muted/30 border-b border-border flex items-center gap-2">
+                        <span class="text-xs font-bold text-red-500">500</span>
+                        <span class="text-xs text-muted-foreground">Sunucu hatası</span>
+                    </div>
+                    <div class="doc-code"><pre><span style="color:#f87171">{ "success": false, "error": "Internal server error" }</span></pre></div>
+                </div>
+            </div>
+
+            <div class="callout callout-warn">
+                <strong>401 alıyorsanız:</strong> API key'inizi kontrol edin. Key <code class="font-mono text-xs bg-black/20 px-1 rounded">lfdev_</code> ile başlamalı ve <code class="font-mono text-xs bg-black/20 px-1 rounded">X-API-Key</code> header'ında gönderilmeli.
+            </div>
+        </section>
+
+        <!-- ═══════════════ INTEGRATION ═══════════════ -->
+        <div class="border-t border-border pt-2">
+            <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Entegrasyon</h3>
+        </div>
+
+        <!-- Code Examples -->
+        <section id="examples" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">Kod Örnekleri</h2>
+            <p class="text-sm text-muted-foreground">Kopyala, yapıştır, çalıştır. Her örnekte hata yönetimi ve retry mekanizması var.</p>
+
+            <!-- Language Tabs -->
+            <div class="rounded-lg border border-border overflow-hidden" id="langExamples">
+                <div class="lang-tabs">
+                    <button class="lang-tab active" onclick="switchLang('curl')">cURL</button>
+                    <button class="lang-tab" onclick="switchLang('python')">Python</button>
+                    <button class="lang-tab" onclick="switchLang('node')">Node.js</button>
+                    <button class="lang-tab" onclick="switchLang('csharp')">C#</button>
+                    <button class="lang-tab" onclick="switchLang('go')">Go</button>
+                    <button class="lang-tab" onclick="switchLang('php')">PHP</button>
+                    <button class="lang-tab" onclick="switchLang('java')">Java</button>
+                    <button class="lang-tab" onclick="switchLang('ruby')">Ruby</button>
+                </div>
+
+                <!-- cURL -->
+                <div class="lang-panel active" data-lang="curl">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre><span style="color:#71717a"># Tek log gönder</span>
+curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "level": "info",
+    "message": "User signed up",
+    "appName": "auth-service",
+    "environment": "production",
+    "metadata": {"userId": 42, "plan": "pro"}
+  }'
+
+<span style="color:#71717a"># Toplu log gönder</span>
+curl -X POST http://localhost:5000/api/logs/batch \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "logs": [
+      {"level":"info","message":"Request start","appName":"api","traceId":"t-1"},
+      {"level":"debug","message":"DB query 12ms","appName":"api","traceId":"t-1"},
+      {"level":"info","message":"Request end 200","appName":"api","traceId":"t-1"}
+    ]
+  }'</pre>
+                    </div>
+                </div>
+
+                <!-- Python -->
+                <div class="lang-panel" data-lang="python">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>import requests
 import time
 
-class LogForDevClient:
-    def __init__(self, server_url: str, api_key: str, app_name: str,
-                 environment: str = "development", max_retries: int = 3):
-        self.server_url = server_url.rstrip('/')
-        self.api_key = api_key
-        self.app_name = app_name
-        self.environment = environment
-        self.max_retries = max_retries
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "X-API-Key": api_key
-        })
+LOGFORDEV_URL = "http://localhost:5000"
+API_KEY = "lfdev_your-key"
+APP_NAME = "my-python-app"
 
-    def _send(self, level: str, message: str, metadata: Optional[Dict] = None,
-              trace_id: Optional[str] = None) -> bool:
-        payload = {
-            "level": level,
-            "message": message,
-            "appName": self.app_name,
-            "environment": self.environment
-        }
-        if metadata:
-            payload["metadata"] = metadata
-        if trace_id:
-            payload["traceId"] = trace_id
+session = requests.Session()
+session.headers.update({
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY
+})
 
-        for attempt in range(self.max_retries):
-            try:
-                response = self.session.post(
-                    f"{self.server_url}/api/logs",
-                    json=payload,
-                    timeout=5
-                )
-                return response.status_code == 200
-            except requests.RequestException:
-                if attempt < self.max_retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
-        return False
-
-    def trace(self, message: str, **kwargs): return self._send("trace", message, **kwargs)
-    def debug(self, message: str, **kwargs): return self._send("debug", message, **kwargs)
-    def info(self, message: str, **kwargs): return self._send("info", message, **kwargs)
-    def warning(self, message: str, **kwargs): return self._send("warning", message, **kwargs)
-    def error(self, message: str, **kwargs): return self._send("error", message, **kwargs)
-    def fatal(self, message: str, **kwargs): return self._send("fatal", message, **kwargs)
-
-# Usage
-logger = LogForDevClient(
-    server_url="http://localhost:5000",
-    api_key="your-api-key",
-    app_name="my-python-app",
-    environment="production"
-)
-
-logger.info("User logged in", metadata={"user_id": 123}, trace_id="req-001")
-logger.error("Payment failed", metadata={"order_id": 456, "error": "Insufficient funds"})</code></pre>
-            </div>
-
-            <!-- Node.js -->
-            <div class="space-y-3">
-                <h3 class="text-base font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center text-xs">⬢</span>
-                    Node.js / TypeScript
-                </h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">interface LogOptions {
-  metadata?: Record&lt;string, any&gt;;
-  traceId?: string;
-}
-
-class LogForDevClient {
-  private serverUrl: string;
-  private apiKey: string;
-  private appName: string;
-  private environment: string;
-  private maxRetries: number;
-
-  constructor(config: {
-    serverUrl: string;
-    apiKey: string;
-    appName: string;
-    environment?: string;
-    maxRetries?: number;
-  }) {
-    this.serverUrl = config.serverUrl.replace(/\/$/, '');
-    this.apiKey = config.apiKey;
-    this.appName = config.appName;
-    this.environment = config.environment || 'development';
-    this.maxRetries = config.maxRetries || 3;
-  }
-
-  private async send(level: string, message: string, options?: LogOptions): Promise&lt;boolean&gt; {
-    const payload = {
-      level,
-      message,
-      appName: this.appName,
-      environment: this.environment,
-      ...options
-    };
-
-    for (let attempt = 0; attempt &lt; this.maxRetries; attempt++) {
-      try {
-        const response = await fetch(`${this.serverUrl}/api/logs`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': this.apiKey
-          },
-          body: JSON.stringify(payload)
-        });
-        if (response.ok) return true;
-      } catch (error) {
-        if (attempt &lt; this.maxRetries - 1) {
-          await new Promise(r =&gt; setTimeout(r, Math.pow(2, attempt) * 1000));
-        }
-      }
+def send_log(level, message, metadata=None, trace_id=None,
+             environment="production", retries=3):
+    """LogForDev'e tek bir log gönderir (retry ile)."""
+    payload = {
+        "level": level,
+        "message": message,
+        "appName": APP_NAME,
+        "environment": environment,
     }
-    return false;
-  }
+    if metadata:
+        payload["metadata"] = metadata
+    if trace_id:
+        payload["traceId"] = trace_id
 
-  trace(message: string, options?: LogOptions) { return this.send('trace', message, options); }
-  debug(message: string, options?: LogOptions) { return this.send('debug', message, options); }
-  info(message: string, options?: LogOptions) { return this.send('info', message, options); }
-  warning(message: string, options?: LogOptions) { return this.send('warning', message, options); }
-  error(message: string, options?: LogOptions) { return this.send('error', message, options); }
-  fatal(message: string, options?: LogOptions) { return this.send('fatal', message, options); }
+    for attempt in range(retries):
+        try:
+            resp = session.post(f"{LOGFORDEV_URL}/api/logs", json=payload, timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+        except requests.RequestException:
+            pass
+        if attempt &lt; retries - 1:
+            time.sleep(2 ** attempt)
+    return None
+
+def send_batch(logs, retries=3):
+    """Birden fazla logu tek istekle gönderir."""
+    for log in logs:
+        log.setdefault("appName", APP_NAME)
+        log.setdefault("environment", "production")
+
+    for attempt in range(retries):
+        try:
+            resp = session.post(
+                f"{LOGFORDEV_URL}/api/logs/batch",
+                json={"logs": logs},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                return resp.json()
+        except requests.RequestException:
+            pass
+        if attempt &lt; retries - 1:
+            time.sleep(2 ** attempt)
+    return None
+
+
+<span style="color:#71717a"># ── Kullanım ─────────────────────────────────────</span>
+
+send_log("info", "User signed up", metadata={"user_id": 42})
+send_log("error", "Payment failed", metadata={"order": 123}, trace_id="req-001")
+
+send_batch([
+    {"level": "info", "message": "Job started"},
+    {"level": "debug", "message": "Processing 500 items"},
+    {"level": "info", "message": "Job completed in 3.2s"},
+])</pre>
+                    </div>
+                </div>
+
+                <!-- Node.js -->
+                <div class="lang-panel" data-lang="node">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>const LOGFORDEV_URL = "http://localhost:5000";
+const API_KEY = "lfdev_your-key";
+const APP_NAME = "my-node-app";
+
+const headers = {
+  "Content-Type": "application/json",
+  "X-API-Key": API_KEY,
+};
+
+async function sendLog(level, message, opts = {}) {
+  const { metadata, traceId, environment = "production", retries = 3 } = opts;
+  const body = JSON.stringify({
+    level, message, appName: APP_NAME, environment,
+    ...(metadata &amp;&amp; { metadata }),
+    ...(traceId &amp;&amp; { traceId }),
+  });
+
+  for (let i = 0; i &lt; retries; i++) {
+    try {
+      const res = await fetch(`${LOGFORDEV_URL}/api/logs`, {
+        method: "POST", headers, body,
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+    if (i &lt; retries - 1) await new Promise(r =&gt; setTimeout(r, 2 ** i * 1000));
+  }
+  return null;
 }
 
-// Usage
-const logger = new LogForDevClient({
-  serverUrl: 'http://localhost:5000',
-  apiKey: 'your-api-key',
-  appName: 'my-node-app',
-  environment: 'production'
+async function sendBatch(logs, retries = 3) {
+  const enriched = logs.map(l =&gt; ({
+    appName: APP_NAME, environment: "production", ...l,
+  }));
+
+  for (let i = 0; i &lt; retries; i++) {
+    try {
+      const res = await fetch(`${LOGFORDEV_URL}/api/logs/batch`, {
+        method: "POST", headers,
+        body: JSON.stringify({ logs: enriched }),
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+    if (i &lt; retries - 1) await new Promise(r =&gt; setTimeout(r, 2 ** i * 1000));
+  }
+  return null;
+}
+
+
+<span style="color:#71717a">// ── Kullanım ─────────────────────────────────────</span>
+
+await sendLog("info", "Server started on port 3000");
+await sendLog("error", "DB connection lost", {
+  metadata: { host: "db-primary", retryIn: 5 },
+  traceId: "req-xyz",
 });
 
-await logger.info('User logged in', { metadata: { userId: 123 }, traceId: 'req-001' });
-await logger.error('Payment failed', { metadata: { orderId: 456 } });</code></pre>
-            </div>
+await sendBatch([
+  { level: "info", message: "Cron job started" },
+  { level: "info", message: "Processed 1200 records" },
+  { level: "info", message: "Cron job finished in 4.1s" },
+]);</pre>
+                    </div>
+                </div>
 
-            <!-- C# -->
-            <div class="space-y-3">
-                <h3 class="text-base font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center text-xs">C#</span>
-                    .NET / C#
-                </h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">using System.Net.Http.Json;
-using Polly;
-using Polly.Retry;
+                <!-- C# -->
+                <div class="lang-panel" data-lang="csharp">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>using System.Net.Http.Json;
 
-public class LogForDevClient : IDisposable
+public class LogForDev : IDisposable
 {
-    private readonly HttpClient _client;
+    private readonly HttpClient _http;
     private readonly string _appName;
-    private readonly string _environment;
-    private readonly AsyncRetryPolicy _retryPolicy;
+    private readonly string _env;
+    private readonly int _retries;
 
-    public LogForDevClient(string serverUrl, string apiKey, string appName,
-        string environment = "development", int maxRetries = 3)
+    public LogForDev(string url, string apiKey, string appName,
+        string env = "production", int retries = 3)
     {
         _appName = appName;
-        _environment = environment;
-        _client = new HttpClient { BaseAddress = new Uri(serverUrl) };
-        _client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
-
-        _retryPolicy = Policy
-            .Handle&lt;HttpRequestException&gt;()
-            .WaitAndRetryAsync(maxRetries, attempt =&gt;
-                TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+        _env = env;
+        _retries = retries;
+        _http = new HttpClient { BaseAddress = new Uri(url) };
+        _http.DefaultRequestHeaders.Add("X-API-Key", apiKey);
     }
 
-    private async Task&lt;bool&gt; SendAsync(string level, string message,
+    public async Task&lt;bool&gt; SendAsync(string level, string message,
         object? metadata = null, string? traceId = null)
     {
-        var payload = new
-        {
-            level,
-            message,
-            appName = _appName,
-            environment = _environment,
-            metadata,
-            traceId
+        var payload = new {
+            level, message, appName = _appName,
+            environment = _env, metadata, traceId
         };
 
-        return await _retryPolicy.ExecuteAsync(async () =&gt;
+        for (int i = 0; i &lt; _retries; i++)
         {
-            var response = await _client.PostAsJsonAsync("/api/logs", payload);
-            return response.IsSuccessStatusCode;
-        });
+            try
+            {
+                var resp = await _http.PostAsJsonAsync("/api/logs", payload);
+                if (resp.IsSuccessStatusCode) return true;
+            }
+            catch (HttpRequestException) { }
+
+            if (i &lt; _retries - 1)
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, i)));
+        }
+        return false;
     }
 
-    public Task&lt;bool&gt; TraceAsync(string msg, object? meta = null, string? traceId = null)
-        =&gt; SendAsync("trace", msg, meta, traceId);
-    public Task&lt;bool&gt; DebugAsync(string msg, object? meta = null, string? traceId = null)
-        =&gt; SendAsync("debug", msg, meta, traceId);
-    public Task&lt;bool&gt; InfoAsync(string msg, object? meta = null, string? traceId = null)
-        =&gt; SendAsync("info", msg, meta, traceId);
-    public Task&lt;bool&gt; WarningAsync(string msg, object? meta = null, string? traceId = null)
-        =&gt; SendAsync("warning", msg, meta, traceId);
-    public Task&lt;bool&gt; ErrorAsync(string msg, object? meta = null, string? traceId = null)
-        =&gt; SendAsync("error", msg, meta, traceId);
-    public Task&lt;bool&gt; FatalAsync(string msg, object? meta = null, string? traceId = null)
-        =&gt; SendAsync("fatal", msg, meta, traceId);
+    public async Task&lt;bool&gt; SendBatchAsync(object[] logs)
+    {
+        var resp = await _http.PostAsJsonAsync("/api/logs/batch", new { logs });
+        return resp.IsSuccessStatusCode;
+    }
 
-    public void Dispose() =&gt; _client.Dispose();
+    public void Dispose() =&gt; _http.Dispose();
 }
 
-// Usage
-using var logger = new LogForDevClient(
-    "http://localhost:5000",
-    "your-api-key",
-    "my-dotnet-app",
-    "production"
+
+<span style="color:#71717a">// ── Kullanım ─────────────────────────────────────</span>
+
+using var log = new LogForDev(
+    "http://localhost:5000", "lfdev_your-key", "my-dotnet-app"
 );
 
-await logger.InfoAsync("User logged in", new { UserId = 123 }, "req-001");
-await logger.ErrorAsync("Payment failed", new { OrderId = 456 });</code></pre>
-            </div>
+await log.SendAsync("info", "Application started");
+await log.SendAsync("error", "Payment failed",
+    metadata: new { OrderId = 123, Amount = 29.99 },
+    traceId: "req-001");</pre>
+                    </div>
+                </div>
 
-            <!-- Go -->
-            <div class="space-y-3">
-                <h3 class="text-base font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center text-xs">Go</span>
-                    Go
-                </h3>
-                <pre class="rounded-lg border border-border bg-muted p-4 overflow-x-auto"><code class="font-mono text-xs text-foreground">package logfordev
+                <!-- Go -->
+                <div class="lang-panel" data-lang="go">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>package main
 
 import (
     "bytes"
     "encoding/json"
+    "fmt"
     "net/http"
     "time"
 )
 
-type Client struct {
-    serverURL   string
-    apiKey      string
-    appName     string
-    environment string
-    httpClient  *http.Client
-    maxRetries  int
-}
+var (
+    logfordevURL = "http://localhost:5000"
+    apiKey       = "lfdev_your-key"
+    appName      = "my-go-app"
+    client       = &amp;http.Client{Timeout: 5 * time.Second}
+    maxRetries   = 3
+)
 
-func NewClient(serverURL, apiKey, appName, environment string) *Client {
-    return &Client{
-        serverURL:   serverURL,
-        apiKey:      apiKey,
-        appName:     appName,
-        environment: environment,
-        httpClient:  &http.Client{Timeout: 5 * time.Second},
-        maxRetries:  3,
-    }
-}
-
-func (c *Client) send(level, message string, metadata map[string]any, traceID string) error {
+func sendLog(level, message string, metadata map[string]any, traceID string) error {
     payload := map[string]any{
-        "level":       level,
-        "message":     message,
-        "appName":     c.appName,
-        "environment": c.environment,
+        "level": level, "message": message,
+        "appName": appName, "environment": "production",
     }
-    if metadata != nil {
-        payload["metadata"] = metadata
-    }
-    if traceID != "" {
-        payload["traceId"] = traceID
-    }
+    if metadata != nil { payload["metadata"] = metadata }
+    if traceID != ""   { payload["traceId"] = traceID }
 
     body, _ := json.Marshal(payload)
 
-    for attempt := 0; attempt &lt; c.maxRetries; attempt++ {
-        req, _ := http.NewRequest("POST", c.serverURL+"/api/logs", bytes.NewBuffer(body))
+    for i := 0; i &lt; maxRetries; i++ {
+        req, _ := http.NewRequest("POST", logfordevURL+"/api/logs", bytes.NewReader(body))
         req.Header.Set("Content-Type", "application/json")
-        req.Header.Set("X-API-Key", c.apiKey)
+        req.Header.Set("X-API-Key", apiKey)
 
-        resp, err := c.httpClient.Do(req)
-        if err == nil && resp.StatusCode == 200 {
+        resp, err := client.Do(req)
+        if err == nil &amp;&amp; resp.StatusCode == 200 {
             resp.Body.Close()
             return nil
         }
-        if resp != nil {
-            resp.Body.Close()
-        }
-        time.Sleep(time.Duration(1&lt;&lt;attempt) * time.Second)
+        if resp != nil { resp.Body.Close() }
+        time.Sleep(time.Duration(1&lt;&lt;i) * time.Second)
     }
-    return fmt.Errorf("failed after %d retries", c.maxRetries)
+    return fmt.Errorf("failed after %d retries", maxRetries)
 }
 
-func (c *Client) Info(msg string, meta map[string]any, traceID string) error {
-    return c.send("info", msg, meta, traceID)
-}
-// ... other levels
 
-// Usage
-client := logfordev.NewClient(
-    "http://localhost:5000",
-    "your-api-key",
-    "my-go-app",
-    "production",
-)
-client.Info("User logged in", map[string]any{"userId": 123}, "req-001")</code></pre>
+<span style="color:#71717a">// ── Kullanım ─────────────────────────────────────</span>
+
+func main() {
+    sendLog("info", "Server started", nil, "")
+    sendLog("error", "Redis timeout",
+        map[string]any{"host": "redis:6379"}, "req-001",
+    )
+}</pre>
+                    </div>
+                </div>
+
+                <!-- PHP -->
+                <div class="lang-panel" data-lang="php">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>&lt;?php
+
+function sendLog(string $level, string $message, ?array $metadata = null, ?string $traceId = null): ?array
+{
+    $url    = 'http://localhost:5000/api/logs';
+    $apiKey = 'lfdev_your-key';
+
+    $payload = [
+        'level'       =&gt; $level,
+        'message'     =&gt; $message,
+        'appName'     =&gt; 'my-php-app',
+        'environment' =&gt; 'production',
+    ];
+    if ($metadata) $payload['metadata'] = $metadata;
+    if ($traceId)  $payload['traceId'] = $traceId;
+
+    $maxRetries = 3;
+    for ($i = 0; $i &lt; $maxRetries; $i++) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           =&gt; true,
+            CURLOPT_RETURNTRANSFER =&gt; true,
+            CURLOPT_TIMEOUT        =&gt; 5,
+            CURLOPT_HTTPHEADER     =&gt; [
+                'Content-Type: application/json',
+                'X-API-Key: ' . $apiKey,
+            ],
+            CURLOPT_POSTFIELDS =&gt; json_encode($payload),
+        ]);
+        $response = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($code === 200) return json_decode($response, true);
+        if ($i &lt; $maxRetries - 1) sleep(pow(2, $i));
+    }
+    return null;
+}
+
+
+<span style="color:#71717a">// ── Kullanım ─────────────────────────────────────</span>
+
+sendLog('info', 'User registered', ['userId' =&gt; 42]);
+sendLog('error', 'Email failed', ['to' =&gt; 'user@@example.com'], 'req-001');</pre>
+                    </div>
+                </div>
+
+                <!-- Java -->
+                <div class="lang-panel" data-lang="java">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>import java.net.URI;
+import java.net.http.*;
+import java.time.Duration;
+import com.google.gson.Gson;
+import java.util.*;
+
+public class LogForDev {
+    private final String url;
+    private final String apiKey;
+    private final String appName;
+    private final HttpClient client;
+    private final Gson gson = new Gson();
+    private static final int MAX_RETRIES = 3;
+
+    public LogForDev(String url, String apiKey, String appName) {
+        this.url = url;
+        this.apiKey = apiKey;
+        this.appName = appName;
+        this.client = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
+    }
+
+    public boolean send(String level, String message,
+                        Map&lt;String, Object&gt; metadata, String traceId) {
+        var payload = new HashMap&lt;String, Object&gt;();
+        payload.put("level", level);
+        payload.put("message", message);
+        payload.put("appName", appName);
+        payload.put("environment", "production");
+        if (metadata != null) payload.put("metadata", metadata);
+        if (traceId != null)  payload.put("traceId", traceId);
+
+        var body = gson.toJson(payload);
+
+        for (int i = 0; i &lt; MAX_RETRIES; i++) {
+            try {
+                var req = HttpRequest.newBuilder()
+                    .uri(URI.create(url + "/api/logs"))
+                    .header("Content-Type", "application/json")
+                    .header("X-API-Key", apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+                var resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() == 200) return true;
+            } catch (Exception e) { }
+            if (i &lt; MAX_RETRIES - 1) {
+                try { Thread.sleep((long) Math.pow(2, i) * 1000); }
+                catch (InterruptedException ignored) { }
+            }
+        }
+        return false;
+    }
+}
+
+
+<span style="color:#71717a">// ── Kullanım ─────────────────────────────────────</span>
+
+var log = new LogForDev("http://localhost:5000", "lfdev_your-key", "my-java-app");
+
+log.send("info", "App started", null, null);
+log.send("error", "Order failed",
+    Map.of("orderId", 123, "reason", "timeout"), "req-001"
+);</pre>
+                    </div>
+                </div>
+
+                <!-- Ruby -->
+                <div class="lang-panel" data-lang="ruby">
+                    <div class="doc-code">
+                        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <pre>require 'net/http'
+require 'json'
+require 'uri'
+
+LOGFORDEV_URL = "http://localhost:5000"
+API_KEY = "lfdev_your-key"
+APP_NAME = "my-rails-app"
+MAX_RETRIES = 3
+
+def send_log(level, message, metadata: nil, trace_id: nil)
+  uri = URI("#{LOGFORDEV_URL}/api/logs")
+  payload = {
+    level: level, message: message,
+    appName: APP_NAME, environment: 'production',
+  }
+  payload[:metadata] = metadata if metadata
+  payload[:traceId] = trace_id if trace_id
+
+  MAX_RETRIES.times do |i|
+    begin
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.open_timeout = 5
+      http.read_timeout = 5
+
+      req = Net::HTTP::Post.new(uri.path)
+      req['Content-Type'] = 'application/json'
+      req['X-API-Key'] = API_KEY
+      req.body = payload.to_json
+
+      resp = http.request(req)
+      return JSON.parse(resp.body) if resp.code == '200'
+    rescue StandardError
+      sleep(2 ** i) if i &lt; MAX_RETRIES - 1
+    end
+  end
+  nil
+end
+
+
+<span style="color:#71717a"># ── Kullanım ─────────────────────────────────────</span>
+
+send_log('info', 'User signed in', metadata: { user_id: 42 })
+send_log('error', 'Stripe failed', metadata: { event: 'charge.failed' }, trace_id: 'req-001')</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Playground -->
+        <section id="playground" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">API Playground</h2>
+            <p class="text-sm text-muted-foreground">API'yi doğrudan tarayıcınızdan test edin.</p>
+
+            <div class="border border-border rounded-lg bg-card p-5 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-muted-foreground mb-1.5">API Key</label>
+                        <input type="text" id="tryApiKey" placeholder="lfdev_your-key" class="try-input font-mono" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-muted-foreground mb-1.5">App Name</label>
+                        <input type="text" id="tryAppName" value="docs-playground" class="try-input" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-muted-foreground mb-1.5">Message</label>
+                    <input type="text" id="tryMessage" placeholder="Hello from LogForDev!" value="Hello from LogForDev!" class="try-input" />
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-muted-foreground mb-1.5">Level</label>
+                        <select id="tryLevel" class="try-select w-full">
+                            <option value="info">info</option>
+                            <option value="debug">debug</option>
+                            <option value="warning">warning</option>
+                            <option value="error">error</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-muted-foreground mb-1.5">Environment</label>
+                        <select id="tryEnv" class="try-select w-full">
+                            <option value="test">test</option>
+                            <option value="development">development</option>
+                            <option value="production">production</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2 flex items-end">
+                        <button onclick="sendTestLog()" class="try-btn w-full">Log Gönder</button>
+                    </div>
+                </div>
+
+                <div id="tryResult" class="hidden">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-medium text-muted-foreground">Yanıt</span>
+                        <span id="tryStatus" class="text-xs font-mono"></span>
+                    </div>
+                    <div class="doc-code"><pre id="tryOutput" class="!border-0"></pre></div>
+                </div>
             </div>
         </section>
 
         <!-- Best Practices -->
-        <section id="best-practices" class="space-y-4">
-            <h2 class="text-xl font-semibold border-b border-border pb-2">Best Practices</h2>
+        <section id="best-practices" class="section-anchor space-y-4">
+            <h2 class="text-lg font-semibold border-b border-border pb-2">En İyi Uygulamalar</h2>
 
-            <div class="space-y-4">
-                <div class="rounded-lg border border-border p-4">
-                    <h4 class="font-medium mb-2">1. Use Batch Endpoints for High Throughput</h4>
-                    <p class="text-sm text-muted-foreground">Buffer logs locally and send in batches of 100-500 for better performance.</p>
+            <div class="space-y-3">
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-start gap-3">
+                        <span class="text-primary text-lg mt-0.5">1</span>
+                        <div>
+                            <h4 class="text-sm font-medium">Yoğun trafikte batch endpoint kullanın</h4>
+                            <p class="text-xs text-muted-foreground mt-1">Logları lokal olarak biriktirip 100&ndash;500'lük gruplar halinde <code class="font-mono text-xs bg-muted px-1 rounded">/api/logs/batch</code> ile gönderin. HTTP overhead'i 10&ndash;50x azalır.</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="rounded-lg border border-border p-4">
-                    <h4 class="font-medium mb-2">2. Add Trace IDs for Distributed Systems</h4>
-                    <p class="text-sm text-muted-foreground">Generate a unique trace ID per request and pass it to all services to correlate logs.</p>
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-start gap-3">
+                        <span class="text-primary text-lg mt-0.5">2</span>
+                        <div>
+                            <h4 class="text-sm font-medium">Trace ID ile servisleri birbirine bağlayın</h4>
+                            <p class="text-xs text-muted-foreground mt-1">Her HTTP isteği için benzersiz bir <code class="font-mono text-xs bg-muted px-1 rounded">traceId</code> üretip tüm servislere iletin. Dashboard'da o isteğin tüm servisler boyunca yolculuğunu görürsünüz.</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="rounded-lg border border-border p-4">
-                    <h4 class="font-medium mb-2">3. Use Structured Metadata</h4>
-                    <p class="text-sm text-muted-foreground">Put contextual data in metadata, not the message. Makes filtering easier.</p>
-                    <pre class="mt-2 rounded bg-muted p-2 font-mono text-xs">// Good
-logger.error("Payment failed", metadata={"orderId": 123, "error": "timeout"})
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-start gap-3">
+                        <span class="text-primary text-lg mt-0.5">3</span>
+                        <div>
+                            <h4 class="text-sm font-medium">Ek bilgileri metadata'ya koyun</h4>
+                            <p class="text-xs text-muted-foreground mt-1">userId, orderId, duration gibi bilgileri message'a yazmak yerine <code class="font-mono text-xs bg-muted px-1 rounded">metadata</code> alanına JSON olarak koyun. Filtreleme ve analiz çok daha kolay olur.</p>
+                            <div class="doc-code mt-2"><pre><span style="color:#4ade80">// Doğru</span>
+{ "message": "Payment failed", "metadata": { "orderId": 123, "reason": "timeout" } }
 
-// Bad
-logger.error("Payment failed for order 123: timeout")</pre>
+<span style="color:#f87171">// Yanlış</span>
+{ "message": "Payment failed for order 123: timeout" }</pre></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="rounded-lg border border-border p-4">
-                    <h4 class="font-medium mb-2">4. Implement Retry with Backoff</h4>
-                    <p class="text-sm text-muted-foreground">Network issues happen. Use exponential backoff to avoid overwhelming the server.</p>
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-start gap-3">
+                        <span class="text-primary text-lg mt-0.5">4</span>
+                        <div>
+                            <h4 class="text-sm font-medium">Retry mekanizması ekleyin</h4>
+                            <p class="text-xs text-muted-foreground mt-1">Network sorunları olabilir. Exponential backoff ile retry yapın (1s, 2s, 4s). Tüm kod örneklerimizde bu zaten var.</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="rounded-lg border border-border p-4">
-                    <h4 class="font-medium mb-2">5. Don't Log Sensitive Data</h4>
-                    <p class="text-sm text-muted-foreground">Never log passwords, tokens, credit card numbers, or PII in plain text.</p>
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-start gap-3">
+                        <span class="text-primary text-lg mt-0.5">5</span>
+                        <div>
+                            <h4 class="text-sm font-medium">Hassas verileri loglara yazmayın</h4>
+                            <p class="text-xs text-muted-foreground mt-1">Şifreler, API token'lar, kredi kartı numaraları veya kişisel veriler asla log'a yazılmamalı.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-border rounded-lg p-4 bg-card">
+                    <div class="flex items-start gap-3">
+                        <span class="text-primary text-lg mt-0.5">6</span>
+                        <div>
+                            <h4 class="text-sm font-medium">Doğru log seviyesini kullanın</h4>
+                            <p class="text-xs text-muted-foreground mt-1"><code class="font-mono text-xs bg-muted px-1 rounded">error</code> ve <code class="font-mono text-xs bg-muted px-1 rounded">fatal</code>'i sadece gerçek sorunlar için kullanın. Her şeyi error yapmak, gerçek hataları bulmayı zorlaştırır.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
+
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        // Smooth scroll for sidebar links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
+<script>
+    // ── Copy to clipboard ──────────────────────────
+    function copyCode(btn) {
+        const pre = btn.closest('.doc-code').querySelector('pre');
+        const text = pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.classList.add('copied');
+            btn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+            }, 2000);
         });
+    }
 
-        // Try it functionality
-        async function sendTestLog() {
-            const apiKey = document.getElementById('tryApiKey').value;
-            const message = document.getElementById('tryMessage').value;
-            const level = document.getElementById('tryLevel').value;
-            const resultEl = document.getElementById('tryResult');
+    // ── Language tabs ──────────────────────────────
+    function switchLang(lang) {
+        document.querySelectorAll('#langExamples .lang-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#langExamples .lang-panel').forEach(p => p.classList.remove('active'));
+        document.querySelector(`#langExamples .lang-tab[onclick*="${lang}"]`).classList.add('active');
+        document.querySelector(`#langExamples .lang-panel[data-lang="${lang}"]`).classList.add('active');
+    }
 
-            if (!message) {
-                resultEl.textContent = 'Error: Please enter a message';
-                resultEl.className = 'rounded-lg border border-red-500/30 bg-red-500/5 p-3 font-mono text-xs text-red-400';
-                resultEl.classList.remove('hidden');
-                return;
+    // ── Sidebar active state on scroll ─────────────
+    const sections = document.querySelectorAll('.section-anchor');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                const link = document.querySelector(`.sidebar-link[data-section="${entry.target.id}"]`);
+                if (link) link.classList.add('active');
             }
+        });
+    }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
 
-            try {
-                const headers = { 'Content-Type': 'application/json' };
-                if (apiKey) headers['X-API-Key'] = apiKey;
+    sections.forEach(s => observer.observe(s));
 
-                const response = await fetch('/api/logs', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({
-                        level,
-                        message,
-                        appName: 'docs-playground',
-                        environment: 'test'
-                    })
-                });
+    // ── Smooth scroll ──────────────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 
-                const data = await response.json();
-                resultEl.textContent = JSON.stringify(data, null, 2);
+    // ── API Playground ─────────────────────────────
+    async function sendTestLog() {
+        const apiKey = document.getElementById('tryApiKey').value;
+        const appName = document.getElementById('tryAppName').value || 'docs-playground';
+        const message = document.getElementById('tryMessage').value;
+        const level = document.getElementById('tryLevel').value;
+        const env = document.getElementById('tryEnv').value;
+        const resultEl = document.getElementById('tryResult');
+        const outputEl = document.getElementById('tryOutput');
+        const statusEl = document.getElementById('tryStatus');
 
-                if (response.ok) {
-                    resultEl.className = 'rounded-lg border border-green-500/30 bg-green-500/5 p-3 font-mono text-xs text-green-400';
-                } else {
-                    resultEl.className = 'rounded-lg border border-red-500/30 bg-red-500/5 p-3 font-mono text-xs text-red-400';
-                }
-            } catch (error) {
-                resultEl.textContent = 'Error: ' + error.message;
-                resultEl.className = 'rounded-lg border border-red-500/30 bg-red-500/5 p-3 font-mono text-xs text-red-400';
-            }
-
+        if (!message) {
             resultEl.classList.remove('hidden');
+            statusEl.textContent = 'Hata';
+            statusEl.style.color = '#f87171';
+            outputEl.textContent = 'Lütfen bir mesaj girin.';
+            return;
         }
-    </script>
+
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (apiKey) headers['X-API-Key'] = apiKey;
+
+            const response = await fetch('/api/logs', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    level, message, appName: appName, environment: env
+                })
+            });
+
+            const data = await response.json();
+            resultEl.classList.remove('hidden');
+            outputEl.textContent = JSON.stringify(data, null, 2);
+
+            if (response.ok) {
+                statusEl.textContent = `${response.status} OK`;
+                statusEl.style.color = '#4ade80';
+            } else {
+                statusEl.textContent = `${response.status} ${response.statusText}`;
+                statusEl.style.color = '#f87171';
+            }
+        } catch (error) {
+            resultEl.classList.remove('hidden');
+            statusEl.textContent = 'Network Error';
+            statusEl.style.color = '#f87171';
+            outputEl.textContent = error.message;
+        }
+    }
+</script>
 }

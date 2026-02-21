@@ -3,9 +3,6 @@
     var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
 }
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-16 right-4 z-[100] space-y-2"></div>
-
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
     <div>
@@ -227,24 +224,6 @@
     <script>
         let deleteProjectId = null;
         let editProjectId = null;
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const colors = {
-                info: 'border-primary/50 bg-primary/10 text-blue-300',
-                error: 'border-red-500/50 bg-red-500/10 text-red-300',
-                success: 'border-green-500/50 bg-green-500/10 text-green-300'
-            };
-            const toast = document.createElement('div');
-            toast.className = `rounded-lg border px-4 py-3 text-sm shadow-lg ${colors[type] || colors.info} transition-all duration-300 transform translate-x-0`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
 
         function copyRevealedKey() {
             const key = document.getElementById('revealedApiKey').textContent;
