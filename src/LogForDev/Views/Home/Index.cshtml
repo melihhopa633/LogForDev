@@ -759,6 +759,20 @@
                                     <p class="font-mono text-xs mt-0.5 break-all">${escapeHtml(log.traceId || '-')}</p>
                                 </div>
                             </div>
+                            ${(log.source || log.userId || log.requestMethod || log.durationMs) ? `
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+                                ${log.source ? `<div><span class="text-[10px] text-muted-foreground uppercase tracking-wider">Source</span><p class="font-mono text-xs mt-0.5">${escapeHtml(log.source)}</p></div>` : ''}
+                                ${log.userId ? `<div><span class="text-[10px] text-muted-foreground uppercase tracking-wider">User ID</span><p class="font-mono text-xs mt-0.5">${escapeHtml(log.userId)}</p></div>` : ''}
+                                ${log.requestMethod ? `<div><span class="text-[10px] text-muted-foreground uppercase tracking-wider">HTTP</span><p class="font-mono text-xs mt-0.5"><span class="text-blue-400">${escapeHtml(log.requestMethod)}</span> ${escapeHtml(log.requestPath || '')}</p></div>` : ''}
+                                ${log.statusCode ? `<div><span class="text-[10px] text-muted-foreground uppercase tracking-wider">Status</span><p class="font-mono text-xs mt-0.5 ${log.statusCode >= 500 ? 'text-red-400' : log.statusCode >= 400 ? 'text-yellow-400' : 'text-green-400'}">${log.statusCode}</p></div>` : ''}
+                                ${log.durationMs ? `<div><span class="text-[10px] text-muted-foreground uppercase tracking-wider">Duration</span><p class="font-mono text-xs mt-0.5">${log.durationMs.toFixed(1)}ms</p></div>` : ''}
+                            </div>` : ''}
+                            ${log.exceptionType ? `
+                            <div class="mb-3 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
+                                <span class="text-[10px] text-red-400 uppercase tracking-wider font-semibold">Exception: ${escapeHtml(log.exceptionType)}</span>
+                                ${log.exceptionMessage ? `<p class="text-xs text-red-300 mt-1">${escapeHtml(log.exceptionMessage)}</p>` : ''}
+                                ${log.exceptionStacktrace ? `<details class="mt-2"><summary class="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">Stack Trace</summary><pre class="mt-1 rounded bg-background/80 border border-border p-2 font-mono text-[10px] whitespace-pre-wrap break-words max-h-48 overflow-auto scrollbar-thin">${escapeHtml(log.exceptionStacktrace)}</pre></details>` : ''}
+                            </div>` : ''}
                             <div class="mb-3">
                                 <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Message</span>
                                 <pre class="mt-1 rounded-lg bg-background/80 border border-border p-3 font-mono text-xs whitespace-pre-wrap break-words max-h-48 overflow-auto scrollbar-thin">${escapeHtml(log.message)}</pre>
@@ -953,6 +967,22 @@
                     <span class="text-muted-foreground font-medium">Trace ID</span>
                     <span class="font-mono text-xs">${escapeHtml(log.traceId || '-')}</span>
                 </div>
+                ${log.source ? `<div class="grid grid-cols-[100px_1fr] gap-2 text-sm"><span class="text-muted-foreground font-medium">Source</span><span class="font-mono text-xs">${escapeHtml(log.source)}</span></div>` : ''}
+                ${log.userId ? `<div class="grid grid-cols-[100px_1fr] gap-2 text-sm"><span class="text-muted-foreground font-medium">User ID</span><span class="font-mono text-xs">${escapeHtml(log.userId)}</span></div>` : ''}
+                ${log.requestMethod ? `<div class="grid grid-cols-[100px_1fr] gap-2 text-sm"><span class="text-muted-foreground font-medium">HTTP</span><span class="font-mono text-xs"><span class="text-blue-400">${escapeHtml(log.requestMethod)}</span> ${escapeHtml(log.requestPath || '')} ${log.statusCode ? '<span class="' + (log.statusCode >= 500 ? 'text-red-400' : log.statusCode >= 400 ? 'text-yellow-400' : 'text-green-400') + '">' + log.statusCode + '</span>' : ''}</span></div>` : ''}
+                ${log.durationMs ? `<div class="grid grid-cols-[100px_1fr] gap-2 text-sm"><span class="text-muted-foreground font-medium">Duration</span><span class="font-mono text-xs">${log.durationMs.toFixed(1)}ms</span></div>` : ''}
+                ${log.exceptionType ? `
+                <div class="border-t border-red-500/20 pt-3 space-y-2">
+                    <p class="text-sm font-medium text-red-400">Exception</p>
+                    <div class="rounded-lg bg-red-500/5 border border-red-500/20 p-3 space-y-2">
+                        <div class="grid grid-cols-[100px_1fr] gap-2 text-sm">
+                            <span class="text-muted-foreground font-medium">Type</span>
+                            <span class="font-mono text-xs text-red-300">${escapeHtml(log.exceptionType)}</span>
+                        </div>
+                        ${log.exceptionMessage ? `<div class="grid grid-cols-[100px_1fr] gap-2 text-sm"><span class="text-muted-foreground font-medium">Message</span><span class="text-xs text-red-300">${escapeHtml(log.exceptionMessage)}</span></div>` : ''}
+                        ${log.exceptionStacktrace ? `<div><p class="text-xs text-muted-foreground font-medium mb-1">Stack Trace</p><pre class="rounded bg-background/80 border border-border p-2 font-mono text-[10px] whitespace-pre-wrap break-words max-h-64 overflow-auto scrollbar-thin">${escapeHtml(log.exceptionStacktrace)}</pre></div>` : ''}
+                    </div>
+                </div>` : ''}
                 <div class="border-t border-border pt-3 space-y-2">
                     <p class="text-sm font-medium text-muted-foreground">Message</p>
                     <pre class="rounded-lg bg-muted/50 border border-border p-3 font-mono text-xs whitespace-pre-wrap break-words">${escapeHtml(log.message)}</pre>
@@ -1206,7 +1236,7 @@
                 showToast('No logs selected', 'error');
                 return;
             }
-            const headers = ['id', 'timestamp', 'level', 'appName', 'environment', 'host', 'message', 'traceId', 'metadata'];
+            const headers = ['id', 'timestamp', 'level', 'appName', 'environment', 'host', 'message', 'source', 'userId', 'exceptionType', 'exceptionMessage', 'requestMethod', 'requestPath', 'statusCode', 'durationMs', 'traceId', 'metadata'];
             const levelMap = {0:'Trace', 1:'Debug', 2:'Info', 3:'Warning', 4:'Error', 5:'Fatal'};
             const csvRows = [headers.join(',')];
             logs.forEach(log => {
@@ -1218,6 +1248,14 @@
                     log.environment || '',
                     log.host || '',
                     `"${(log.message || '').replace(/"/g, '""').replace(/\n/g, '\\n')}"`,
+                    log.source || '',
+                    log.userId || '',
+                    log.exceptionType || '',
+                    `"${(log.exceptionMessage || '').replace(/"/g, '""')}"`,
+                    log.requestMethod || '',
+                    log.requestPath || '',
+                    log.statusCode || '',
+                    log.durationMs || '',
                     log.traceId || '',
                     `"${(log.metadata || '').replace(/"/g, '""')}"`
                 ];

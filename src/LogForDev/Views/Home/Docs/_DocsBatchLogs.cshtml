@@ -1,0 +1,58 @@
+<!-- POST /api/logs/batch -->
+<section id="send-batch" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">Batch Logs</h2>
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="method-badge method-post">POST</span>
+            <span class="endpoint-path">/api/logs/batch</span>
+        </div>
+        <div class="p-4 space-y-4">
+            <p class="text-sm text-muted-foreground">Send multiple log entries in a single request. Recommended for high-traffic applications.</p>
+
+            <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Request Body</h4>
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-json">{
+  "logs": [
+    {
+      "level": "info",
+      "message": "Order received",
+      "appName": "order-service",
+      "traceId": "trace-001",
+      "source": "OrderController",
+      "requestMethod": "POST",
+      "requestPath": "/api/orders",
+      "userId": "user_42",
+      "metadata": { "orderId": 789 }
+    },
+    {
+      "level": "debug",
+      "message": "Processing payment",
+      "appName": "payment-service",
+      "traceId": "trace-001",
+      "source": "PaymentProcessor"
+    },
+    {
+      "level": "info",
+      "message": "Order completed",
+      "appName": "order-service",
+      "traceId": "trace-001",
+      "durationMs": 145.2,
+      "statusCode": 200
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Response <span class="text-green-400">200</span></h4>
+            <div class="doc-code"><pre><code class="language-json">{
+  "success": true,
+  "count": 3
+}</code></pre></div>
+
+            <div class="callout callout-info">
+                <strong>Performance tip:</strong> Buffer logs locally and send in groups of 100&ndash;500. This reduces HTTP overhead by 10&ndash;50x.
+            </div>
+        </div>
+    </div>
+</section>

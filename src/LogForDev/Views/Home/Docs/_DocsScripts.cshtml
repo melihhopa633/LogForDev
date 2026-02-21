@@ -1,0 +1,124 @@
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+    // Initialize syntax highlighting
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('pre code').forEach(block => {
+            hljs.highlightElement(block);
+        });
+    });
+
+    // ── Copy to clipboard ──────────────────────────
+    const copyIcon = `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const checkIcon = `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+    function copyCode(btn) {
+        const pre  = btn.closest('.doc-code').querySelector('pre');
+        const text = pre.innerText; // innerText strips HTML spans
+        navigator.clipboard.writeText(text).then(() => {
+            btn.classList.add('copied');
+            btn.innerHTML = checkIcon;
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = copyIcon;
+            }, 2000);
+        });
+    }
+
+    // ── Language tabs ──────────────────────────────
+    function switchLang(lang) {
+        document.querySelectorAll('#langExamples .lang-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#langExamples .lang-panel').forEach(p => p.classList.remove('active'));
+
+        const tab   = document.querySelector(`#langExamples .lang-tab[data-lang="${lang}"]`);
+        const panel = document.querySelector(`#langExamples .lang-panel[data-lang="${lang}"]`);
+        tab.classList.add('active');
+        panel.classList.add('active');
+
+        // Re-highlight newly visible code blocks
+        panel.querySelectorAll('pre code').forEach(block => {
+            if (!block.classList.contains('hljs')) hljs.highlightElement(block);
+        });
+    }
+
+    // ── Sidebar active state on scroll ─────────────
+    const sections    = document.querySelectorAll('.section-anchor');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                const link = document.querySelector(`.sidebar-link[data-section="${entry.target.id}"]`);
+                if (link) link.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(s => observer.observe(s));
+
+    // ── Smooth scroll ──────────────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href'))
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // ── API Playground ─────────────────────────────
+    async function sendTestLog() {
+        const apiKey     = document.getElementById('tryApiKey').value;
+        const appName    = document.getElementById('tryAppName').value || 'docs-playground';
+        const message    = document.getElementById('tryMessage').value;
+        const level      = document.getElementById('tryLevel').value;
+        const env        = document.getElementById('tryEnv').value;
+        const source     = document.getElementById('trySource').value;
+        const userId     = document.getElementById('tryUserId').value;
+        const exType     = document.getElementById('tryExType').value;
+        const reqMethod  = document.getElementById('tryReqMethod').value;
+        const reqPath    = document.getElementById('tryReqPath').value;
+        const result     = document.getElementById('tryResult');
+        const output     = document.getElementById('tryOutput');
+        const status     = document.getElementById('tryStatus');
+
+        if (!message) {
+            result.classList.remove('hidden');
+            status.textContent = 'Error';
+            status.style.color = '#f87171';
+            output.textContent = 'Please enter a message.';
+            return;
+        }
+
+        try {
+            const hdrs = { 'Content-Type': 'application/json' };
+            if (apiKey) hdrs['X-API-Key'] = apiKey;
+
+            const payload = { level, message, appName, environment: env };
+            if (source)    payload.source        = source;
+            if (userId)    payload.userId        = userId;
+            if (exType)    payload.exceptionType = exType;
+            if (reqMethod) payload.requestMethod = reqMethod;
+            if (reqPath)   payload.requestPath   = reqPath;
+
+            const res  = await fetch('/api/logs', {
+                method: 'POST', headers: hdrs,
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+
+            result.classList.remove('hidden');
+            output.textContent = JSON.stringify(data, null, 2);
+            hljs.highlightElement(output);
+
+            status.textContent = res.ok ? `${res.status} OK` : `${res.status} ${res.statusText}`;
+            status.style.color = res.ok ? '#4ade80' : '#f87171';
+        } catch (err) {
+            result.classList.remove('hidden');
+            status.textContent = 'Network Error';
+            status.style.color = '#f87171';
+            output.textContent = err.message;
+        }
+    }
+</script>
+}

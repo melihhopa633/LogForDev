@@ -1,0 +1,157 @@
+<!-- Divider -->
+<div class="border-t border-border pt-2">
+    <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Sending Logs</h3>
+</div>
+
+<!-- POST /api/logs -->
+<section id="send-log" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">Send a Log</h2>
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="method-badge method-post">POST</span>
+            <span class="endpoint-path">/api/logs</span>
+        </div>
+        <div class="p-4 space-y-4">
+            <p class="text-sm text-muted-foreground">Send a single log entry from your application.</p>
+            <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Request Body</h4>
+            <div class="rounded-lg border border-border overflow-hidden">
+                <table class="param-table">
+                    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="param-name">level</span><span class="param-required">REQUIRED</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Log severity: <code>trace</code>, <code>debug</code>, <code>info</code>, <code>warning</code>, <code>error</code>, <code>fatal</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">message</span><span class="param-required">REQUIRED</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>The log message</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">appName</span><span class="param-required">REQUIRED</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Your application or service name</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">metadata</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">object</span></td>
+                            <td>Extra context as JSON (userId, orderId, duration, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">exceptionType</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Exception class name (e.g. <code>NullReferenceException</code>, <code>ValueError</code>)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">exceptionMessage</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Exception message text</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">exceptionStacktrace</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Full stack trace string</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">source</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Log source class/module (e.g. <code>OrderService</code>, <code>auth.middleware</code>)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">requestMethod</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>HTTP method: <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, etc.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">requestPath</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>HTTP request path (e.g. <code>/api/orders/123</code>)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">statusCode</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">integer</span></td>
+                            <td>HTTP response status code (e.g. <code>200</code>, <code>404</code>, <code>500</code>). Default: <code>0</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">durationMs</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">number</span></td>
+                            <td>Request/operation duration in milliseconds. Default: <code>0</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">userId</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>User identifier for the action that generated this log</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">traceId</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Distributed trace ID &mdash; correlate logs across multiple services</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">spanId</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Span ID &mdash; used together with traceId</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">environment</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Deployment environment. Defaults to <code>production</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">host</span><span class="param-optional">optional</span></td>
+                            <td><span class="param-type">string</span></td>
+                            <td>Server hostname. Falls back to client IP if omitted</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Full Example</h4>
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-bash">curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "level": "error",
+    "message": "Order processing failed",
+    "appName": "order-service",
+    "environment": "production",
+    "source": "OrderService",
+    "exceptionType": "NullReferenceException",
+    "exceptionMessage": "Object reference not set to an instance of an object",
+    "exceptionStacktrace": "at OrderService.Process() in OrderService.cs:line 42",
+    "requestMethod": "POST",
+    "requestPath": "/api/orders",
+    "statusCode": 500,
+    "durationMs": 234.5,
+    "userId": "user_123",
+    "metadata": {
+      "orderId": 4521,
+      "amount": 29.99
+    },
+    "traceId": "req-abc-123",
+    "spanId": "span-456"
+  }'</code></pre>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Success <span class="text-green-400">200</span></h4>
+                    <div class="doc-code"><pre><code class="language-json">{
+  "success": true,
+  "id": "550e8400-e29b-41d4-..."
+}</code></pre></div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Error <span class="text-red-400">400</span></h4>
+                    <div class="doc-code"><pre><code class="language-json">{
+  "success": false,
+  "error": "Invalid log level"
+}</code></pre></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

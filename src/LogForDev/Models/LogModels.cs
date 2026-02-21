@@ -32,6 +32,15 @@ public class LogEntry
     public string AppName { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
     public string? Metadata { get; set; }
+    public string? ExceptionType { get; set; }
+    public string? ExceptionMessage { get; set; }
+    public string? ExceptionStacktrace { get; set; }
+    public string? Source { get; set; }
+    public string? RequestMethod { get; set; }
+    public string? RequestPath { get; set; }
+    public int StatusCode { get; set; }
+    public double DurationMs { get; set; }
+    public string? UserId { get; set; }
     public string? TraceId { get; set; }
     public string? SpanId { get; set; }
     public string? Host { get; set; }
@@ -62,9 +71,36 @@ public class LogEntryRequest
     
     [JsonPropertyName("host")]
     public string? Host { get; set; }
-    
+
     [JsonPropertyName("environment")]
     public string? Environment { get; set; }
+
+    [JsonPropertyName("exceptionType")]
+    public string? ExceptionType { get; set; }
+
+    [JsonPropertyName("exceptionMessage")]
+    public string? ExceptionMessage { get; set; }
+
+    [JsonPropertyName("exceptionStacktrace")]
+    public string? ExceptionStacktrace { get; set; }
+
+    [JsonPropertyName("source")]
+    public string? Source { get; set; }
+
+    [JsonPropertyName("requestMethod")]
+    public string? RequestMethod { get; set; }
+
+    [JsonPropertyName("requestPath")]
+    public string? RequestPath { get; set; }
+
+    [JsonPropertyName("statusCode")]
+    public int StatusCode { get; set; }
+
+    [JsonPropertyName("durationMs")]
+    public double DurationMs { get; set; }
+
+    [JsonPropertyName("userId")]
+    public string? UserId { get; set; }
 
     public LogEntry ToLogEntry()
     {
@@ -74,6 +110,15 @@ public class LogEntryRequest
             Message = Message,
             AppName = AppName,
             Metadata = Metadata != null ? System.Text.Json.JsonSerializer.Serialize(Metadata) : null,
+            ExceptionType = ExceptionType,
+            ExceptionMessage = ExceptionMessage,
+            ExceptionStacktrace = ExceptionStacktrace,
+            Source = Source,
+            RequestMethod = RequestMethod,
+            RequestPath = RequestPath,
+            StatusCode = StatusCode,
+            DurationMs = DurationMs,
+            UserId = UserId,
             TraceId = TraceId,
             SpanId = SpanId,
             Host = Host,
@@ -112,6 +157,12 @@ public class LogQueryParams
     public string? Environment { get; set; }
     public string? TraceId { get; set; }
     public Guid? ProjectId { get; set; }
+    public string? ExceptionType { get; set; }
+    public string? Source { get; set; }
+    public string? UserId { get; set; }
+    public string? RequestMethod { get; set; }
+    public int? StatusCodeMin { get; set; }
+    public int? StatusCodeMax { get; set; }
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
     public int Page { get; set; } = 1;
@@ -264,6 +315,12 @@ public class TraceLogEntry
 
     [JsonPropertyName("metadata")]
     public string? Metadata { get; set; }
+
+    [JsonPropertyName("exceptionType")]
+    public string? ExceptionType { get; set; }
+
+    [JsonPropertyName("source")]
+    public string? Source { get; set; }
 
     [JsonPropertyName("offsetMs")]
     public double OffsetMs { get; set; }

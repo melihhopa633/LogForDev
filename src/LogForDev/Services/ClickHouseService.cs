@@ -75,6 +75,15 @@ public class ClickHouseService : IClickHouseService
                     app_name LowCardinality(String),
                     message String,
                     metadata String DEFAULT '{{}}'  ,
+                    exception_type LowCardinality(String) DEFAULT '',
+                    exception_message String DEFAULT '',
+                    exception_stacktrace String DEFAULT '',
+                    source LowCardinality(String) DEFAULT '',
+                    request_method LowCardinality(String) DEFAULT '',
+                    request_path String DEFAULT '',
+                    status_code UInt16 DEFAULT 0,
+                    duration_ms Float64 DEFAULT 0,
+                    user_id String DEFAULT '',
                     trace_id String DEFAULT '',
                     span_id String DEFAULT '',
                     host LowCardinality(String) DEFAULT '',
@@ -119,6 +128,26 @@ public class ClickHouseService : IClickHouseService
             await using var alterCmd2 = connection.CreateCommand();
             alterCmd2.CommandText = "ALTER TABLE logs ADD COLUMN IF NOT EXISTS project_name LowCardinality(String) DEFAULT ''";
             await alterCmd2.ExecuteNonQueryAsync();
+
+            // Add new schema columns for industry-standard logging
+            var newColumns = new[]
+            {
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS exception_type LowCardinality(String) DEFAULT ''",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS exception_message String DEFAULT ''",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS exception_stacktrace String DEFAULT ''",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS source LowCardinality(String) DEFAULT ''",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS request_method LowCardinality(String) DEFAULT ''",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS request_path String DEFAULT ''",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS status_code UInt16 DEFAULT 0",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS duration_ms Float64 DEFAULT 0",
+                "ALTER TABLE logs ADD COLUMN IF NOT EXISTS user_id String DEFAULT ''"
+            };
+            foreach (var alterSql in newColumns)
+            {
+                await using var alterNewCmd = connection.CreateCommand();
+                alterNewCmd.CommandText = alterSql;
+                await alterNewCmd.ExecuteNonQueryAsync();
+            }
 
             // Create app_logs table for internal application logs
             await using var appLogsCmd = connection.CreateCommand();

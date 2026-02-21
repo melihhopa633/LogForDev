@@ -1,0 +1,35 @@
+<!-- Error Responses -->
+<section id="error-responses" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">Error Responses</h2>
+    <p class="text-sm text-muted-foreground">All errors return a consistent JSON format:</p>
+
+    <div class="space-y-3">
+        <div class="rounded-lg border border-border overflow-hidden">
+            <div class="px-4 py-2.5 bg-muted/30 border-b border-border flex items-center gap-2">
+                <span class="text-xs font-bold text-red-400">401</span>
+                <span class="text-xs text-muted-foreground">Unauthorized &mdash; API key missing or invalid</span>
+            </div>
+            <div class="doc-code"><pre><code class="language-json">{ "success": false, "error": "Missing or invalid API key" }</code></pre></div>
+        </div>
+
+        <div class="rounded-lg border border-border overflow-hidden">
+            <div class="px-4 py-2.5 bg-muted/30 border-b border-border flex items-center gap-2">
+                <span class="text-xs font-bold text-yellow-400">400</span>
+                <span class="text-xs text-muted-foreground">Bad Request &mdash; missing or invalid field</span>
+            </div>
+            <div class="doc-code"><pre><code class="language-json">{ "success": false, "error": "Invalid log level. Valid: Trace, Debug, Info, Warning, Error, Fatal" }</code></pre></div>
+        </div>
+
+        <div class="rounded-lg border border-border overflow-hidden">
+            <div class="px-4 py-2.5 bg-muted/30 border-b border-border flex items-center gap-2">
+                <span class="text-xs font-bold text-red-500">500</span>
+                <span class="text-xs text-muted-foreground">Internal Server Error</span>
+            </div>
+            <div class="doc-code"><pre><code class="language-json">{ "success": false, "error": "Internal server error" }</code></pre></div>
+        </div>
+    </div>
+
+    <div class="callout callout-warn">
+        <strong>Getting 401?</strong> Your API key must start with <code class="font-mono text-xs bg-black/20 px-1 rounded">lfdev_</code> and be sent in the <code class="font-mono text-xs bg-black/20 px-1 rounded">X-API-Key</code> header.
+    </div>
+</section>

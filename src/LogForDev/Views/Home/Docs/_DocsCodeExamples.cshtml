@@ -1,0 +1,611 @@
+<!-- Divider -->
+<div class="border-t border-border pt-2">
+    <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Integration</h3>
+</div>
+
+<!-- Code Examples -->
+<section id="examples" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">Code Examples</h2>
+    <p class="text-sm text-muted-foreground">Copy, paste, run. Every example includes error handling, retry logic, and exception logging.</p>
+
+    <div class="rounded-lg border border-border overflow-hidden" id="langExamples">
+        <div class="lang-tabs">
+            <button class="lang-tab active" data-lang="curl" onclick="switchLang('curl')">
+                <span class="lang-dot lang-dot-curl"></span>cURL
+            </button>
+            <button class="lang-tab" data-lang="python" onclick="switchLang('python')">
+                <span class="lang-dot lang-dot-python"></span>Python
+            </button>
+            <button class="lang-tab" data-lang="node" onclick="switchLang('node')">
+                <span class="lang-dot lang-dot-node"></span>Node.js
+            </button>
+            <button class="lang-tab" data-lang="csharp" onclick="switchLang('csharp')">
+                <span class="lang-dot lang-dot-csharp"></span>C#
+            </button>
+            <button class="lang-tab" data-lang="go" onclick="switchLang('go')">
+                <span class="lang-dot lang-dot-go"></span>Go
+            </button>
+            <button class="lang-tab" data-lang="php" onclick="switchLang('php')">
+                <span class="lang-dot lang-dot-php"></span>PHP
+            </button>
+            <button class="lang-tab" data-lang="java" onclick="switchLang('java')">
+                <span class="lang-dot lang-dot-java"></span>Java
+            </button>
+            <button class="lang-tab" data-lang="ruby" onclick="switchLang('ruby')">
+                <span class="lang-dot lang-dot-ruby"></span>Ruby
+            </button>
+        </div>
+
+        <!-- cURL -->
+        <div class="lang-panel active" data-lang="curl">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-bash"># Send a log with exception details
+curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "level": "error",
+    "message": "Order processing failed",
+    "appName": "order-service",
+    "environment": "production",
+    "source": "OrderService",
+    "exceptionType": "NullReferenceException",
+    "exceptionMessage": "Object reference not set",
+    "exceptionStacktrace": "at OrderService.Process() in OrderService.cs:line 42",
+    "requestMethod": "POST",
+    "requestPath": "/api/orders",
+    "statusCode": 500,
+    "durationMs": 234.5,
+    "userId": "user_123",
+    "traceId": "req-abc-123",
+    "metadata": {"orderId": 4521, "amount": 29.99}
+  }'
+
+# Send a batch with mixed log types
+curl -X POST http://localhost:5000/api/logs/batch \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "logs": [
+      {"level":"info",  "message":"Request received",  "appName":"api", "traceId":"t-1", "requestMethod":"POST", "requestPath":"/api/orders", "userId":"user_42"},
+      {"level":"debug", "message":"DB query completed", "appName":"api", "traceId":"t-1", "durationMs":12.3, "source":"OrderRepository"},
+      {"level":"info",  "message":"Response sent",      "appName":"api", "traceId":"t-1", "statusCode":200, "durationMs":45.6}
+    ]
+  }'</code></pre>
+            </div>
+        </div>
+
+        <!-- Python -->
+        <div class="lang-panel" data-lang="python">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-python">import requests, time, traceback
+
+LOGFORDEV_URL = "http://localhost:5000"
+API_KEY       = "lfdev_your-key"
+APP_NAME      = "my-python-app"
+
+session = requests.Session()
+session.headers.update({
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY,
+})
+
+def send_log(level, message, metadata=None, trace_id=None,
+             source=None, user_id=None, exception=None,
+             request_method=None, request_path=None,
+             status_code=0, duration_ms=0, retries=3):
+    """Send a single log to LogForDev with automatic retry."""
+    payload = {
+        "level": level, "message": message,
+        "appName": APP_NAME, "environment": "production",
+    }
+    if metadata:        payload["metadata"]       = metadata
+    if trace_id:        payload["traceId"]        = trace_id
+    if source:          payload["source"]         = source
+    if user_id:         payload["userId"]         = user_id
+    if request_method:  payload["requestMethod"]  = request_method
+    if request_path:    payload["requestPath"]    = request_path
+    if status_code:     payload["statusCode"]     = status_code
+    if duration_ms:     payload["durationMs"]     = duration_ms
+
+    # Auto-extract exception info
+    if exception:
+        payload["exceptionType"]       = type(exception).__name__
+        payload["exceptionMessage"]    = str(exception)
+        payload["exceptionStacktrace"] = traceback.format_exc()
+
+    for attempt in range(retries):
+        try:
+            r = session.post(f"{LOGFORDEV_URL}/api/logs", json=payload, timeout=5)
+            if r.status_code == 200:
+                return r.json()
+        except requests.RequestException:
+            pass
+        if attempt &lt; retries - 1:
+            time.sleep(2 ** attempt)
+    return None
+
+
+# ── Usage ─────────────────────────────────────────
+send_log("info", "User signed up", metadata={"user_id": 42}, source="AuthService")
+
+try:
+    process_order(order_id=123)
+except Exception as e:
+    send_log("error", "Order processing failed",
+             exception=e, source="OrderService",
+             request_method="POST", request_path="/api/orders",
+             status_code=500, duration_ms=234.5,
+             user_id="user_123", trace_id="req-001")</code></pre>
+            </div>
+        </div>
+
+        <!-- Node.js -->
+        <div class="lang-panel" data-lang="node">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-javascript">const LOGFORDEV_URL = "http://localhost:5000";
+const API_KEY       = "lfdev_your-key";
+const APP_NAME      = "my-node-app";
+
+const headers = {
+  "Content-Type": "application/json",
+  "X-API-Key": API_KEY,
+};
+
+async function sendLog(level, message, opts = {}) {
+  const {
+    metadata, traceId, environment = "production",
+    source, userId, exceptionType, exceptionMessage,
+    exceptionStacktrace, requestMethod, requestPath,
+    statusCode, durationMs, retries = 3
+  } = opts;
+
+  const body = JSON.stringify({
+    level, message, appName: APP_NAME, environment,
+    ...(metadata            && { metadata }),
+    ...(traceId             && { traceId }),
+    ...(source              && { source }),
+    ...(userId              && { userId }),
+    ...(exceptionType       && { exceptionType }),
+    ...(exceptionMessage    && { exceptionMessage }),
+    ...(exceptionStacktrace && { exceptionStacktrace }),
+    ...(requestMethod       && { requestMethod }),
+    ...(requestPath         && { requestPath }),
+    ...(statusCode          && { statusCode }),
+    ...(durationMs          && { durationMs }),
+  });
+
+  for (let i = 0; i &lt; retries; i++) {
+    try {
+      const res = await fetch(`${LOGFORDEV_URL}/api/logs`, { method: "POST", headers, body });
+      if (res.ok) return await res.json();
+    } catch {}
+    if (i &lt; retries - 1) await new Promise(r => setTimeout(r, 2 ** i * 1000));
+  }
+  return null;
+}
+
+// ── Usage ─────────────────────────────────────────
+await sendLog("info", "Server started on port 3000", { source: "App" });
+
+try {
+  await processOrder(orderId);
+} catch (err) {
+  await sendLog("error", "Order processing failed", {
+    exceptionType: err.name,
+    exceptionMessage: err.message,
+    exceptionStacktrace: err.stack,
+    source: "OrderService",
+    requestMethod: "POST",
+    requestPath: "/api/orders",
+    statusCode: 500,
+    durationMs: 234.5,
+    userId: "user_123",
+    traceId: "req-xyz",
+  });
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- C# -->
+        <div class="lang-panel" data-lang="csharp">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-csharp">using System.Net.Http.Json;
+
+public class LogForDev : IDisposable
+{
+    private readonly HttpClient _http;
+    private readonly string _appName;
+    private readonly string _env;
+    private readonly int _retries;
+
+    public LogForDev(string url, string apiKey, string appName,
+        string env = "production", int retries = 3)
+    {
+        _appName  = appName;
+        _env      = env;
+        _retries  = retries;
+        _http     = new HttpClient { BaseAddress = new Uri(url) };
+        _http.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+    }
+
+    public async Task&lt;bool&gt; SendAsync(string level, string message,
+        object? metadata = null, string? traceId = null,
+        string? source = null, string? userId = null,
+        Exception? exception = null,
+        string? requestMethod = null, string? requestPath = null,
+        int statusCode = 0, double durationMs = 0)
+    {
+        var payload = new {
+            level, message, appName = _appName, environment = _env,
+            metadata, traceId, source, userId,
+            exceptionType       = exception?.GetType().Name,
+            exceptionMessage    = exception?.Message,
+            exceptionStacktrace = exception?.StackTrace,
+            requestMethod, requestPath, statusCode, durationMs,
+        };
+
+        for (int i = 0; i &lt; _retries; i++)
+        {
+            try
+            {
+                var resp = await _http.PostAsJsonAsync("/api/logs", payload);
+                if (resp.IsSuccessStatusCode) return true;
+            }
+            catch (HttpRequestException) { }
+
+            if (i &lt; _retries - 1)
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, i)));
+        }
+        return false;
+    }
+
+    public void Dispose() =&gt; _http.Dispose();
+}
+
+
+// ── Usage ─────────────────────────────────────────
+using var log = new LogForDev(
+    "http://localhost:5000", "lfdev_your-key", "my-dotnet-app"
+);
+
+await log.SendAsync("info", "Application started", source: "Program");
+
+try { await ProcessOrderAsync(orderId); }
+catch (Exception ex)
+{
+    await log.SendAsync("error", "Order processing failed",
+        exception: ex, source: "OrderService",
+        requestMethod: "POST", requestPath: "/api/orders",
+        statusCode: 500, durationMs: 234.5,
+        userId: "user_123", traceId: "req-001");
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Go -->
+        <div class="lang-panel" data-lang="go">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-go">package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "runtime"
+    "time"
+)
+
+var (
+    logfordevURL = "http://localhost:5000"
+    apiKey       = "lfdev_your-key"
+    appName      = "my-go-app"
+    httpClient   = &amp;http.Client{Timeout: 5 * time.Second}
+    maxRetries   = 3
+)
+
+type LogPayload struct {
+    Level               string         `json:"level"`
+    Message             string         `json:"message"`
+    AppName             string         `json:"appName"`
+    Environment         string         `json:"environment"`
+    Source              string         `json:"source,omitempty"`
+    UserID              string         `json:"userId,omitempty"`
+    ExceptionType       string         `json:"exceptionType,omitempty"`
+    ExceptionMessage    string         `json:"exceptionMessage,omitempty"`
+    ExceptionStacktrace string         `json:"exceptionStacktrace,omitempty"`
+    RequestMethod       string         `json:"requestMethod,omitempty"`
+    RequestPath         string         `json:"requestPath,omitempty"`
+    StatusCode          int            `json:"statusCode,omitempty"`
+    DurationMs          float64        `json:"durationMs,omitempty"`
+    TraceID             string         `json:"traceId,omitempty"`
+    Metadata            map[string]any `json:"metadata,omitempty"`
+}
+
+func sendLog(p LogPayload) error {
+    p.AppName = appName
+    if p.Environment == "" { p.Environment = "production" }
+
+    body, _ := json.Marshal(p)
+    for i := 0; i &lt; maxRetries; i++ {
+        req, _ := http.NewRequest("POST", logfordevURL+"/api/logs", bytes.NewReader(body))
+        req.Header.Set("Content-Type", "application/json")
+        req.Header.Set("X-API-Key", apiKey)
+        resp, err := httpClient.Do(req)
+        if err == nil &amp;&amp; resp.StatusCode == 200 {
+            resp.Body.Close()
+            return nil
+        }
+        if resp != nil { resp.Body.Close() }
+        time.Sleep(time.Duration(1&lt;&lt;i) * time.Second)
+    }
+    return fmt.Errorf("failed after %d retries", maxRetries)
+}
+
+
+// ── Usage ─────────────────────────────────────────
+func main() {
+    sendLog(LogPayload{Level: "info", Message: "Server started", Source: "main"})
+
+    if err := processOrder(123); err != nil {
+        buf := make([]byte, 4096)
+        n := runtime.Stack(buf, false)
+        sendLog(LogPayload{
+            Level:               "error",
+            Message:             "Order processing failed",
+            Source:              "OrderHandler",
+            ExceptionType:       "ProcessingError",
+            ExceptionMessage:    err.Error(),
+            ExceptionStacktrace: string(buf[:n]),
+            RequestMethod:       "POST",
+            RequestPath:         "/api/orders",
+            StatusCode:          500,
+            DurationMs:          234.5,
+            UserID:              "user_123",
+            TraceID:             "req-001",
+        })
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- PHP -->
+        <div class="lang-panel" data-lang="php">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-php">&lt;?php
+
+function sendLog(string $level, string $message, array $opts = []): ?array {
+    $url    = 'http://localhost:5000/api/logs';
+    $apiKey = 'lfdev_your-key';
+
+    $payload = array_filter([
+        'level'               =&gt; $level,
+        'message'             =&gt; $message,
+        'appName'             =&gt; 'my-php-app',
+        'environment'         =&gt; 'production',
+        'source'              =&gt; $opts['source'] ?? null,
+        'userId'              =&gt; $opts['userId'] ?? null,
+        'exceptionType'       =&gt; $opts['exceptionType'] ?? null,
+        'exceptionMessage'    =&gt; $opts['exceptionMessage'] ?? null,
+        'exceptionStacktrace' =&gt; $opts['exceptionStacktrace'] ?? null,
+        'requestMethod'       =&gt; $opts['requestMethod'] ?? null,
+        'requestPath'         =&gt; $opts['requestPath'] ?? null,
+        'statusCode'          =&gt; $opts['statusCode'] ?? null,
+        'durationMs'          =&gt; $opts['durationMs'] ?? null,
+        'traceId'             =&gt; $opts['traceId'] ?? null,
+        'metadata'            =&gt; $opts['metadata'] ?? null,
+    ], fn($v) =&gt; $v !== null);
+
+    for ($i = 0; $i &lt; 3; $i++) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           =&gt; true,
+            CURLOPT_RETURNTRANSFER =&gt; true,
+            CURLOPT_TIMEOUT        =&gt; 5,
+            CURLOPT_HTTPHEADER     =&gt; [
+                'Content-Type: application/json',
+                'X-API-Key: ' . $apiKey,
+            ],
+            CURLOPT_POSTFIELDS =&gt; json_encode($payload),
+        ]);
+        $response = curl_exec($ch);
+        $code     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($code === 200) return json_decode($response, true);
+        if ($i &lt; 2) sleep(2 ** $i);
+    }
+    return null;
+}
+
+
+// ── Usage ─────────────────────────────────────────
+sendLog('info', 'User registered', ['source' =&gt; 'AuthController', 'userId' =&gt; '42']);
+
+try {
+    processOrder($orderId);
+} catch (\Exception $e) {
+    sendLog('error', 'Order processing failed', [
+        'exceptionType'       =&gt; get_class($e),
+        'exceptionMessage'    =&gt; $e-&gt;getMessage(),
+        'exceptionStacktrace' =&gt; $e-&gt;getTraceAsString(),
+        'source'              =&gt; 'OrderService',
+        'requestMethod'       =&gt; 'POST',
+        'requestPath'         =&gt; '/api/orders',
+        'statusCode'          =&gt; 500,
+        'durationMs'          =&gt; 234.5,
+        'userId'              =&gt; 'user_123',
+        'traceId'             =&gt; 'req-001',
+    ]);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Java -->
+        <div class="lang-panel" data-lang="java">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-java">import java.net.URI;
+import java.net.http.*;
+import java.time.Duration;
+import java.io.*;
+import com.google.gson.Gson;
+import java.util.*;
+
+public class LogForDev {
+
+    private final String      url;
+    private final String      apiKey;
+    private final String      appName;
+    private final HttpClient  client;
+    private final Gson        gson       = new Gson();
+    private static final int  MAX_TRIES  = 3;
+
+    public LogForDev(String url, String apiKey, String appName) {
+        this.url     = url;
+        this.apiKey  = apiKey;
+        this.appName = appName;
+        this.client  = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5)).build();
+    }
+
+    public boolean send(String level, String message, Map&lt;String, Object&gt; opts) {
+        var payload = new HashMap&lt;String, Object&gt;();
+        payload.put("level", level);
+        payload.put("message", message);
+        payload.put("appName", appName);
+        payload.put("environment", "production");
+        if (opts != null) payload.putAll(opts);
+
+        var body = gson.toJson(payload);
+        for (int i = 0; i &lt; MAX_TRIES; i++) {
+            try {
+                var req = HttpRequest.newBuilder()
+                    .uri(URI.create(url + "/api/logs"))
+                    .header("Content-Type", "application/json")
+                    .header("X-API-Key", apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+                var resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() == 200) return true;
+            } catch (Exception ignored) {}
+            if (i &lt; MAX_TRIES - 1) {
+                try { Thread.sleep((long) Math.pow(2, i) * 1000); }
+                catch (InterruptedException ignored) {}
+            }
+        }
+        return false;
+    }
+
+    public boolean sendException(String message, Exception ex,
+            String source, String requestMethod, String requestPath,
+            int statusCode, double durationMs, String userId, String traceId) {
+        var sw = new StringWriter();
+        ex.printStackTrace(new PrintWriter(sw));
+        return send("error", message, Map.of(
+            "exceptionType", ex.getClass().getSimpleName(),
+            "exceptionMessage", ex.getMessage(),
+            "exceptionStacktrace", sw.toString(),
+            "source", source,
+            "requestMethod", requestMethod,
+            "requestPath", requestPath,
+            "statusCode", statusCode,
+            "durationMs", durationMs,
+            "userId", userId,
+            "traceId", traceId
+        ));
+    }
+}
+
+
+// ── Usage ─────────────────────────────────────────
+var log = new LogForDev("http://localhost:5000", "lfdev_your-key", "my-java-app");
+
+log.send("info", "App started", Map.of("source", "Main"));
+
+try { processOrder(123); }
+catch (Exception ex) {
+    log.sendException("Order processing failed", ex,
+        "OrderService", "POST", "/api/orders", 500, 234.5, "user_123", "req-001");
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Ruby -->
+        <div class="lang-panel" data-lang="ruby">
+            <div class="doc-code">
+                <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <pre><code class="language-ruby">require 'net/http'
+require 'json'
+require 'uri'
+
+LOGFORDEV_URL = 'http://localhost:5000'
+API_KEY       = 'lfdev_your-key'
+APP_NAME      = 'my-rails-app'
+MAX_RETRIES   = 3
+
+def send_log(level, message, **opts)
+  uri     = URI("#{LOGFORDEV_URL}/api/logs")
+  payload = {
+    level: level, message: message,
+    appName: APP_NAME, environment: 'production',
+  }
+  payload[:source]              = opts[:source]         if opts[:source]
+  payload[:userId]              = opts[:user_id]        if opts[:user_id]
+  payload[:exceptionType]       = opts[:exception_type] if opts[:exception_type]
+  payload[:exceptionMessage]    = opts[:exception_msg]  if opts[:exception_msg]
+  payload[:exceptionStacktrace] = opts[:stacktrace]     if opts[:stacktrace]
+  payload[:requestMethod]       = opts[:request_method] if opts[:request_method]
+  payload[:requestPath]         = opts[:request_path]   if opts[:request_path]
+  payload[:statusCode]          = opts[:status_code]    if opts[:status_code]
+  payload[:durationMs]          = opts[:duration_ms]    if opts[:duration_ms]
+  payload[:traceId]             = opts[:trace_id]       if opts[:trace_id]
+  payload[:metadata]            = opts[:metadata]       if opts[:metadata]
+
+  MAX_RETRIES.times do |i|
+    begin
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.open_timeout = 5
+      http.read_timeout = 5
+      req                  = Net::HTTP::Post.new(uri.path)
+      req['Content-Type']  = 'application/json'
+      req['X-API-Key']     = API_KEY
+      req.body             = payload.to_json
+      resp = http.request(req)
+      return JSON.parse(resp.body) if resp.code == '200'
+    rescue StandardError
+      sleep(2**i) if i &lt; MAX_RETRIES - 1
+    end
+  end
+  nil
+end
+
+
+# ── Usage ─────────────────────────────────────────
+send_log('info', 'User signed in', source: 'AuthController', user_id: 'user_42')
+
+begin
+  process_order(order_id)
+rescue => e
+  send_log('error', 'Order processing failed',
+    exception_type: e.class.name,
+    exception_msg:  e.message,
+    stacktrace:     e.backtrace&.join("\n"),
+    source:         'OrderService',
+    request_method: 'POST',
+    request_path:   '/api/orders',
+    status_code:    500,
+    duration_ms:    234.5,
+    user_id:        'user_123',
+    trace_id:       'req-001')
+end</code></pre>
+            </div>
+        </div>
+    </div>
+</section>

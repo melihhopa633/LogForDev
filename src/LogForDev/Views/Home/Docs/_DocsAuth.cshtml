@@ -1,0 +1,18 @@
+<section id="authentication" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">1. Get Your API Key</h2>
+    <p class="text-sm text-muted-foreground">
+        You need an API key to send logs to LogForDev.
+        Go to the <a href="/Home/Projects" class="text-primary hover:underline">Projects</a> page and create a new project &mdash; an API key is generated automatically.
+    </p>
+
+    <div class="callout callout-info">
+        Click <strong>Projects &rarr; Create Project</strong>, enter a project name, and copy the generated key.
+        It will start with <code class="font-mono text-xs bg-black/20 px-1 rounded">lfdev_</code>.
+    </div>
+
+    <p class="text-sm text-muted-foreground">Include the key in every request as an HTTP header:</p>
+    <div class="doc-code">
+        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <pre><code class="language-http">X-API-Key: lfdev_your-api-key-here</code></pre>
+    </div>
+</section>

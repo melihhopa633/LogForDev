@@ -1,0 +1,80 @@
+<!-- API Playground -->
+<section id="playground" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">API Playground</h2>
+    <p class="text-sm text-muted-foreground">Test the API directly from your browser.</p>
+
+    <div class="border border-border rounded-lg bg-card p-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">API Key</label>
+                <input type="text" id="tryApiKey" placeholder="lfdev_your-key" class="try-input font-mono" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">App Name</label>
+                <input type="text" id="tryAppName" value="docs-playground" class="try-input" />
+            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-muted-foreground mb-1.5">Message</label>
+            <input type="text" id="tryMessage" value="Hello from LogForDev!" class="try-input" />
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Level</label>
+                <select id="tryLevel" class="try-select w-full">
+                    <option value="info">info</option>
+                    <option value="debug">debug</option>
+                    <option value="warning">warning</option>
+                    <option value="error">error</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Environment</label>
+                <select id="tryEnv" class="try-select w-full">
+                    <option value="test">test</option>
+                    <option value="development">development</option>
+                    <option value="production">production</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Source</label>
+                <input type="text" id="trySource" placeholder="e.g. OrderService" class="try-input" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">User ID</label>
+                <input type="text" id="tryUserId" placeholder="e.g. user_123" class="try-input" />
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Exception Type</label>
+                <input type="text" id="tryExType" placeholder="e.g. NullReferenceException" class="try-input" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Request Method</label>
+                <select id="tryReqMethod" class="try-select w-full">
+                    <option value="">None</option>
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Request Path</label>
+                <input type="text" id="tryReqPath" placeholder="e.g. /api/orders" class="try-input" />
+            </div>
+            <div class="flex items-end">
+                <button onclick="sendTestLog()" class="try-btn w-full">Send Log</button>
+            </div>
+        </div>
+
+        <div id="tryResult" class="hidden">
+            <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-medium text-muted-foreground">Response</span>
+                <span id="tryStatus" class="text-xs font-mono"></span>
+            </div>
+            <div class="doc-code"><pre><code id="tryOutput" class="language-json !border-0"></code></pre></div>
+        </div>
+    </div>
+</section>

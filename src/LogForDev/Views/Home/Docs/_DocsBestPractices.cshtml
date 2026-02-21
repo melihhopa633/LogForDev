@@ -1,0 +1,100 @@
+<!-- Best Practices -->
+<section id="best-practices" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">Best Practices</h2>
+
+    <div class="space-y-3">
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">1</span>
+                <div>
+                    <h4 class="text-sm font-medium">Use batch endpoint for high throughput</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Buffer logs locally and send groups of 100&ndash;500 to <code class="font-mono text-xs bg-muted px-1 rounded">/api/logs/batch</code>. Reduces HTTP overhead by 10&ndash;50x.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">2</span>
+                <div>
+                    <h4 class="text-sm font-medium">Link services with trace IDs</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Generate a unique <code class="font-mono text-xs bg-muted px-1 rounded">traceId</code> per request and propagate it across all services. The dashboard shows the full request journey.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">3</span>
+                <div>
+                    <h4 class="text-sm font-medium">Always log exception details</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Use the dedicated <code class="font-mono text-xs bg-muted px-1 rounded">exceptionType</code>, <code class="font-mono text-xs bg-muted px-1 rounded">exceptionMessage</code>, and <code class="font-mono text-xs bg-muted px-1 rounded">exceptionStacktrace</code> fields instead of embedding exception info in the message or metadata.</p>
+                    <div class="doc-code mt-2">
+                        <pre><code class="language-json">// Good
+{ "message": "Order failed", "exceptionType": "TimeoutException", "exceptionMessage": "Connection timed out" }
+
+// Bad
+{ "message": "Order failed: TimeoutException - Connection timed out" }</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">4</span>
+                <div>
+                    <h4 class="text-sm font-medium">Put context in metadata, not the message</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Structured data is far easier to filter and analyze.</p>
+                    <div class="doc-code mt-2">
+                        <pre><code class="language-json">// Good
+{ "message": "Payment failed", "metadata": { "orderId": 123, "reason": "timeout" } }
+
+// Bad
+{ "message": "Payment failed for order 123: timeout" }</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">5</span>
+                <div>
+                    <h4 class="text-sm font-medium">Include HTTP context for API logs</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Set <code class="font-mono text-xs bg-muted px-1 rounded">requestMethod</code>, <code class="font-mono text-xs bg-muted px-1 rounded">requestPath</code>, <code class="font-mono text-xs bg-muted px-1 rounded">statusCode</code>, and <code class="font-mono text-xs bg-muted px-1 rounded">durationMs</code> to enable HTTP performance analysis and error tracking.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">6</span>
+                <div>
+                    <h4 class="text-sm font-medium">Retry with exponential backoff</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Network hiccups happen. All code examples above include retry logic with backoff (1s, 2s, 4s).</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">7</span>
+                <div>
+                    <h4 class="text-sm font-medium">Never log sensitive data</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Passwords, tokens, credit card numbers, and PII should never appear in logs.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-border rounded-lg p-4 bg-card">
+            <div class="flex items-start gap-3">
+                <span class="text-primary font-semibold mt-0.5 w-5 shrink-0">8</span>
+                <div>
+                    <h4 class="text-sm font-medium">Choose the right log level</h4>
+                    <p class="text-xs text-muted-foreground mt-1">Reserve <code class="font-mono text-xs bg-muted px-1 rounded">error</code> and <code class="font-mono text-xs bg-muted px-1 rounded">fatal</code> for genuine problems. Over-using them causes alert fatigue.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

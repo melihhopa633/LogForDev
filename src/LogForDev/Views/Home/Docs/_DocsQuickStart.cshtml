@@ -1,0 +1,26 @@
+<section id="quick-start" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">2. Send Your First Log</h2>
+    <p class="text-sm text-muted-foreground">Send your first log with a single cURL command:</p>
+
+    <div class="doc-code">
+        <button class="copy-btn" onclick="copyCode(this)"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <pre><code class="language-bash">curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: lfdev_your-key" \
+  -d '{
+    "level": "info",
+    "message": "Hello from LogForDev!",
+    "appName": "my-app"
+  }'</code></pre>
+    </div>
+
+    <p class="text-sm text-muted-foreground">Success response:</p>
+    <div class="doc-code">
+        <pre><code class="language-json">{
+  "success": true,
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}</code></pre>
+    </div>
+
+    <p class="text-sm text-muted-foreground">Done. Your log is now visible on the <a href="/" class="text-primary hover:underline">Dashboard</a>.</p>
+</section>

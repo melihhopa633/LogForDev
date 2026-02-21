@@ -1,0 +1,42 @@
+<!-- Log Levels -->
+<section id="log-levels" class="section-anchor space-y-4">
+    <h2 class="text-lg font-semibold border-b border-border pb-2">Log Levels</h2>
+    <p class="text-sm text-muted-foreground">Use one of the following values in the <code class="font-mono text-xs bg-muted px-1 rounded">level</code> field (case-insensitive):</p>
+    <div class="rounded-lg border border-border overflow-hidden">
+        <table class="param-table">
+            <thead><tr><th>Level</th><th>Value</th><th>When to use</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#71717a"></span><span class="text-zinc-400 text-xs font-semibold">trace</span></span></td>
+                    <td><code class="font-mono text-xs">"level": "trace"</code></td>
+                    <td>Most granular info, development only</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#60a5fa"></span><span class="text-blue-400 text-xs font-semibold">debug</span></span></td>
+                    <td><code class="font-mono text-xs">"level": "debug"</code></td>
+                    <td>Useful when actively debugging an issue</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#4ade80"></span><span class="text-green-400 text-xs font-semibold">info</span></span></td>
+                    <td><code class="font-mono text-xs">"level": "info"</code></td>
+                    <td>Normal operational events (login, request completed, etc.)</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#facc15"></span><span class="text-yellow-400 text-xs font-semibold">warning</span></span></td>
+                    <td><code class="font-mono text-xs">"level": "warning"</code></td>
+                    <td>Something needs attention (disk nearly full, rate limit approaching)</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#f87171"></span><span class="text-red-400 text-xs font-semibold">error</span></span></td>
+                    <td><code class="font-mono text-xs">"level": "error"</code></td>
+                    <td>Something went wrong but the app keeps running</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-flex items-center gap-1.5"><span class="level-dot" style="background:#ef4444"></span><span class="text-red-500 text-xs font-semibold">fatal</span></span></td>
+                    <td><code class="font-mono text-xs">"level": "fatal"</code></td>
+                    <td>Critical failure &mdash; app is down or cannot continue</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>

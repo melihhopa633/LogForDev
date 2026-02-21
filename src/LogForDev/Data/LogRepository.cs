@@ -20,7 +20,10 @@ public class LogRepository : ILogRepository
     {
         var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
         var sql = $@"
-            INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment, project_id, project_name)
+            INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata,
+                exception_type, exception_message, exception_stacktrace, source,
+                request_method, request_path, status_code, duration_ms, user_id,
+                trace_id, span_id, host, environment, project_id, project_name)
             VALUES (
                 '{log.Id}',
                 now64(3),
@@ -28,6 +31,15 @@ public class LogRepository : ILogRepository
                 '{ClickHouseStringHelper.Escape(log.AppName)}',
                 '{ClickHouseStringHelper.Escape(log.Message)}',
                 '{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}',
+                '{ClickHouseStringHelper.Escape(log.ExceptionType ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.ExceptionMessage ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.ExceptionStacktrace ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.Source ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.RequestMethod ?? "")}',
+                '{ClickHouseStringHelper.Escape(log.RequestPath ?? "")}',
+                {log.StatusCode},
+                {log.DurationMs.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                '{ClickHouseStringHelper.Escape(log.UserId ?? "")}',
                 '{ClickHouseStringHelper.Escape(log.TraceId ?? "")}',
                 '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}',
                 '{ClickHouseStringHelper.Escape(log.Host ?? "")}',
@@ -46,13 +58,17 @@ public class LogRepository : ILogRepository
         if (!logList.Any()) return 0;
 
         var sql = new StringBuilder();
-        sql.AppendLine($"INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, trace_id, span_id, host, environment, project_id, project_name) VALUES");
+        sql.AppendLine($"INSERT INTO {TableName} (id, timestamp, level, app_name, message, metadata, exception_type, exception_message, exception_stacktrace, source, request_method, request_path, status_code, duration_ms, user_id, trace_id, span_id, host, environment, project_id, project_name) VALUES");
 
         var values = logList.Select(log =>
         {
             var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
             return $"('{log.Id}', now64(3), '{log.Level}', '{ClickHouseStringHelper.Escape(log.AppName)}', '{ClickHouseStringHelper.Escape(log.Message)}', " +
-                $"'{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}', '{ClickHouseStringHelper.Escape(log.TraceId ?? "")}', '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}', " +
+                $"'{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}', " +
+                $"'{ClickHouseStringHelper.Escape(log.ExceptionType ?? "")}', '{ClickHouseStringHelper.Escape(log.ExceptionMessage ?? "")}', '{ClickHouseStringHelper.Escape(log.ExceptionStacktrace ?? "")}', " +
+                $"'{ClickHouseStringHelper.Escape(log.Source ?? "")}', '{ClickHouseStringHelper.Escape(log.RequestMethod ?? "")}', '{ClickHouseStringHelper.Escape(log.RequestPath ?? "")}', " +
+                $"{log.StatusCode}, {log.DurationMs.ToString(System.Globalization.CultureInfo.InvariantCulture)}, '{ClickHouseStringHelper.Escape(log.UserId ?? "")}', " +
+                $"'{ClickHouseStringHelper.Escape(log.TraceId ?? "")}', '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}', " +
                 $"'{ClickHouseStringHelper.Escape(log.Host ?? "")}', '{ClickHouseStringHelper.Escape(log.Environment)}', " +
                 $"'{projectId}', '{ClickHouseStringHelper.Escape(log.ProjectName ?? "")}')";
         });
@@ -70,7 +86,10 @@ public class LogRepository : ILogRepository
         var totalCount = await CountAsync(query, cancellationToken);
 
         var dataSql = queryBuilder
-            .Select("id", "timestamp", "level", "app_name", "message", "metadata", "trace_id", "span_id", "host", "environment", "project_id", "project_name")
+            .Select("id", "timestamp", "level", "app_name", "message", "metadata",
+                "exception_type", "exception_message", "exception_stacktrace", "source",
+                "request_method", "request_path", "status_code", "duration_ms", "user_id",
+                "trace_id", "span_id", "host", "environment", "project_id", "project_name")
             .OrderByDesc("timestamp")
             .Paginate(query.Page, query.PageSize)
             .BuildSelect();
@@ -199,7 +218,7 @@ public class LogRepository : ILogRepository
             return null;
 
         var sql = $@"
-            SELECT id, timestamp, level, app_name, message, metadata
+            SELECT id, timestamp, level, app_name, message, metadata, exception_type, source
             FROM {TableName}
             WHERE trace_id = '{ClickHouseStringHelper.Escape(traceId)}'
             ORDER BY timestamp ASC
@@ -212,7 +231,9 @@ public class LogRepository : ILogRepository
             Level = Enum.Parse<Models.LogLevel>(r.GetString(2), true),
             AppName = r.GetString(3),
             Message = r.GetString(4),
-            Metadata = r.IsDBNull(5) ? null : r.GetString(5)
+            Metadata = r.IsDBNull(5) ? null : r.GetString(5),
+            ExceptionType = r.IsDBNull(6) ? null : r.GetString(6),
+            Source = r.IsDBNull(7) ? null : r.GetString(7)
         }, cancellationToken);
 
         if (!logs.Any())
@@ -291,6 +312,36 @@ public class LogRepository : ILogRepository
             builder.Where("project_id", query.ProjectId.Value.ToString());
         }
 
+        if (!string.IsNullOrEmpty(query.ExceptionType))
+        {
+            builder.Where("exception_type", query.ExceptionType);
+        }
+
+        if (!string.IsNullOrEmpty(query.Source))
+        {
+            builder.Where("source", query.Source);
+        }
+
+        if (!string.IsNullOrEmpty(query.UserId))
+        {
+            builder.Where("user_id", query.UserId);
+        }
+
+        if (!string.IsNullOrEmpty(query.RequestMethod))
+        {
+            builder.Where("request_method", query.RequestMethod);
+        }
+
+        if (query.StatusCodeMin.HasValue)
+        {
+            builder.Where("status_code", ">=", query.StatusCodeMin.Value.ToString());
+        }
+
+        if (query.StatusCodeMax.HasValue)
+        {
+            builder.Where("status_code", "<=", query.StatusCodeMax.Value.ToString());
+        }
+
         if (query.From.HasValue && query.To.HasValue)
         {
             builder.WhereBetween("timestamp",
@@ -315,7 +366,11 @@ public class LogRepository : ILogRepository
 
     private static LogEntry MapLogEntry(System.Data.IDataReader reader)
     {
-        var projectId = reader.IsDBNull(10) ? (Guid?)null : reader.GetGuid(10);
+        // Column order: id(0), timestamp(1), level(2), app_name(3), message(4), metadata(5),
+        // exception_type(6), exception_message(7), exception_stacktrace(8), source(9),
+        // request_method(10), request_path(11), status_code(12), duration_ms(13), user_id(14),
+        // trace_id(15), span_id(16), host(17), environment(18), project_id(19), project_name(20)
+        var projectId = reader.IsDBNull(19) ? (Guid?)null : reader.GetGuid(19);
         if (projectId == Guid.Empty) projectId = null;
 
         return new LogEntry
@@ -326,12 +381,21 @@ public class LogRepository : ILogRepository
             AppName = reader.GetString(3),
             Message = reader.GetString(4),
             Metadata = reader.IsDBNull(5) ? null : reader.GetString(5),
-            TraceId = reader.IsDBNull(6) ? null : reader.GetString(6),
-            SpanId = reader.IsDBNull(7) ? null : reader.GetString(7),
-            Host = reader.IsDBNull(8) ? null : reader.GetString(8),
-            Environment = reader.GetString(9),
+            ExceptionType = reader.IsDBNull(6) ? null : reader.GetString(6),
+            ExceptionMessage = reader.IsDBNull(7) ? null : reader.GetString(7),
+            ExceptionStacktrace = reader.IsDBNull(8) ? null : reader.GetString(8),
+            Source = reader.IsDBNull(9) ? null : reader.GetString(9),
+            RequestMethod = reader.IsDBNull(10) ? null : reader.GetString(10),
+            RequestPath = reader.IsDBNull(11) ? null : reader.GetString(11),
+            StatusCode = Convert.ToInt32(reader.GetValue(12)),
+            DurationMs = Convert.ToDouble(reader.GetValue(13)),
+            UserId = reader.IsDBNull(14) ? null : reader.GetString(14),
+            TraceId = reader.IsDBNull(15) ? null : reader.GetString(15),
+            SpanId = reader.IsDBNull(16) ? null : reader.GetString(16),
+            Host = reader.IsDBNull(17) ? null : reader.GetString(17),
+            Environment = reader.GetString(18),
             ProjectId = projectId,
-            ProjectName = reader.IsDBNull(11) ? null : reader.GetString(11)
+            ProjectName = reader.IsDBNull(20) ? null : reader.GetString(20)
         };
     }
 }
