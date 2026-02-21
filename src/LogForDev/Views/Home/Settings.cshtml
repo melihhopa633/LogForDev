@@ -1,0 +1,173 @@
+@{
+    ViewData["Title"] = "Ayarlar";
+    var userEmail = User.Identity?.Name ?? "";
+    var userInitial = userEmail.Length > 0 ? userEmail[0].ToString().ToUpper() : "U";
+}
+
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-xl font-semibold text-foreground">Hesap Ayarları</h1>
+        <p class="text-sm text-muted-foreground mt-1">Hesap bilgilerinizi ve güvenlik ayarlarınızı yönetin.</p>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+        <div class="px-5 py-4 border-b border-border">
+            <h2 class="text-sm font-medium text-foreground">Profil</h2>
+        </div>
+        <div class="px-5 py-5 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xl font-bold text-primary shrink-0">
+                @userInitial
+            </div>
+            <div>
+                <p class="text-sm font-medium text-foreground">@userEmail</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Administrator</p>
+                <span class="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded text-xs bg-green-500/10 text-green-400 border border-green-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
+                    Aktif
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Card -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+        <div class="px-5 py-4 border-b border-border">
+            <h2 class="text-sm font-medium text-foreground">Şifre Değiştir</h2>
+            <p class="text-xs text-muted-foreground mt-0.5">Hesap güvenliğiniz için güçlü bir şifre kullanın.</p>
+        </div>
+        <div class="px-5 py-5 space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-foreground mb-1.5">Mevcut Şifre</label>
+                <input type="password" id="currentPassword" autocomplete="current-password"
+                       class="w-full px-3 py-2 text-sm bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+                       placeholder="••••••••" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-foreground mb-1.5">Yeni Şifre</label>
+                <input type="password" id="newPassword" autocomplete="new-password"
+                       class="w-full px-3 py-2 text-sm bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+                       placeholder="En az 8 karakter" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-foreground mb-1.5">Yeni Şifre (Tekrar)</label>
+                <input type="password" id="confirmPassword" autocomplete="new-password"
+                       class="w-full px-3 py-2 text-sm bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors"
+                       placeholder="••••••••" />
+            </div>
+
+            <!-- Feedback -->
+            <div id="pwFeedback" class="hidden text-xs px-3 py-2 rounded-md"></div>
+
+            <div class="flex items-center gap-3 pt-1">
+                <button onclick="changePassword()"
+                        id="changePasswordBtn"
+                        class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Şifreyi Güncelle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Info Card -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+        <div class="px-5 py-4 border-b border-border">
+            <h2 class="text-sm font-medium text-foreground">Güvenlik</h2>
+        </div>
+        <div class="px-5 py-4 space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-border/50">
+                <div>
+                    <p class="text-sm text-foreground">İki Faktörlü Doğrulama (TOTP)</p>
+                    <p class="text-xs text-muted-foreground mt-0.5">Google Authenticator veya uyumlu uygulama ile</p>
+                </div>
+                <span class="px-2 py-1 rounded text-xs bg-green-500/10 text-green-400 border border-green-500/20">Aktif</span>
+            </div>
+            <div class="flex items-center justify-between py-2">
+                <div>
+                    <p class="text-sm text-foreground">Oturum Süresi</p>
+                    <p class="text-xs text-muted-foreground mt-0.5">Oturumlar 7 gün sonra otomatik sona erer</p>
+                </div>
+                <span class="text-xs text-muted-foreground">7 gün</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="bg-card border border-destructive/30 rounded-lg overflow-hidden">
+        <div class="px-5 py-4 border-b border-destructive/30">
+            <h2 class="text-sm font-medium text-destructive">Tehlikeli Alan</h2>
+        </div>
+        <div class="px-5 py-4 flex items-center justify-between">
+            <div>
+                <p class="text-sm text-foreground">Oturumu Kapat</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Mevcut oturumunuzu sonlandırır.</p>
+            </div>
+            <button onclick="logout()"
+                    class="px-4 py-2 text-sm font-medium text-destructive border border-destructive/40 rounded-md hover:bg-destructive/10 transition-colors">
+                Çıkış Yap
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    async function changePassword() {
+        const current = document.getElementById('currentPassword').value.trim();
+        const newPw = document.getElementById('newPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const btn = document.getElementById('changePasswordBtn');
+        const feedback = document.getElementById('pwFeedback');
+
+        const showError = (msg) => {
+            feedback.textContent = msg;
+            feedback.className = 'text-xs px-3 py-2 rounded-md bg-destructive/10 text-destructive border border-destructive/20';
+            feedback.classList.remove('hidden');
+        };
+
+        const showSuccess = (msg) => {
+            feedback.textContent = msg;
+            feedback.className = 'text-xs px-3 py-2 rounded-md bg-green-500/10 text-green-400 border border-green-500/20';
+            feedback.classList.remove('hidden');
+        };
+
+        if (!current || !newPw || !confirm) return showError('Tüm alanları doldurunuz.');
+        if (newPw.length < 8) return showError('Yeni şifre en az 8 karakter olmalıdır.');
+        if (newPw !== confirm) return showError('Şifreler eşleşmiyor.');
+
+        btn.disabled = true;
+        btn.textContent = 'Güncelleniyor...';
+
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showSuccess('Şifre başarıyla güncellendi.');
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } else {
+                showError(data.error ?? 'Bir hata oluştu.');
+            }
+        } catch {
+            showError('Sunucu bağlantı hatası.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Şifreyi Güncelle';
+        }
+    }
+
+    async function logout() {
+        await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        window.location.href = '/login';
+    }
+</script>
+}

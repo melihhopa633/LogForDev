@@ -15,6 +15,7 @@ public interface IUserService
     Task<User?> GetUserByEmailAsync(string email);
     Task UpdateLastLoginAsync(Guid userId);
     Task IncrementFailedLoginAsync(Guid userId);
+    Task<bool> ChangePasswordAsync(string email, string currentPassword, string newPassword);
     string GenerateTotpSecret();
     string GenerateQrCodeDataUri(string email, string totpSecret);
     bool VerifyTotpCode(string secret, string code);
@@ -231,6 +232,30 @@ public class UserService : IUserService
         await using var updateCmd = connection.CreateCommand();
         updateCmd.CommandText = sql;
         await updateCmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<bool> ChangePasswordAsync(string email, string currentPassword, string newPassword)
+    {
+        var user = await GetUserByEmailAsync(email);
+        if (user == null) return false;
+
+        if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+        {
+            _logger.LogWarning("Change password failed — wrong current password: {Email}", email);
+            return false;
+        }
+
+        var newHash = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
+
+        await using var connection = GetConnection();
+        await connection.OpenAsync();
+
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = $"ALTER TABLE users UPDATE password_hash = '{newHash.Replace("'", "''")}' WHERE id = '{user.Id}'";
+        await cmd.ExecuteNonQueryAsync();
+
+        _logger.LogInformation("Password changed for user: {Email}", email);
+        return true;
     }
 
     public string GenerateTotpSecret()

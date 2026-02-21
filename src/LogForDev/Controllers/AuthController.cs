@@ -97,11 +97,29 @@ public class AuthController : Controller
     [HttpPost("/api/auth/logout")]
     public IActionResult Logout()
     {
-        // Delete cookie
         Response.Cookies.Delete(CookieAuthenticationOptions.CookieName);
-
         _logger.LogInformation("User logged out");
-
         return Ok(new { success = true });
+    }
+
+    [HttpPost("/api/auth/change-password")]
+    [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = CookieAuthenticationOptions.Scheme)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+            return BadRequest(new { success = false, error = "Tüm alanları doldurunuz" });
+
+        if (request.NewPassword.Length < 8)
+            return BadRequest(new { success = false, error = "Yeni şifre en az 8 karakter olmalıdır" });
+
+        var email = User.Identity?.Name;
+        if (string.IsNullOrEmpty(email))
+            return Unauthorized(new { success = false, error = "Oturum bulunamadı" });
+
+        var ok = await _userService.ChangePasswordAsync(email, request.CurrentPassword, request.NewPassword);
+        if (!ok)
+            return BadRequest(new { success = false, error = "Mevcut şifre hatalı" });
+
+        return Ok(new { success = true, message = "Şifre güncellendi" });
     }
 }
