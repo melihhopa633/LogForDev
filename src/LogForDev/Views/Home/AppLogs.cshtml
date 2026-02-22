@@ -1,7 +1,36 @@
+@*
+    AppLogs.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    Internal application logs viewer rendered inside _Layout.cshtml.
+    Displays request/response logs written by Serilog into the `app_logs`
+    ClickHouse table (separate from user logs in the `logs` table).
+
+    Useful for:
+      · Debugging slow API requests (duration column)
+      · Monitoring error rates in the LogForDev application itself
+      · Auditing which API endpoints are being called and by whom
+
+    Page sections:
+      · Header          — title + description
+      · Filters bar     — level toggles (INF/WRN/ERR), time range, search,
+                          custom date range, delete dropdown
+      · Logs table      — paginated, expandable rows (click to see detail)
+      · Pagination      — prev/next with total count
+
+    Inline <style> block (in @section Scripts):
+      · Level-toggle active colors: blue=INF, yellow=WRN, red=ERR
+        (these are log-level semantic colors, not the brand cyan)
+      · active-time-range: cyan (#22d3ee) matching the primary brand color
+
+    API endpoints used:
+      · GET  /api/logs/app  — paginated fetch with filters
+      · DELETE /api/logs/app[?olderThanDays=N]  — bulk delete
+*@
 @{
     ViewData["Title"] = "App Logs";
 }
 
+@* ── PAGE HEADER ──────────────────────────────────────────────────────── *@
 <!-- Header -->
 <div class="mb-4">
     <h1 class="text-2xl font-bold">Application Logs</h1>
@@ -133,12 +162,36 @@
 
 @section Scripts {
     <style>
-        .level-toggle.active[data-level="Information"] { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.5); color: #60a5fa; }
-        .level-toggle.active[data-level="Warning"] { background: rgba(234,179,8,0.15); border-color: rgba(234,179,8,0.5); color: #facc15; }
-        .level-toggle.active[data-level="Error"] { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.5); color: #f87171; }
-        .active-time-range { background: rgba(37,99,235,0.15) !important; border-color: rgba(37,99,235,0.5) !important; color: #60a5fa !important; }
-        .expand-arrow { transition: transform 0.2s; }
+        /*
+         * Level-toggle active states.
+         * Each log level has a distinct semantic color:
+         *   Information — blue  (conventional for informational messages)
+         *   Warning     — yellow
+         *   Error       — red
+         * These are LEVEL indicator colors, not brand colors, so blue is
+         * intentional and correct here even though the brand is cyan.
+         */
+        .level-toggle.active[data-level="Information"] { background: rgba(59,130,246,0.15);  border-color: rgba(59,130,246,0.5);  color: #60a5fa; }
+        .level-toggle.active[data-level="Warning"]     { background: rgba(234,179,8,0.15);   border-color: rgba(234,179,8,0.5);   color: #facc15; }
+        .level-toggle.active[data-level="Error"]       { background: rgba(239,68,68,0.15);   border-color: rgba(239,68,68,0.5);   color: #f87171; }
+
+        /*
+         * .active-time-range
+         * Applied by JS to the currently selected time-range button.
+         * !important overrides Tailwind utilities on the same element.
+         * Uses the primary cyan accent (#22d3ee) to match the main dashboard.
+         */
+        .active-time-range {
+            background:   rgba(34,211,238,0.15) !important; /* faint cyan fill  */
+            border-color: rgba(34,211,238,0.5)  !important; /* cyan border       */
+            color:        #22d3ee               !important; /* cyan text         */
+        }
+
+        /* Expand-arrow chevron rotates 90° when the row detail is open */
+        .expand-arrow      { transition: transform 0.2s; }
         .expand-arrow.open { transform: rotate(90deg); }
+
+        /* Log row hover — faint zinc wash to signal clickability */
         .log-row:hover { background: rgba(39,39,42,0.5); }
     </style>
     <script>

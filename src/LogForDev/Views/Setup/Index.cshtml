@@ -1,3 +1,22 @@
+@*
+    Setup/Index.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    The Setup Wizard page (Layout = null — fully standalone HTML document).
+    Guides a first-time user through six steps to configure LogForDev:
+        Step 1 – Database connection (ClickHouse host/port/credentials)
+        Step 2 – Admin account creation (email + password)
+        Step 3 – First project + API key generation
+        Step 4 – TOTP 2FA setup (scan QR code with authenticator app)
+        Step 5 – Test log submission (verifies the full pipeline works)
+        Step 6 – Finish & redirect to the login page
+
+    Architecture notes:
+      · _SetupStyles  — Tailwind CDN, Google Fonts, theme config, animations
+      · _SetupHeader  — ">_" logo + "Adım X / 6" counter + circle stepper
+      · _Step1…_Step6 — one partial per wizard step (shown/hidden by JS)
+      · setup.js      — all wizard logic: navigation, API calls, toasts
+      · window.__setupBaseUrl is injected here so setup.js knows the API root
+*@
 @{
     Layout = null;
     var baseUrl = ViewBag.BaseUrl as string ?? "";
@@ -8,22 +27,64 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Setup Wizard - LogForDev</title>
+
+    @*
+        _SetupStyles renders (in this order):
+          · Google Fonts preconnect + stylesheet (Outfit + JetBrains Mono)
+          · Tailwind CSS CDN <script>
+          · tailwind.config block (cyan primary, dark theme, custom radii)
+          · <style> block with all CSS animations and component classes
+    *@
     @await Html.PartialAsync("_SetupStyles")
 </head>
 <body class="bg-background text-foreground min-h-screen antialiased">
 
-    <!-- Background effects -->
+    @* ── BACKGROUND EFFECTS ──────────────────────────────────────────────
+       Two fixed (non-scrolling) layers add visual depth behind the card:
+
+         1. dot-grid  — subtle 24×24 px white dot texture at 4% opacity.
+                        Defined in _SetupStyles.cshtml as .dot-grid.
+         2. radial    — soft cyan gradient bloom at the top-centre of the page.
+                        rgba(34,211,238,0.05) = very faint — just enough warmth.
+
+       Both are pointer-events-none so they never block form interactions.
+       position: fixed keeps them stationary when the page is scrollable.
+    ──────────────────────────────────────────────────────────────────── *@
     <div class="fixed inset-0 dot-grid pointer-events-none"></div>
     <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] pointer-events-none"
-         style="background: radial-gradient(ellipse at center, rgba(59,130,246,0.05) 0%, transparent 65%);"></div>
+         style="background: radial-gradient(ellipse at center, rgba(34,211,238,0.05) 0%, transparent 65%);"></div>
 
+    @* ── PAGE WRAPPER ────────────────────────────────────────────────────
+       Full-screen flex centred layout.  max-w-2xl matches the card width.
+       relative z-10 ensures content renders above the fixed background layers.
+    ──────────────────────────────────────────────────────────────────── *@
     <div class="min-h-screen flex items-center justify-center p-4 relative z-10">
         <div class="w-full max-w-2xl">
 
+            @*
+                _SetupHeader renders (staggered .animate-fade-up entrance):
+                  · ">_" logo icon + "LogForDev" wordmark
+                  · "Kurulum Sihirbazı" subtitle + "Adım X / 6" counter
+                  · Connected 6-step circle stepper with connector lines
+            *@
             @await Html.PartialAsync("_SetupHeader")
 
-            <!-- Card Container -->
-            <div class="bg-card border border-border rounded-xl animate-fade-up" style="animation-delay:0.2s; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.5), 0 0 40px -8px rgba(59,130,246,0.08);">
+            @* ── STEP CARD ───────────────────────────────────────────────
+               Single card containing all six .step-panel partials.
+               JS (setup.js goToStep) shows exactly one panel at a time by
+               toggling the "active" class on .step-panel elements.
+
+               Box shadow breakdown:
+                 · 0 25px 60px -12px rgba(0,0,0,0.5) — deep lift shadow
+                 · 0 0 40px -8px rgba(34,211,238,0.08) — subtle cyan aura
+
+               animation-delay: 0.2s makes the card enter just after the
+               header, creating a natural staggered entrance on load.
+               clearProps:"all" (in GSAP below) removes the inline style
+               after animation so CSS hover transitions work normally.
+            ──────────────────────────────────────────────────────────────── *@
+            <div class="bg-card border border-border rounded-xl animate-fade-up"
+                 style="animation-delay:0.2s; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.5), 0 0 40px -8px rgba(34,211,238,0.08);">
                 @await Html.PartialAsync("_Step1Database")
                 @await Html.PartialAsync("_Step2Admin")
                 @await Html.PartialAsync("_Step3Project")
@@ -32,15 +93,53 @@
                 @await Html.PartialAsync("_Step6Finish")
             </div>
 
-            <!-- Footer -->
+            <!-- Footer credit line -->
             <p class="text-center text-xs text-muted-foreground mt-6">LogForDev &mdash; Open Source Logging System</p>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="width:360px;max-width:calc(100vw - 2rem);pointer-events:none;"></div>
+    @* ── TOAST CONTAINER ─────────────────────────────────────────────────
+       Fixed top-right area for transient notifications.
+       showToast() in setup.js appends toast elements here; they auto-dismiss
+       after their exit animation completes.
+       pointer-events: none on the container lets clicks pass through empty
+       space — each individual toast re-enables pointer events on itself.
+       z-[9999] ensures toasts always render above any modal overlays.
+    ──────────────────────────────────────────────────────────────────── *@
+    <div id="toastContainer"
+         class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"
+         style="width:360px;max-width:calc(100vw - 2rem);pointer-events:none;"></div>
 
+    @*
+        Expose the server-side base URL to setup.js.
+        This is set by SetupController.Index() via ViewBag.BaseUrl and
+        ensures API fetch calls use the correct origin in both dev
+        (e.g. https://localhost:5001) and production environments.
+    *@
     <script>window.__setupBaseUrl = '@baseUrl';</script>
+
+    @*
+        ── GSAP PAGE ENTRANCE ────────────────────────────────────────────────
+        Animates all .animate-fade-up elements (header + card) sliding up
+        from 18px below with a 0.12s stagger between them.
+        clearProps: 'all' removes the GSAP inline styles once the animation
+        finishes so CSS transitions (hover effects etc.) work correctly.
+        GSAP is loaded from the official CDN — 3.12.5 is the latest stable.
+    *@
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script>
+        gsap.from('.animate-fade-up', {
+            opacity:    0,
+            y:          18,
+            duration:   0.5,
+            stagger:    0.12,    /* header enters 120 ms before the card   */
+            ease:       'power3.out',
+            clearProps: 'all'    /* remove inline styles after animation   */
+        });
+    </script>
+
+    @* setup.js: all wizard logic — step navigation, API calls, stepper
+       updates, toast notifications, TOTP QR-code display *@
     <script src="~/js/setup.js"></script>
 </body>
 </html>

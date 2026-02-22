@@ -1,23 +1,39 @@
+@*
+    _LoginBranding.cshtml
+    ─────────────────────
+    Left panel of the login page (hidden on mobile, visible on lg+ screens).
+    Shows the brand logo, a fake live-streaming terminal window, an API example
+    command, and feature badges at the bottom.
+
+    This partial is rendered by Login.cshtml (Layout = null, standalone page).
+*@
+
 <!-- Left Panel: Branding + Live Terminal -->
 <div class="hidden lg:flex flex-col justify-between p-10 xl:p-14 border-r border-border relative overflow-hidden">
 
-    <!-- Background effects -->
+    @* ── BACKGROUND EFFECTS ───────────────────────────────────────────────────
+       Two layered effects create depth without adding DOM weight:
+         1. dot-grid  – subtle 24px dot grid texture (defined in Login.cshtml <style>)
+         2. radial    – a soft cyan glow blob centred on the panel, gives the
+                        impression of light emanating from the terminal window
+    ──────────────────────────────────────────────────────────────────────────── *@
     <div class="absolute inset-0 dot-grid pointer-events-none"></div>
     <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[500px] pointer-events-none"
-         style="background: radial-gradient(ellipse at center, rgba(59,130,246,0.06) 0%, transparent 65%);"></div>
+         style="background: radial-gradient(ellipse at center, rgba(34,211,238,0.06) 0%, transparent 65%);"></div>
 
-    <!-- Top: Logo + Tagline -->
+    @* ── TOP: LOGO + TAGLINE ──────────────────────────────────────────────────
+       Uses the same ">_" terminal-style logo as _Layout.cshtml for consistency.
+       The tagline is kept very short — developers read it at a glance.
+    ──────────────────────────────────────────────────────────────────────────── *@
     <div class="relative z-10">
         <div class="flex items-center gap-2.5 mb-4">
-            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <svg class="w-4.5 h-4.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
+            <!-- Icon box: matches _Layout.cshtml logo exactly -->
+            <div class="w-8 h-8 bg-primary/10 border border-primary/30 rounded-md flex items-center justify-center"
+                 style="box-shadow: 0 0 12px rgba(34,211,238,0.08);">
+                <span class="text-primary font-bold leading-none select-none"
+                      style="font-family:'JetBrains Mono',monospace;font-size:10px;">&gt;_</span>
             </div>
-            <span class="text-lg font-semibold tracking-tight">LogForDev</span>
+            <span class="text-lg font-semibold tracking-tight">Log<span class="text-primary">For</span>Dev</span>
         </div>
         <p class="text-sm text-muted-foreground leading-relaxed max-w-sm">
             Self-hosted, real-time logging system.<br/>
@@ -25,57 +41,85 @@
         </p>
     </div>
 
-    <!-- Center: Terminal Window -->
+    @* ── CENTER: SIMULATED TERMINAL WINDOW ───────────────────────────────────
+       A purely decorative macOS-style terminal window showing sample log lines.
+       Each .log-entry uses the CSS animation defined in Login.cshtml:
+           animation: fadeSlide + animation-delay (staggered per line)
+       This makes the log lines appear one-by-one on page load, simulating
+       a live stream — reinforcing the product's value proposition visually.
+
+       The three coloured dots in the title bar are the macOS traffic-light
+       buttons (close/minimise/full-screen), hardcoded as decorative only.
+    ──────────────────────────────────────────────────────────────────────────── *@
     <div class="relative z-10 max-w-lg">
         <div class="rounded-xl border border-border/60 overflow-hidden"
-             style="background-color:#0c0c10; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.5), 0 0 40px -8px rgba(59,130,246,0.08);">
+             style="background-color:#0c0c10; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.5), 0 0 40px -8px rgba(34,211,238,0.06);">
 
-            <!-- Title bar -->
+            <!-- macOS-style title bar with traffic-light dots -->
             <div class="flex items-center gap-2 px-4 h-10 border-b border-border/40">
-                <div class="w-2.5 h-2.5 rounded-full" style="background:#ff5f57"></div>
-                <div class="w-2.5 h-2.5 rounded-full" style="background:#febc2e"></div>
-                <div class="w-2.5 h-2.5 rounded-full" style="background:#28c840"></div>
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#ff5f57"></div> <!-- close  -->
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#febc2e"></div> <!-- minimise -->
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#28c840"></div> <!-- full-screen -->
                 <span class="ml-2 text-[11px] text-muted-foreground font-mono">logfordev — live logs</span>
             </div>
 
-            <!-- Log entries -->
+            <!-- Log entries — each fades in with a staggered animation-delay -->
             <div class="p-4 font-mono text-[11px] leading-relaxed space-y-2">
+
+                <!-- INF: successful login -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:0.3s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:01</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(34,197,94,0.12);color:#4ade80">INF</span>
                     <span class="text-foreground/70 truncate">User login successful — user_id: 8291</span>
                 </div>
+
+                <!-- DBG: HTTP request trace -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:0.6s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:02</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(96,165,250,0.12);color:#60a5fa">DBG</span>
                     <span class="text-foreground/70 truncate">GET /api/users/8291 — 200 (12ms)</span>
                 </div>
+
+                <!-- WRN: rate limit approaching -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:0.9s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:03</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(250,204,21,0.12);color:#facc15">WRN</span>
                     <span class="text-foreground/70 truncate">Rate limit approaching: 85% for 192.168.1.42</span>
                 </div>
+
+                <!-- INF: payment processed -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:1.2s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:04</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(34,197,94,0.12);color:#4ade80">INF</span>
                     <span class="text-foreground/70 truncate">Payment processed: order #4521 ($29.99)</span>
                 </div>
+
+                <!-- ERR: redis connection timeout -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:1.5s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:05</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(239,68,68,0.15);color:#f87171">ERR</span>
                     <span class="text-foreground/70 truncate">Connection timeout to redis-primary:6379</span>
                 </div>
+
+                <!-- INF: cache invalidated -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:1.8s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:06</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(34,197,94,0.12);color:#4ade80">INF</span>
                     <span class="text-foreground/70 truncate">Cache invalidated for key user:8291</span>
                 </div>
+
+                <!-- DBG: slow query warning -->
                 <div class="log-entry flex items-center gap-2.5" style="animation-delay:2.1s">
                     <span class="text-muted-foreground shrink-0 w-[52px]">14:23:07</span>
                     <span class="shrink-0 w-[38px] text-center px-1 py-px rounded text-[9px] font-bold" style="background:rgba(96,165,250,0.12);color:#60a5fa">DBG</span>
                     <span class="text-foreground/70 truncate">Query completed in 3ms (pool: 12/50)</span>
                 </div>
-                <!-- Blinking cursor -->
+
+                @*
+                    Blinking cursor on the last line — gives the illusion that logs
+                    are still streaming in. Uses the .cursor-blink CSS class from
+                    Login.cshtml which applies: animation: blink 1.1s step-end infinite
+                *@
                 <div class="log-entry flex items-center gap-1.5" style="animation-delay:2.4s">
                     <span class="text-green-400/70 text-[10px]">▸</span>
                     <span class="cursor-blink w-[6px] h-3.5 rounded-sm" style="background:rgba(74,222,128,0.7)"></span>
@@ -83,7 +127,11 @@
             </div>
         </div>
 
-        <!-- API example -->
+        @* ── API USAGE EXAMPLE ────────────────────────────────────────────────
+           A single-line curl snippet below the terminal reinforces how easy
+           it is to start sending logs. "lfdev_..." is the real API key format:
+               lfdev_ + Guid.NewGuid().ToString("N")   (see LogsController)
+        ──────────────────────────────────────────────────────────────────────── *@
         <div class="mt-4 px-1">
             <div class="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
                 <span class="text-green-400/60">$</span>
@@ -92,21 +140,28 @@
         </div>
     </div>
 
-    <!-- Bottom: Feature badges -->
+    @* ── BOTTOM: FEATURE BADGES ───────────────────────────────────────────────
+       Four short feature badges at the bottom summarise the product.
+       text-primary/70 gives the icons a slightly muted cyan tint.
+    ──────────────────────────────────────────────────────────────────────────── *@
     <div class="relative z-10 flex items-center gap-5 text-xs text-muted-foreground">
         <span class="flex items-center gap-1.5">
+            <!-- Lightning bolt = blazing fast ingestion (LogBufferService batches 100 logs/sec) -->
             <svg class="w-3.5 h-3.5 text-primary/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             Blazing Fast
         </span>
         <span class="flex items-center gap-1.5">
+            <!-- Padlock = TOTP 2FA (Otp.NET + QRCoder) -->
             <svg class="w-3.5 h-3.5 text-primary/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             2FA Secured
         </span>
         <span class="flex items-center gap-1.5">
+            <!-- Globe = REST API works from any language / platform -->
             <svg class="w-3.5 h-3.5 text-primary/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             Any Language
         </span>
         <span class="flex items-center gap-1.5">
+            <!-- Database = ClickHouse columnar storage -->
             <svg class="w-3.5 h-3.5 text-primary/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
             ClickHouse
         </span>

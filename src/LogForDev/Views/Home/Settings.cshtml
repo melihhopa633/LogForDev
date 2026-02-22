@@ -1,29 +1,58 @@
+@*
+    Settings.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    Account settings page rendered inside _Layout.cshtml.
+
+    Sections:
+      · Profile card    — avatar initial, email, active badge
+      · Change password — current / new / confirm inputs + feedback banner
+      · Security info   — TOTP status (always active), session duration
+      · Danger zone     — logout button (calls /api/auth/logout)
+
+    Data sources:
+      · User.Identity.Name — set by cookie auth on each request
+      · userInitial        — first character of email, uppercased
+
+    The change-password form POSTs to /api/auth/change-password (JSON).
+    All validation (empty fields, length, match) is done client-side first,
+    then the API performs server-side validation and BCrypt re-hashing.
+*@
 @{
     ViewData["Title"] = "Ayarlar";
-    var userEmail = User.Identity?.Name ?? "";
+    @* User.Identity.Name is populated from the auth cookie by _Layout's auth middleware *@
+    var userEmail   = User.Identity?.Name ?? "";
+    @* Avatar initial: first char of the email, uppercased (falls back to "U") *@
     var userInitial = userEmail.Length > 0 ? userEmail[0].ToString().ToUpper() : "U";
 }
 
 <div class="max-w-2xl mx-auto space-y-6">
 
-    <!-- Page Header -->
+    @* ── PAGE HEADER ──────────────────────────────────────────────────── *@
     <div>
         <h1 class="text-xl font-semibold text-foreground">Hesap Ayarları</h1>
         <p class="text-sm text-muted-foreground mt-1">Hesap bilgilerinizi ve güvenlik ayarlarınızı yönetin.</p>
     </div>
 
-    <!-- Profile Card -->
+    @* ── PROFILE CARD ─────────────────────────────────────────────────── *@
+    @*
+        Avatar is a letter-based fallback (no image uploads) — the first
+        letter of the user's email.  bg-primary/20 + border-primary/30 gives
+        it a subtle cyan tint consistent with the brand color.
+        The "Aktif" badge confirms the session is live.
+    *@
     <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="px-5 py-4 border-b border-border">
             <h2 class="text-sm font-medium text-foreground">Profil</h2>
         </div>
         <div class="px-5 py-5 flex items-center gap-4">
+            <!-- Letter avatar — first char of email, uppercased -->
             <div class="w-14 h-14 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xl font-bold text-primary shrink-0">
                 @userInitial
             </div>
             <div>
                 <p class="text-sm font-medium text-foreground">@userEmail</p>
                 <p class="text-xs text-muted-foreground mt-0.5">Administrator</p>
+                <!-- Green dot + "Aktif" = session is currently authenticated -->
                 <span class="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded text-xs bg-green-500/10 text-green-400 border border-green-500/20">
                     <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
                     Aktif
@@ -32,7 +61,16 @@
         </div>
     </div>
 
-    <!-- Change Password Card -->
+    @* ── CHANGE PASSWORD CARD ─────────────────────────────────────────── *@
+    @*
+        Three-field form: current password, new password, confirmation.
+        changePassword() in @section Scripts validates locally first:
+          · All fields must be non-empty
+          · New password must be ≥ 8 characters
+          · New and confirm must match
+        Then POSTs to /api/auth/change-password (JSON).
+        #pwFeedback div shows success (green) or error (red) inline.
+    *@
     <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="px-5 py-4 border-b border-border">
             <h2 class="text-sm font-medium text-foreground">Şifre Değiştir</h2>
@@ -71,7 +109,13 @@
         </div>
     </div>
 
-    <!-- Security Info Card -->
+    @* ── SECURITY INFO CARD ───────────────────────────────────────────── *@
+    @*
+        Read-only security summary — no interactive controls here.
+        TOTP is always "Active" because the setup wizard enforces TOTP
+        setup before allowing the admin to log in.
+        Session duration is hardcoded at 7 days (configured in Program.cs).
+    *@
     <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="px-5 py-4 border-b border-border">
             <h2 class="text-sm font-medium text-foreground">Güvenlik</h2>
@@ -94,7 +138,13 @@
         </div>
     </div>
 
-    <!-- Danger Zone -->
+    @* ── DANGER ZONE ──────────────────────────────────────────────────── *@
+    @*
+        Uses destructive theme tokens (red) to visually separate destructive
+        actions from safe settings above.
+        logout() calls POST /api/auth/logout, which clears the auth cookie
+        server-side, then redirects the browser to /login.
+    *@
     <div class="bg-card border border-destructive/30 rounded-lg overflow-hidden">
         <div class="px-5 py-4 border-b border-destructive/30">
             <h2 class="text-sm font-medium text-destructive">Tehlikeli Alan</h2>
@@ -115,25 +165,36 @@
 
 @section Scripts {
 <script>
+    /**
+     * changePassword()
+     * Validates the three password fields locally, then POSTs to
+     * /api/auth/change-password.  On success the fields are cleared
+     * and a green feedback message is shown.  On failure, a red error.
+     * The button is disabled while the fetch is in-flight to prevent
+     * duplicate submissions.
+     */
     async function changePassword() {
-        const current = document.getElementById('currentPassword').value.trim();
-        const newPw = document.getElementById('newPassword').value;
-        const confirm = document.getElementById('confirmPassword').value;
-        const btn = document.getElementById('changePasswordBtn');
+        const current  = document.getElementById('currentPassword').value.trim();
+        const newPw    = document.getElementById('newPassword').value;
+        const confirm  = document.getElementById('confirmPassword').value;
+        const btn      = document.getElementById('changePasswordBtn');
         const feedback = document.getElementById('pwFeedback');
 
+        // Helper: shows red error feedback inline
         const showError = (msg) => {
             feedback.textContent = msg;
             feedback.className = 'text-xs px-3 py-2 rounded-md bg-destructive/10 text-destructive border border-destructive/20';
             feedback.classList.remove('hidden');
         };
 
+        // Helper: shows green success feedback inline
         const showSuccess = (msg) => {
             feedback.textContent = msg;
             feedback.className = 'text-xs px-3 py-2 rounded-md bg-green-500/10 text-green-400 border border-green-500/20';
             feedback.classList.remove('hidden');
         };
 
+        // Client-side validation — fail fast before hitting the API
         if (!current || !newPw || !confirm) return showError('Tüm alanları doldurunuz.');
         if (newPw.length < 8) return showError('Yeni şifre en az 8 karakter olmalıdır.');
         if (newPw !== confirm) return showError('Şifreler eşleşmiyor.');
@@ -165,6 +226,13 @@
         }
     }
 
+    /**
+     * logout()
+     * POSTs to /api/auth/logout which clears the server-side auth cookie,
+     * then redirects the browser to /login.  .catch(() => {}) swallows
+     * network errors — the redirect happens regardless so the user ends
+     * up on the login page even if the server call fails.
+     */
     async function logout() {
         await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
         window.location.href = '/login';

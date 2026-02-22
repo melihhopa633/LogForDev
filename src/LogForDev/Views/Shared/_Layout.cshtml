@@ -4,26 +4,67 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - LogForDev</title>
+
+    @*
+        ── FONTS ──────────────────────────────────────────────────────────────
+        We load two typefaces from Google Fonts:
+          • Outfit        – clean modern sans-serif used for all UI text
+          • JetBrains Mono – monospace for log messages, kbd shortcuts,
+                             the ">_" logo icon, and code blocks
+
+        preconnect hints tell the browser to open the TCP/DNS connection
+        to Google's font servers early (before parsing the <link> tag),
+        shaving ~100-200 ms off the first font request on cold loads.
+        ──────────────────────────────────────────────────────────────────────
+    *@
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    @*
+        ── TAILWIND CSS (CDN "play" mode) ─────────────────────────────────────
+        We use the CDN build because there is no Node.js build step in this
+        project. The config block immediately after customises the theme.
+        ──────────────────────────────────────────────────────────────────────
+    *@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        /**
+         * Tailwind Design Token Configuration
+         * ------------------------------------
+         * All colours are defined once here. Every view inherits them via
+         * Tailwind utility classes (bg-primary, text-muted-foreground, etc.).
+         *
+         * Colour palette:
+         *   background  #09090b  – near-black page background
+         *   foreground  #f0f0ff  – slightly blue-white text (softer than pure white)
+         *   card        #0e0e16  – slightly lighter surface for cards / panels
+         *   primary     #22d3ee  – electric cyan — main brand accent
+         *   secondary   #13131e  – dark surface for inputs, hover states
+         *   accent      #818cf8  – soft indigo — secondary accent (rarely used)
+         *   destructive #f87171  – soft red for errors / delete actions
+         *   border      #1c1c2e  – very dark blue-grey border
+         *   ring        #22d3ee  – focus outline colour (matches primary)
+         */
         tailwind.config = {
-            darkMode: 'class',
+            darkMode: 'class', // dark mode is controlled by the "dark" class on <html>
             theme: {
                 extend: {
                     colors: {
-                        background: '#09090b',
-                        foreground: '#fafafa',
-                        card: { DEFAULT: '#111113', foreground: '#fafafa' },
-                        primary: { DEFAULT: '#3b82f6', foreground: '#fafafa' },
-                        secondary: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
-                        muted: { DEFAULT: '#1c1c1f', foreground: '#71717a' },
-                        accent: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
-                        destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
-                        border: '#27272a',
-                        input: '#1c1c1f',
-                        ring: '#3b82f6',
+                        background:  '#09090b',
+                        foreground:  '#f0f0ff',
+                        card:        { DEFAULT: '#0e0e16', foreground: '#f0f0ff' },
+                        primary:     { DEFAULT: '#22d3ee', foreground: '#07070b' },
+                        secondary:   { DEFAULT: '#13131e', foreground: '#f0f0ff' },
+                        muted:       { DEFAULT: '#13131e', foreground: '#71717a' },
+                        accent:      { DEFAULT: '#818cf8', foreground: '#07070b' },
+                        destructive: { DEFAULT: '#f87171', foreground: '#07070b' },
+                        border: '#1c1c2e',
+                        input:  '#13131e',
+                        ring:   '#22d3ee',
                     },
                     borderRadius: {
+                        // Keep radii small and consistent — no huge pill shapes
                         lg: '0.5rem',
                         md: 'calc(0.5rem - 2px)',
                         sm: 'calc(0.5rem - 4px)',
@@ -32,70 +73,151 @@
             }
         }
     </script>
+
+    @*
+        ── LOCAL STYLESHEET ────────────────────────────────────────────────────
+        dashboard.css lives in wwwroot/css/ and contains only the CSS rules
+        that Tailwind cannot express inline (nth-child selectors, keyframe
+        animations, webkit scrollbar pseudo-elements, etc.).
+        Keep it minimal — Tailwind utilities cover 95% of styling needs.
+        ──────────────────────────────────────────────────────────────────────
+    *@
     <link rel="stylesheet" href="/css/dashboard.css" />
+
     <style>
-        body { font-feature-settings: "rlig" 1, "calt" 1; }
-        .nav-active { color: #fafafa !important; }
+        /*
+         * Global body defaults
+         * font-family  : Outfit first, falling back to the OS system sans-serif
+         * font-feature : "rlig" = required ligatures, "calt" = contextual alternates
+         *               Both improve readability in Outfit at small sizes.
+         */
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-feature-settings: "rlig" 1, "calt" 1;
+        }
+
+        /*
+         * Active navigation link indicator
+         * ---------------------------------
+         * .nav-active is added by Razor when the current page matches the link.
+         *
+         * The ::after pseudo-element draws a glowing cyan underline bar:
+         *   - positioned at the very bottom of the nav bar (bottom: -1px)
+         *   - inset 15% from each side so it does not span the full link width
+         *   - box-shadow layers a soft glow around the bar for the neon effect
+         *
+         * "relative" must be on the <a> tag so ::after can be absolutely
+         * positioned inside it — see the nav links markup below.
+         */
+        .nav-active { color: #f0f0ff !important; }
         .nav-active::after {
             content: '';
             position: absolute;
             bottom: -1px;
-            left: 0;
-            right: 0;
+            left: 15%;
+            right: 15%;
             height: 2px;
-            background: #3b82f6;
+            background: #22d3ee;
             border-radius: 2px 2px 0 0;
+            /* Two-layer glow: tight bright core + wider soft halo */
+            box-shadow: 0 0 8px #22d3ee, 0 0 18px rgba(34,211,238,0.35);
         }
     </style>
 </head>
+
+@*
+    Body classes:
+      bg-background  – sets page background to our near-black token
+      text-foreground – default text colour
+      min-h-screen   – ensures page fills the full viewport height
+      flex flex-col  – column flex so the footer sticks to the bottom
+      antialiased    – enables font smoothing
+*@
 <body class="bg-background text-foreground min-h-screen flex flex-col antialiased">
 
 @{
+    // Read the current MVC action name so we can highlight the correct nav link
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-    var userEmail = User.Identity?.Name ?? "";
+
+    // User details come from the authentication cookie via ASP.NET Core ClaimsPrincipal
+    var userEmail   = User.Identity?.Name ?? "";
     var userInitial = userEmail.Length > 0 ? userEmail[0].ToString().ToUpper() : "U";
 }
 
-<!-- Navbar -->
+@*
+    ═══════════════════════════════════════════════════════════════════════════
+    NAVBAR
+    sticky top-0  – stays visible when the page scrolls
+    z-50          – sits above all page content
+    backdrop-blur – frosts the content scrolling behind it
+    bg-background/95 + supports-[backdrop-filter]:bg-background/60
+                  – on browsers that support backdrop-filter the background is
+                    60% opaque (shows blur); otherwise fully 95% opaque
+    ═══════════════════════════════════════════════════════════════════════════
+*@
 <nav class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
     <div class="flex h-14 items-center justify-between px-4 md:px-6 max-w-screen-2xl mx-auto">
 
-        <!-- Logo -->
-        <a href="/" class="flex items-center gap-2.5 font-semibold text-base text-foreground hover:opacity-80 transition-opacity shrink-0">
-            <div class="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
+        @*
+            ── LOGO ─────────────────────────────────────────────────────────────
+            Uses the "group" Tailwind trick: hovering the <a> parent propagates
+            group-hover:* classes to children, so the icon border and background
+            tint together in one smooth transition.
+            The ">_" terminal symbol uses JetBrains Mono so it renders as a crisp
+            monospace glyph at 11px.
+            ──────────────────────────────────────────────────────────────────────
+        *@
+        <a href="/" class="flex items-center gap-2.5 shrink-0 group">
+            <!-- Icon box: subtle cyan border + 10% opacity fill, glows on hover -->
+            <div class="w-7 h-7 bg-primary/10 border border-primary/30 rounded-md flex items-center justify-center transition-all group-hover:border-primary/60 group-hover:bg-primary/15"
+                 style="box-shadow: 0 0 12px rgba(34,211,238,0.08);">
+                <span class="text-primary font-bold leading-none select-none"
+                      style="font-family:'JetBrains Mono',monospace;font-size:11px;">&gt;_</span>
             </div>
-            LogForDev
+            <!-- "For" highlighted in cyan to visually break the brand word -->
+            <span class="font-semibold text-base tracking-tight text-foreground">
+                Log<span class="text-primary">For</span>Dev
+            </span>
         </a>
 
-        <!-- Desktop Nav Links -->
+        @*
+            ── DESKTOP NAVIGATION LINKS ──────────────────────────────────────────
+            Hidden on mobile (md:flex shows at >= 768px).
+
+            Each link:
+              • gets "nav-item" so GSAP can target it for staggered entrance animation
+              • uses a Razor ternary to apply "nav-active" (glowing underline)
+                when the current route matches, otherwise muted text + hover state
+              • "relative" is required so .nav-active::after can be positioned inside it
+            ──────────────────────────────────────────────────────────────────────
+        *@
         <div class="hidden md:flex items-center h-full gap-0.5 ml-6">
-            <a href="/" class="relative px-3 py-1.5 text-sm transition-colors rounded-md
-                @(currentAction == "Index" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
+            <a href="/"
+               class="nav-item relative px-3 py-1.5 text-sm transition-colors rounded-md
+                      @(currentAction == "Index" ? "nav-active" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
                 Dashboard
             </a>
-            <a href="/Home/AppLogs" class="relative px-3 py-1.5 text-sm transition-colors rounded-md
-                @(currentAction == "AppLogs" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
+            <a href="/Home/AppLogs"
+               class="nav-item relative px-3 py-1.5 text-sm transition-colors rounded-md
+                      @(currentAction == "AppLogs" ? "nav-active" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
                 App Logs
             </a>
-            <a href="/Home/Projects" class="relative px-3 py-1.5 text-sm transition-colors rounded-md
-                @(currentAction == "Projects" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
+            <a href="/Home/Projects"
+               class="nav-item relative px-3 py-1.5 text-sm transition-colors rounded-md
+                      @(currentAction == "Projects" ? "nav-active" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
                 Projects
             </a>
-            <a href="/Home/Docs" class="relative px-3 py-1.5 text-sm transition-colors rounded-md
-                @(currentAction == "Docs" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
+            <a href="/Home/Docs"
+               class="nav-item relative px-3 py-1.5 text-sm transition-colors rounded-md
+                      @(currentAction == "Docs" ? "nav-active" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60")">
                 Docs
             </a>
         </div>
 
-        <!-- Right Side -->
+        <!-- Right side: GitHub link + user avatar dropdown + mobile hamburger -->
         <div class="flex items-center gap-2 ml-auto">
-            <!-- GitHub -->
+
+            <!-- GitHub link — hidden on mobile to save space -->
             <a href="https://github.com/melihhopa633/LogForDev" target="_blank"
                class="hidden md:flex p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-secondary/60"
                title="GitHub">
@@ -104,22 +226,33 @@
                 </svg>
             </a>
 
-            <!-- User Avatar Dropdown -->
+            @*
+                ── USER AVATAR DROPDOWN ───────────────────────────────────────────
+                Managed by toggleUserMenu() below.
+                Clicking anywhere outside #userMenu closes it (document click listener).
+                ──────────────────────────────────────────────────────────────────────
+            *@
             <div class="relative" id="userMenu">
+
+                <!-- Trigger button: shows the user's first-letter initial -->
                 <button onclick="toggleUserMenu()"
                         class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/60 transition-colors group">
+                    <!-- Avatar circle – bg-primary/20 gives a faint cyan tint -->
                     <div class="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-semibold text-primary">
                         @userInitial
                     </div>
-                    <svg class="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6 9 12 15 18 9"/>
                     </svg>
                 </button>
 
-                <!-- Dropdown -->
+                <!-- Dropdown panel – "hidden" class toggled by toggleUserMenu() -->
                 <div id="userDropdown"
                      class="hidden absolute right-0 top-full mt-1.5 w-56 bg-card border border-border rounded-lg shadow-xl shadow-black/30 py-1 z-50">
-                    <!-- User info -->
+
+                    <!-- User info header -->
                     <div class="px-3 py-2.5 border-b border-border">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
@@ -132,7 +265,7 @@
                         </div>
                     </div>
 
-                    <!-- Menu items -->
+                    <!-- Settings link -->
                     <div class="py-1">
                         <a href="/Home/Settings"
                            class="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
@@ -144,6 +277,7 @@
                         </a>
                     </div>
 
+                    <!-- Logout – calls logout() which POSTs to /api/auth/logout -->
                     <div class="border-t border-border py-1">
                         <button onclick="logout()"
                                 class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors">
@@ -158,22 +292,34 @@
                 </div>
             </div>
 
-            <!-- Mobile hamburger -->
+            @*
+                ── MOBILE HAMBURGER ────────────────────────────────────────────────
+                Only visible on small screens (md:hidden).
+                Toggles the #mobileMenu panel below the nav bar.
+                ──────────────────────────────────────────────────────────────────────
+            *@
             <button class="md:hidden p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-secondary/60"
                     onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/>
+                    <line x1="4" y1="12" x2="20" y2="12"/>
+                    <line x1="4" y1="6"  x2="20" y2="6"/>
+                    <line x1="4" y1="18" x2="20" y2="18"/>
                 </svg>
             </button>
         </div>
     </div>
 
-    <!-- Mobile Menu -->
+    @*
+        ── MOBILE MENU PANEL ────────────────────────────────────────────────────
+        Shown only on small screens when the hamburger is tapped.
+        Same Razor active-state ternary as the desktop nav.
+        ──────────────────────────────────────────────────────────────────────────
+    *@
     <div id="mobileMenu" class="hidden md:hidden border-t border-border px-4 py-3 space-y-0.5 bg-background">
-        <a href="/" class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "Index" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">Dashboard</a>
-        <a href="/Home/AppLogs" class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "AppLogs" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">App Logs</a>
+        <a href="/"              class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "Index"    ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">Dashboard</a>
+        <a href="/Home/AppLogs"  class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "AppLogs"  ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">App Logs</a>
         <a href="/Home/Projects" class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "Projects" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">Projects</a>
-        <a href="/Home/Docs" class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "Docs" ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">Docs</a>
+        <a href="/Home/Docs"     class="flex items-center px-3 py-2 text-sm rounded-md transition-colors @(currentAction == "Docs"     ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60")">Docs</a>
         <div class="border-t border-border mt-2 pt-2">
             <a href="/Home/Settings" class="flex items-center px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-secondary/60">Ayarlar</a>
             <button onclick="logout()" class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md text-destructive hover:bg-destructive/10">Çıkış Yap</button>
@@ -181,7 +327,14 @@
     </div>
 </nav>
 
-<!-- Main Content -->
+@*
+    ═══════════════════════════════════════════════════════════════════════════
+    MAIN CONTENT AREA
+    flex-1        – grows to fill remaining vertical space (pushes footer down)
+    max-w-screen-2xl mx-auto – centres content on very wide monitors
+    GSAP animates this element sliding up + fading in on every page load.
+    ═══════════════════════════════════════════════════════════════════════════
+*@
 <main class="flex-1 w-full max-w-screen-2xl mx-auto px-4 md:px-6 py-6">
     @RenderBody()
 </main>
@@ -201,12 +354,20 @@
 </footer>
 
 <script>
+    /**
+     * toggleUserMenu()
+     * Opens or closes the user dropdown by toggling the "hidden" class.
+     * Called by the avatar button's onclick attribute.
+     */
     function toggleUserMenu() {
         const dropdown = document.getElementById('userDropdown');
         dropdown.classList.toggle('hidden');
     }
 
-    // Close dropdown when clicking outside
+    /**
+     * Close the dropdown when the user clicks anywhere outside #userMenu.
+     * Uses event delegation on document so no cleanup is needed.
+     */
     document.addEventListener('click', function(e) {
         const menu = document.getElementById('userMenu');
         if (menu && !menu.contains(e.target)) {
@@ -214,6 +375,13 @@
         }
     });
 
+    /**
+     * logout()
+     * POSTs to the auth API to invalidate the server-side session cookie,
+     * then redirects to the login page.
+     * The catch block handles network failures by still redirecting —
+     * the server will reject the stale cookie on the next visit anyway.
+     */
     async function logout() {
         try {
             const res = await fetch('/api/auth/logout', { method: 'POST' });
@@ -221,43 +389,79 @@
                 window.location.href = '/login';
             }
         } catch {
+            // Even on network error, send the user to login for a consistent UI
             window.location.href = '/login';
         }
     }
 </script>
 
+@*
+    Optional "Scripts" section slot.
+    Individual views can inject page-specific <script> blocks by declaring:
+        @section Scripts { <script>...</script> }
+    required: false means pages that don't define the section won't error.
+*@
 @await RenderSectionAsync("Scripts", required: false)
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="width:360px;max-width:calc(100vw - 2rem);pointer-events:none;"></div>
+@*
+    ── TOAST NOTIFICATION CONTAINER ────────────────────────────────────────────
+    Toasts are dynamically injected here by showToast() below.
+    fixed top-4 right-4 z-[9999] – always on top, top-right corner.
+    pointer-events:none on the container lets clicks pass through empty space;
+    individual toasts re-enable pointer-events so they are clickable.
+    ──────────────────────────────────────────────────────────────────────────────
+*@
+<div id="toastContainer"
+     class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"
+     style="width:360px; max-width:calc(100vw - 2rem); pointer-events:none;"></div>
 
 <style>
     @@keyframes toast-in {
+        /* Slides in from the right edge */
         from { opacity: 0; transform: translateX(calc(100% + 1rem)); }
         to   { opacity: 1; transform: translateX(0); }
     }
     @@keyframes toast-out {
+        /* Slides back out to the right */
         from { opacity: 1; transform: translateX(0); }
         to   { opacity: 0; transform: translateX(calc(100% + 1rem)); }
     }
-    .toast-enter { animation: toast-in 0.35s cubic-bezier(0.21,1.02,0.73,1) forwards; }
+    /* cubic-bezier(0.21,1.02,0.73,1) gives a slight overshoot "spring" on enter */
+    .toast-enter { animation: toast-in  0.35s cubic-bezier(0.21,1.02,0.73,1) forwards; }
     .toast-exit  { animation: toast-out 0.25s ease-in forwards; }
 </style>
 
 <script>
+    /**
+     * showToast(message, type, duration)
+     * ------------------------------------
+     * Creates and injects a self-dismissing toast into #toastContainer.
+     *
+     * @@param {string} message  – Text to display
+     * @@param {string} type     – "success" | "error" | "warning" | "info"
+     * @@param {number} duration – Auto-dismiss time in ms (default 3500)
+     *
+     * Each toast has:
+     *   • A type-specific SVG icon
+     *   • A shrinking progress bar (Web Animations API)
+     *   • A close (×) button that dismisses immediately
+     *   • Pause on hover: timer stops while the cursor is over the toast
+     */
     function showToast(message, type = 'info', duration = 3500) {
         const container = document.getElementById('toastContainer');
 
+        // Each type maps to a border colour, progress bar colour, and icon SVG
         const cfg = {
             success: { border: 'rgba(34,197,94,0.25)',  bar: '#22c55e', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>' },
             error:   { border: 'rgba(239,68,68,0.25)',  bar: '#ef4444', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
             warning: { border: 'rgba(234,179,8,0.25)',  bar: '#eab308', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
             info:    { border: 'rgba(59,130,246,0.25)', bar: '#3b82f6', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' },
         };
-        const c = cfg[type] || cfg.info;
+        const c = cfg[type] || cfg.info; // fall back to "info" for unknown types
 
+        // Build the toast element
         const el = document.createElement('div');
-        el.className = 'toast-enter';
+        el.className = 'toast-enter'; // triggers the slide-in CSS animation
         el.style.cssText = `pointer-events:auto;display:flex;align-items:center;gap:10px;padding:12px 14px;background:#18181b;border:1px solid ${c.border};border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.55),0 2px 8px rgba(0,0,0,0.3);position:relative;overflow:hidden;`;
         el.innerHTML = `
             ${c.icon}
@@ -268,20 +472,75 @@
             <div id="tp" style="position:absolute;bottom:0;left:0;height:2px;background:${c.bar};width:100%;opacity:0.5;"></div>
         `;
 
+        /**
+         * dismiss()
+         * Clears the auto-dismiss timer, triggers the slide-out animation,
+         * then removes the element from the DOM after the animation finishes.
+         */
         function dismiss() {
             clearTimeout(timer);
-            el.classList.replace('toast-enter', 'toast-exit');
-            setTimeout(() => el.remove(), 260);
+            el.classList.replace('toast-enter', 'toast-exit'); // swap to exit animation
+            setTimeout(() => el.remove(), 260); // wait for 0.25s animation to finish
         }
 
-        el.addEventListener('dismiss', dismiss);
+        el.addEventListener('dismiss', dismiss); // fired by the × button
+        // Progress bar shrinks from 100% → 0% at a constant rate over `duration` ms
         el.querySelector('#tp').animate([{ width: '100%' }, { width: '0%' }], { duration, easing: 'linear' });
         container.appendChild(el);
 
+        // Auto-dismiss after `duration` ms
         let timer = setTimeout(dismiss, duration);
+        // Pause the timer while hovering so users can read long messages
         el.addEventListener('mouseenter', () => clearTimeout(timer));
         el.addEventListener('mouseleave', () => { timer = setTimeout(dismiss, 800); });
     }
 </script>
+
+@*
+    ── GSAP PAGE ANIMATIONS ──────────────────────────────────────────────────────
+    GSAP (GreenSock Animation Platform) loaded from jsDelivr CDN.
+
+    1. Main content (gsap.from 'main'):
+       – Fades in from opacity:0 and slides up 14px
+       – ease 'power2.out' decelerates quickly for a snappy feel
+       – delay 0.05s gives the browser one frame to finish its initial paint
+
+    2. Nav items (gsap.from '.nav-item'):
+       – Each link fades in from opacity:0 and slides down 6px from above
+       – stagger: 0.07s makes each item start 70ms after the previous one,
+         creating a left-to-right cascade effect across the nav bar
+    ──────────────────────────────────────────────────────────────────────────────
+*@
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script>
+    // Animate the main content area sliding up on every page load
+    gsap.from('main', {
+        opacity: 0,
+        y: 14,          // start 14px below final position
+        duration: 0.45,
+        ease: 'power2.out',
+        delay: 0.05     // tiny delay lets the browser finish its initial paint
+    });
+
+    // Animate each desktop nav link cascading down from above
+    gsap.from('.nav-item', {
+        opacity: 0,
+        y: -6,          // start 6px above final position
+        duration: 0.35,
+        stagger: 0.07,  // 70ms between each nav item
+        ease: 'power2.out'
+    });
+</script>
+
+@*
+    ── FLOWBITE ──────────────────────────────────────────────────────────────────
+    Flowbite extends Tailwind with pre-built interactive components
+    (dropdowns, modals, tooltips, tabs) via data-* attributes.
+    Loaded at end of <body> so it does not block rendering.
+    Existing custom JS (toggleUserMenu, etc.) continues to work alongside it.
+    ──────────────────────────────────────────────────────────────────────────────
+*@
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.3.0/dist/flowbite.min.js"></script>
+
 </body>
 </html>

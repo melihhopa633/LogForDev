@@ -1,21 +1,58 @@
+@*
+    _SetupStyles.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    Styles and Tailwind configuration for the Setup Wizard.
+    Rendered as a partial inside Setup/Index.cshtml's <head> element.
+
+    Because the Setup page uses Layout = null (standalone HTML), this
+    partial must load everything that _Layout.cshtml would normally provide:
+      1. Google Fonts (Outfit + JetBrains Mono)
+      2. Tailwind CSS CDN + inline theme config
+      3. Custom CSS: keyframe animations, component classes, dark-mode fixes
+
+    Color convention: cyan #22d3ee is the primary accent everywhere.
+    This replaces the old #3b82f6 (blue-500) that was used before the redesign.
+*@
+
+@*
+    ── GOOGLE FONTS ──────────────────────────────────────────────────────
+    Outfit     – geometric sans-serif for all UI text and headings
+    JetBrains Mono – monospaced for code examples and terminal elements
+    preconnect hints tell the browser to open DNS + TLS to Google Fonts
+    immediately, reducing the font flash on first render.
+*@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+@* Tailwind CSS CDN — configured via the tailwind.config block below *@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
+    /**
+     * Tailwind theme for the Setup Wizard.
+     * Kept in sync with Login.cshtml and _Layout.cshtml so the color
+     * system is identical regardless of which page the user is on.
+     *
+     * Primary accent: #22d3ee  (cyan-400 in Tailwind)
+     * All rgba() glow values throughout this file use (34,211,238) — the
+     * decimal expansion of #22d3ee.
+     */
     tailwind.config = {
         darkMode: 'class',
         theme: {
             extend: {
                 colors: {
-                    background: '#09090b',
-                    foreground: '#fafafa',
-                    card: { DEFAULT: '#111113', foreground: '#fafafa' },
-                    primary: { DEFAULT: '#3b82f6', foreground: '#fafafa' },
-                    secondary: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
-                    muted: { DEFAULT: '#1c1c1f', foreground: '#71717a' },
-                    accent: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
+                    background:  '#09090b',            /* near-black page background     */
+                    foreground:  '#fafafa',             /* default body text              */
+                    card:        { DEFAULT: '#111113', foreground: '#fafafa' },
+                    primary:     { DEFAULT: '#22d3ee', foreground: '#07070b' }, /* cyan  */
+                    secondary:   { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
+                    muted:       { DEFAULT: '#1c1c1f', foreground: '#71717a' },
+                    accent:      { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
                     destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
-                    border: '#27272a',
-                    input: '#1c1c1f',
-                    ring: '#3b82f6',
+                    border:      '#27272a',
+                    input:       '#1c1c1f',
+                    ring:        '#22d3ee',             /* focus-ring color               */
                 },
                 borderRadius: {
                     lg: '0.5rem',
@@ -27,39 +64,77 @@
     }
 </script>
 <style>
-    body { font-feature-settings: "rlig" 1, "calt" 1; }
+    /*
+     * Body defaults.
+     * Outfit is our primary UI font.
+     * font-feature-settings enables typographic ligatures ("rlig") and
+     * contextual alternates ("calt") for improved character rendering.
+     */
+    body {
+        font-family: 'Outfit', system-ui, sans-serif;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
 
-    /* Dot grid background */
+    /*
+     * .dot-grid
+     * Full-viewport dot-grid background applied to the fixed overlay layer
+     * in Index.cshtml.  radial-gradient draws a 1px white dot at every
+     * 24×24 grid intersection.  rgba(255,255,255,0.04) = barely visible.
+     */
     .dot-grid {
         background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
         background-size: 24px 24px;
     }
 
-    /* Step panel transitions */
-    .step-panel { display: none; }
+    /*
+     * .step-panel / .step-panel.active
+     * Each wizard step is a separate <div class="step-panel">.
+     * Only one panel is shown at a time — goToStep() in setup.js adds
+     * or removes the "active" class when the user advances or goes back.
+     */
+    .step-panel        { display: none; }
     .step-panel.active { display: block; }
+
+    /*
+     * .slide-forward / .slide-back
+     * Applied by goToStep() in setup.js when transitioning between steps.
+     *   slide-forward — advancing to the NEXT step (slides in from right)
+     *   slide-back    — returning to a PREVIOUS step (slides in from left)
+     */
     .slide-forward { animation: slideFromRight 0.35s ease-out; }
-    .slide-back { animation: slideFromLeft 0.35s ease-out; }
+    .slide-back    { animation: slideFromLeft  0.35s ease-out; }
+
     @@keyframes slideFromRight {
-        from { opacity: 0; transform: translateX(30px); }
-        to { opacity: 1; transform: translateX(0); }
+        from { opacity: 0; transform: translateX(30px);  }
+        to   { opacity: 1; transform: translateX(0);     }
     }
     @@keyframes slideFromLeft {
         from { opacity: 0; transform: translateX(-30px); }
-        to { opacity: 1; transform: translateX(0); }
+        to   { opacity: 1; transform: translateX(0);     }
     }
 
-    /* Fade up animation */
+    /*
+     * .animate-fade-up
+     * Generic entrance: fades an element up from 16px below its final position.
+     * Applied to the header section (animation-delay: 0) and the card
+     * container (animation-delay: 0.2s) in Index.cshtml, creating a
+     * natural staggered entrance where the header arrives first.
+     */
     @@keyframes fadeUp {
         from { opacity: 0; transform: translateY(16px); }
-        to { opacity: 1; transform: translateY(0); }
+        to   { opacity: 1; transform: translateY(0);    }
     }
     .animate-fade-up { animation: fadeUp 0.5s ease-out both; }
 
-    /* Spinner */
+    /*
+     * .spinner
+     * Spinning loading indicator shown inside buttons during async ops.
+     * Only the border-top uses the cyan accent color; the other three
+     * borders are dark (#27272a), which creates the rotating "arc" illusion.
+     */
     .spinner {
-        border: 2px solid #27272a;
-        border-top-color: #3b82f6;
+        border: 2px solid #27272a;       /* dark base ring                  */
+        border-top-color: #22d3ee;       /* cyan spinning arc               */
         border-radius: 50%;
         width: 16px;
         height: 16px;
@@ -69,36 +144,63 @@
     }
     @@keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Button glow */
+    /*
+     * .btn-glow
+     * On hover (when not disabled), the main CTA button emits a wide cyan
+     * glow — rgba(34,211,238,0.3) = 30% opacity cyan, spread 24px.
+     * This makes the primary action feel tactile and premium.
+     */
     .btn-glow:hover:not(:disabled) {
-        box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 0 24px rgba(34, 211, 238, 0.3);
     }
 
-    /* Scale check animation */
+    /*
+     * .animate-scale-check
+     * Applied to the large animated check-mark icon when a step succeeds.
+     * Bounces from invisible (scale 0) through a slight overshoot (1.2×)
+     * then settles at full size — gives satisfying "success" feedback.
+     */
     @@keyframes scaleCheck {
-        0% { transform: scale(0); opacity: 0; }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); opacity: 1; }
+        0%   { transform: scale(0);   opacity: 0; }
+        50%  { transform: scale(1.2);             }
+        100% { transform: scale(1);   opacity: 1; }
     }
     .animate-scale-check { animation: scaleCheck 0.5s ease-out both; }
 
-    /* Stepper pulse */
+    /*
+     * .stepper-pulse
+     * The currently active stepper circle emits a repeating cyan ring pulse
+     * to draw attention.  box-shadow expands from 0 → 8px radius → 0,
+     * creating the "ripple" effect.  Repeats every 2 s.
+     */
     @@keyframes pulse-ring {
-        0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-        70% { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
-        100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        0%   { box-shadow: 0 0 0 0   rgba(34,211,238,0.4); }
+        70%  { box-shadow: 0 0 0 8px rgba(34,211,238,0);   }
+        100% { box-shadow: 0 0 0 0   rgba(34,211,238,0);   }
     }
     .stepper-pulse { animation: pulse-ring 2s ease-out infinite; }
 
-    /* Stepper check pop */
+    /*
+     * .stepper-complete-anim
+     * When a step is marked completed, the stepper circle briefly scales up
+     * to 1.15× then back — a satisfying "pop" confirming the action.
+     * setup.js adds this class then removes it after 300 ms.
+     */
     @@keyframes stepComplete {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.15); }
-        100% { transform: scale(1); }
+        0%   { transform: scale(1);    }
+        50%  { transform: scale(1.15); }
+        100% { transform: scale(1);    }
     }
     .stepper-complete-anim { animation: stepComplete 0.3s ease-out; }
 
-    /* Autofill fix for Chrome dark mode */
+    /*
+     * Browser autofill override for Chrome dark mode.
+     * Chrome forcibly applies a bright background to autofilled inputs,
+     * breaking the dark theme.  Fix: an enormous inset box-shadow in our
+     * desired background color renders on top of Chrome's autofill layer.
+     * transition: background-color 5000s delays the color change so long
+     * it effectively never takes effect during a normal session.
+     */
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus {
@@ -108,7 +210,12 @@
         transition: background-color 5000s ease-in-out 0s;
     }
 
-    /* Toast animations */
+    /*
+     * Toast animations.
+     * Toasts slide in from the right edge with a springy overshoot
+     * (cubic-bezier(0.21,1.02,0.73,1)) and exit back to the right quickly.
+     * showToast() / dismissToast() in setup.js add/remove these classes.
+     */
     @@keyframes toast-in {
         from { opacity: 0; transform: translateX(calc(100% + 1rem)); }
         to   { opacity: 1; transform: translateX(0); }
@@ -117,14 +224,19 @@
         from { opacity: 1; transform: translateX(0); }
         to   { opacity: 0; transform: translateX(calc(100% + 1rem)); }
     }
-    .toast-enter { animation: toast-in 0.35s cubic-bezier(0.21,1.02,0.73,1) forwards; }
+    .toast-enter { animation: toast-in  0.35s cubic-bezier(0.21,1.02,0.73,1) forwards; }
     .toast-exit  { animation: toast-out 0.25s ease-in forwards; }
 
-    /* Feature card hover */
+    /*
+     * .feature-card
+     * Info cards on the final step that showcase product features.
+     * On hover: a faint cyan border appears and the card lifts 1px.
+     * transition: all 0.2s ensures the lift and color change animate smoothly.
+     */
     .feature-card { transition: all 0.2s ease; }
     .feature-card:hover {
-        border-color: rgba(59,130,246,0.3);
-        background-color: rgba(59,130,246,0.03);
+        border-color: rgba(34, 211, 238, 0.3);
+        background-color: rgba(34, 211, 238, 0.03);
         transform: translateY(-1px);
     }
 </style>

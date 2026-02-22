@@ -1,39 +1,85 @@
+@*
+    _LoginForm.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    Right panel of the login page (always visible on all screen sizes).
+    Contains:
+      · Mobile logo (lg:hidden) — shown when _LoginBranding is hidden
+      · Desktop heading (hidden lg:block)
+      · Email / password / TOTP 2FA fields
+      · Remember-me checkbox
+      · Error message banner
+      · Submit button (with .spinner indicator)
+      · Footer security badges (2FA, Self-hosted, MIT License)
+
+    All interactive JS (togglePassword, TOTP sync, form submit) lives
+    in Login.cshtml so this partial stays purely declarative HTML.
+
+    This partial is rendered by Login.cshtml (Layout = null, standalone page).
+*@
+
 <!-- Right Panel: Login Form -->
 <div class="flex items-center justify-center p-4 sm:p-8 relative">
 
-    <!-- Subtle glow -->
+    @* ── BACKGROUND GLOW ─────────────────────────────────────────────────
+       Soft cyan radial gradient blooms at the top-centre of the right panel.
+       Colour: rgba(34,211,238,0.04) — very faint so it adds warmth without
+       being distracting on an already dark background.
+       pointer-events-none ensures it never captures click/touch events.
+    ──────────────────────────────────────────────────────────────────── *@
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[350px] pointer-events-none"
-         style="background: radial-gradient(ellipse at center, rgba(59,130,246,0.04) 0%, transparent 60%);"></div>
+         style="background: radial-gradient(ellipse at center, rgba(34,211,238,0.04) 0%, transparent 60%);"></div>
 
+    @* ── CARD WRAPPER ────────────────────────────────────────────────────
+       .animate-fade-up (Login.cshtml <style>) slides the form up and fades
+       it in on page load — see also the GSAP entrance at the bottom of
+       Login.cshtml which animates both columns with a stagger.
+       max-w-[400px] constrains the form width on wide viewports.
+    ──────────────────────────────────────────────────────────────────── *@
     <div class="relative z-10 w-full max-w-[400px] animate-fade-up">
 
-        <!-- Mobile: Logo + subtitle -->
+        @* ── MOBILE LOGO  (hidden on lg+ screens) ────────────────────────
+           On small screens the _LoginBranding left panel is hidden via
+           "hidden lg:flex", so we show a compact logo + subtitle here.
+           Uses the same ">_" terminal-icon style as _Layout.cshtml and
+           _LoginBranding.cshtml for brand consistency.
+           "lg:hidden" makes this section disappear on desktop once the
+           branding panel becomes visible.
+        ──────────────────────────────────────────────────────────────────── *@
         <div class="text-center mb-8 lg:hidden">
             <div class="inline-flex items-center gap-2.5 mb-3">
-                <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
+                <!-- Terminal-style ">_" icon, matches _Layout.cshtml logo -->
+                <div class="w-9 h-9 bg-primary/10 border border-primary/30 rounded-lg flex items-center justify-center"
+                     style="box-shadow: 0 0 12px rgba(34,211,238,0.08);">
+                    <span class="text-primary font-bold leading-none select-none"
+                          style="font-family:'JetBrains Mono',monospace;font-size:11px;">&gt;_</span>
                 </div>
-                <span class="text-xl font-semibold tracking-tight">LogForDev</span>
+                <span class="text-xl font-semibold tracking-tight">Log<span class="text-primary">For</span>Dev</span>
             </div>
             <p class="text-sm text-muted-foreground">Hesabınıza giriş yapın</p>
         </div>
 
-        <!-- Desktop: Heading -->
+        @* ── DESKTOP HEADING (hidden on mobile) ──────────────────────────
+           On lg+ the full branding panel is visible on the left, so we
+           only need a brief heading here — no logo duplication needed.
+        ──────────────────────────────────────────────────────────────────── *@
         <div class="hidden lg:block mb-8">
             <h1 class="text-2xl font-bold tracking-tight">Giriş Yap</h1>
             <p class="text-sm text-muted-foreground mt-1.5">LogForDev hesabınıza giriş yapın</p>
         </div>
 
-        <!-- Form Card -->
+        @* ── FORM CARD ────────────────────────────────────────────────────
+           bg-card (#111113) is slightly lighter than bg-background (#09090b),
+           giving the card visual elevation without needing a drop-shadow.
+        ──────────────────────────────────────────────────────────────────── *@
         <div class="bg-card border border-border rounded-xl p-6 sm:p-8">
             <form id="loginForm" class="space-y-5">
 
-                <!-- Email -->
+                @* ── EMAIL INPUT ──────────────────────────────────────────────
+                   autocomplete="username" tells Chrome's credential manager
+                   this is the account identifier field — required for the
+                   Chrome password-save trick in Login.cshtml to work.
+                   TestMode pre-fills the demo admin email for convenience.
+                ──────────────────────────────────────────────────────────────── *@
                 <div>
                     <label for="email" class="block text-sm font-medium text-foreground mb-2">E-posta</label>
                     <input
@@ -48,7 +94,12 @@
                         placeholder="admin@@example.com" />
                 </div>
 
-                <!-- Password -->
+                @* ── PASSWORD INPUT ─────────────────────────────────────────
+                   Relative wrapper positions the eye-toggle button at the
+                   right edge.  togglePassword() in Login.cshtml flips
+                   type between "password" (dots) and "text" (readable).
+                   TestMode pre-fills "1" so testers can log in without typing.
+                ──────────────────────────────────────────────────────────────── *@
                 <div>
                     <label for="password" class="block text-sm font-medium text-foreground mb-2">Şifre</label>
                     <div class="relative">
@@ -62,12 +113,15 @@
                             class="w-full h-10 px-3 pr-10 text-sm rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                             style="background-color:#1c1c1f"
                             placeholder="••••••••" />
+                        <!-- Eye-toggle button — calls togglePassword() defined in Login.cshtml -->
                         <button
                             type="button"
                             onclick="togglePassword()"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            tabindex="-1">
+                            tabindex="-1"
+                            aria-label="Şifreyi göster / gizle">
                             <svg id="eyeIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Default state: open eye (password is hidden) -->
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
@@ -75,7 +129,21 @@
                     </div>
                 </div>
 
-                <!-- TOTP Code -->
+                @* ── TOTP 2FA INPUT ──────────────────────────────────────────
+                   Split into six individual single-character boxes instead
+                   of one text field.  Benefits:
+                     · Each digit is clearly separated — reduces typos
+                     · inputmode="numeric" opens the number pad on mobile
+                     · .totp-box (Login.cshtml) applies cyan focus glow
+
+                   A hidden <input id="totpCode"> collects the full 6-digit
+                   value; syncTotp() in Login.cshtml populates it on every
+                   keystroke.  The separator "–" between boxes 3 and 4 is
+                   decorative only — it mirrors Google Authenticator's layout.
+
+                   TestMode pre-fills "000000" and shows a yellow notice
+                   so QA testers don't need a real authenticator app.
+                ──────────────────────────────────────────────────────────────── *@
                 <div>
                     <label class="block text-sm font-medium text-foreground mb-1.5">Doğrulama Kodu</label>
                     <p class="text-xs text-muted-foreground mb-3">Authenticator uygulamanızdaki 6 haneli kod</p>
@@ -83,11 +151,13 @@
                         <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 1" />
                         <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 2" />
                         <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 3" />
+                        <!-- Visual separator between digit groups (decorative, no semantic value) -->
                         <span class="text-muted-foreground select-none px-0.5">–</span>
                         <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 4" />
                         <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 5" />
                         <input type="text" maxlength="1" inputmode="numeric" class="totp-box w-11 h-12 text-center text-lg font-mono rounded-lg border border-border text-foreground focus:outline-none transition-all" style="background-color:#1c1c1f" aria-label="Hane 6" />
                     </div>
+                    <!-- Hidden aggregator: syncTotp() in Login.cshtml populates this before submit -->
                     <input type="hidden" id="totpCode" name="totpCode" value="@(ViewBag.TestMode == true ? "000000" : "")" />
                     @if (ViewBag.TestMode == true)
                     {
@@ -95,35 +165,62 @@
                     }
                 </div>
 
-                <!-- Remember Me -->
+                @* ── REMEMBER ME ─────────────────────────────────────────────
+                   When checked the auth cookie is given a 30-day sliding
+                   expiry (AuthController reads this flag).
+                   Without it, the cookie is a session cookie that expires
+                   when the browser closes.
+                   accent-primary colours the checkbox cyan on Chromium.
+                ──────────────────────────────────────────────────────────────── *@
                 <div class="flex items-center gap-2.5">
                     <input
                         type="checkbox"
                         id="rememberMe"
                         name="rememberMe"
                         class="w-4 h-4 rounded border border-border accent-primary cursor-pointer" />
-                    <label for="rememberMe" class="text-sm text-muted-foreground cursor-pointer select-none">Beni hatırla <span class="text-xs">(30 gün)</span></label>
+                    <label for="rememberMe" class="text-sm text-muted-foreground cursor-pointer select-none">
+                        Beni hatırla <span class="text-xs">(30 gün)</span>
+                    </label>
                 </div>
 
-                <!-- Error Message -->
+                @* ── ERROR BANNER ────────────────────────────────────────────
+                   Hidden by default; showError() / hideError() in Login.cshtml
+                   toggle the "hidden" class and write the message text.
+                   Destructive theme tokens keep the style consistent with
+                   other error states in the app.
+                ──────────────────────────────────────────────────────────────── *@
                 <div id="errorMessage" class="hidden p-3 rounded-lg bg-destructive/10 border border-destructive/20">
                     <p class="text-sm text-destructive" id="errorText"></p>
                 </div>
 
-                <!-- Submit -->
+                @* ── SUBMIT BUTTON ───────────────────────────────────────────
+                   .btn-glow (Login.cshtml) adds a wide cyan hover glow.
+                   setLoading(true/false) in Login.cshtml manages three states:
+                     · Disables the button while the fetch is in-flight
+                     · Swaps "Giriş Yap" ↔ "Giriş yapılıyor..." in #submitText
+                     · Shows / hides the .spinner in #submitSpinner
+                ──────────────────────────────────────────────────────────────── *@
                 <button
                     type="submit"
                     id="submitBtn"
                     class="btn-glow w-full h-10 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     <span id="submitText">Giriş Yap</span>
+                    <!-- Spinner revealed only while fetch is in-flight (Login.cshtml) -->
                     <span id="submitSpinner" class="spinner hidden"></span>
                 </button>
             </form>
         </div>
 
-        <!-- Footer badges -->
+        @* ── FOOTER BADGES ───────────────────────────────────────────────
+           Three short trust signals below the card.  The vertical pipes
+           (w-px h-3 bg-border) are a common compact separator pattern.
+             · 2FA Korumalı  — TOTP enforced at login (Otp.NET library)
+             · Self-hosted   — user data never leaves their own server
+             · MIT License   — open source, no vendor lock-in
+        ──────────────────────────────────────────────────────────────────── *@
         <div class="flex items-center justify-center gap-3 mt-6 text-xs text-muted-foreground">
             <span class="inline-flex items-center gap-1.5">
+                <!-- Padlock = TOTP 2-factor authentication -->
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 2FA Korumalı
             </span>

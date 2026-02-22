@@ -1,8 +1,37 @@
+@*
+    Index.cshtml  (Home/Dashboard)
+    ─────────────────────────────────────────────────────────────────────
+    Main log viewer dashboard rendered inside _Layout.cshtml.
+    This is the primary page users see after login.
+
+    Page sections:
+      · Filters bar     — level toggles, time range, project select, search,
+                          trace-ID filter, delete dropdown, custom date range
+      · Bulk actions bar — appears when rows are checked (copy/download JSON,
+                          CSV, or plain log format)
+      · Logs table       — paginated, sortable, expandable rows with detail panel
+      · Pagination       — first/prev/page-numbers/next/last + rows-per-page
+      · Trace modal      — timeline view for a specific trace ID
+      · Shortcuts modal  — keyboard shortcut reference (?  key)
+      · Log detail modal — full detail view for a single log entry
+
+    Data flow:
+      · loadLogs() fetches /api/logs with query params (page, level, search…)
+      · renderLogs() builds the table rows via innerHTML template literals
+      · expandedRow / tab system handles the detail panel (Details / Raw JSON)
+      · Live mode: setInterval(loadLogs, Xs) polls continuously
+
+    Inline <style> block:
+      · Overrides that need !important (active-time-range, page-btn.active)
+      · These duplicate some rules from dashboard.css intentionally —
+        @section Scripts is rendered after the page CSS so these always win.
+*@
 @{
     ViewData["Title"] = "Dashboard";
     var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
 }
 
+@* ── FILTERS BAR ─────────────────────────────────────────────────────── *@
 <!-- Filters -->
 <div class="rounded-xl border border-border bg-card p-5 mb-4">
     <!-- Row 1: Level toggles + Time range + Project + Actions -->
@@ -313,21 +342,63 @@
 @section Scripts {
     <style>
         .level-toggle.active { font-weight: 700; }
+        /*
+         * .active-time-range
+         * Applied by JS to the currently selected time-range button (1h/6h/24h…).
+         * !important is required to override Tailwind utility classes that target
+         * the same properties inline.  Cyan accent (#22d3ee) matches the primary.
+         */
         .active-time-range {
-            background-color: rgb(37 99 235 / 0.15) !important;
-            border-color: rgb(37 99 235 / 0.5) !important;
-            color: rgb(96 165 250) !important;
+            background-color: rgb(34 211 238 / 0.15) !important; /* subtle cyan fill */
+            border-color:     rgb(34 211 238 / 0.5)  !important; /* cyan border       */
+            color:            #22d3ee                !important; /* cyan text         */
         }
+
+        /*
+         * .log-row
+         * Every <tr> in the log table — sets pointer cursor to signal clickability.
+         * nth-child zebra striping: rows 1-2, 5-6, 9-10 … get a very faint tint
+         * (4n+1 / 4n+2 means pairs, so stripes span two rows at a time).
+         * hover: a barely visible zinc wash over the subtle cyan in dashboard.css
+         */
         .log-row { cursor: pointer; }
-        .log-row:nth-child(4n+1), .log-row:nth-child(4n+2) { background-color: rgba(39, 39, 42, 0.15); }
+        .log-row:nth-child(4n+1),
+        .log-row:nth-child(4n+2) { background-color: rgba(39, 39, 42, 0.15); }
         .log-row:hover { background-color: rgba(39, 39, 42, 0.4) !important; }
-        .expand-row { display: none; }
-        .expand-row.open { display: table-row; }
-        .expand-row td { padding: 0 !important; }
-        .expand-content { animation: slideDown 0.2s ease-out; }
-        @@keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+
+        /*
+         * .expand-row / .expand-row.open
+         * Each log row has a hidden sibling <tr class="expand-row"> immediately
+         * after it.  JS toggles "open" to reveal the detail panel below the row.
+         * .expand-row td padding: 0 lets the inner .expand-content div control
+         * its own padding for a clean slide-down animation.
+         */
+        .expand-row       { display: none; }
+        .expand-row.open  { display: table-row; }
+        .expand-row td    { padding: 0 !important; }
+        .expand-content   { animation: slideDown 0.2s ease-out; }
+        @@keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to   { opacity: 1; max-height: 500px; }
+        }
+
+        /*
+         * .page-btn / .page-btn.active
+         * Pagination page number buttons.  min-width: 2rem prevents tiny numbers
+         * (1, 2, 3) from collapsing.  .active gets a solid cyan fill + dark text.
+         */
         .page-btn { min-width: 2rem; }
-        .page-btn.active { background-color: rgb(37 99 235) !important; color: white !important; border-color: rgb(37 99 235) !important; }
+        .page-btn.active {
+            background-color: #22d3ee !important; /* solid cyan fill                    */
+            color:            #07070b !important; /* near-black — readable on cyan      */
+            border-color:     #22d3ee !important;
+        }
+
+        /*
+         * .refresh-spin
+         * Applied to the refresh icon SVG while data is loading.
+         * Removed once the fetch promise resolves.
+         */
         .refresh-spin { animation: spin 0.7s linear infinite; }
         @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>

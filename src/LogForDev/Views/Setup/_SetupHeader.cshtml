@@ -1,57 +1,122 @@
-<!-- Header -->
+@*
+    _SetupHeader.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    Top section of the Setup Wizard, rendered by Setup/Index.cshtml.
+    Contains:
+      · Product logo (">_" terminal-style icon + "LogForDev" wordmark)
+      · Subtitle "Kurulum Sihirbazı" + "Adım X / 6" counter
+      · Connected circle stepper showing all 6 setup steps
+
+    Dynamic updates:
+      · updateStepper(step) in setup.js updates button styles and labels
+        as the user progresses (active = cyan pulse, completed = check mark)
+      · #stepCounter text ("Adım X / 6") is also updated by setup.js
+      · Connector lines (#line1 … #line5) turn primary-colored as steps
+        complete, creating a visual progress trail
+
+    CSS classes (.animate-fade-up, .stepper-pulse, .stepper-circle) are
+    all defined in _SetupStyles.cshtml.
+*@
+
+@* ── LOGO + SUBTITLE + STEP COUNTER ─────────────────────────────────── *@
 <div class="text-center mb-8 animate-fade-up">
     <div class="flex items-center justify-center gap-3 mb-3">
-        <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
+        @*
+            Terminal-style ">_" logo icon — identical to _Layout.cshtml and
+            _LoginBranding.cshtml for visual consistency across all pages.
+            bg-primary/10 + border-primary/30 = subtle cyan tinted box.
+            box-shadow adds a soft glow that reinforces the brand aesthetic.
+        *@
+        <div class="w-10 h-10 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-center"
+             style="box-shadow: 0 0 14px rgba(34,211,238,0.10);">
+            <span class="text-primary font-bold leading-none select-none"
+                  style="font-family:'JetBrains Mono',monospace;font-size:14px;">&gt;_</span>
         </div>
-        <h1 class="text-2xl font-bold tracking-tight">LogForDev</h1>
+        <h1 class="text-2xl font-bold tracking-tight">Log<span class="text-primary">For</span>Dev</h1>
     </div>
     <p class="text-sm text-muted-foreground">Kurulum Sihirbaz&#305;</p>
+    @* Step counter — updated live by updateStepper() in setup.js *@
     <p id="stepCounter" class="text-xs text-muted-foreground mt-1">Ad&#305;m 1 / 6</p>
 </div>
 
-<!-- Step Indicator (Connected Circle Stepper) -->
+@* ── CONNECTED CIRCLE STEPPER ────────────────────────────────────────── *@
+@*
+    Six numbered circles connected by thin horizontal lines.
+    Each circle is a clickable <button> — goToStep(n) in setup.js handles
+    the click, but only allows navigation to already-completed steps
+    (you cannot skip forward).
+
+    State classes (managed by JS):
+      Active step    — bg-primary + stepper-pulse (glowing ring)
+      Completed step — bg-primary, number replaced with ✓ checkmark
+      Future step    — bg-secondary + border + muted text
+
+    Connector lines (id="line1"…"line5"):
+      Incomplete — bg-border (dark grey)
+      Complete   — bg-primary (cyan), toggled by JS
+
+    Breakpoint note: w-8 on mobile, sm:w-12 on sm+ to prevent overflow.
+*@
 <div class="flex items-start justify-center mb-8 animate-fade-up" style="animation-delay:0.1s">
     <div class="flex items-start">
-        <!-- Step 1 -->
+
+        <!-- Step 1: Veritabanı (Database connection) — starts as active -->
         <div class="flex flex-col items-center">
-            <button onclick="goToStep(1)" id="stepBtn1" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-primary text-white stepper-pulse ring-2 ring-primary/30 ring-offset-2 ring-offset-background" aria-label="Ad&#305;m 1">1</button>
+            <button onclick="goToStep(1)" id="stepBtn1"
+                    class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-primary text-primary-foreground stepper-pulse ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
+                    aria-label="Ad&#305;m 1">1</button>
             <span class="text-[10px] sm:text-xs text-primary font-medium mt-2 transition-colors">Veritaban&#305;</span>
         </div>
+        <!-- Connector 1→2: JS sets bg-primary when step 1 completes -->
         <div id="line1" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
-        <!-- Step 2 -->
+
+        <!-- Step 2: Admin account creation -->
         <div class="flex flex-col items-center">
-            <button onclick="goToStep(2)" id="stepBtn2" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 2">2</button>
+            <button onclick="goToStep(2)" id="stepBtn2"
+                    class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border"
+                    aria-label="Ad&#305;m 2">2</button>
             <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Admin</span>
         </div>
+        <!-- Connector 2→3 -->
         <div id="line2" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
-        <!-- Step 3 -->
+
+        <!-- Step 3: First project & API key generation -->
         <div class="flex flex-col items-center">
-            <button onclick="goToStep(3)" id="stepBtn3" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 3">3</button>
+            <button onclick="goToStep(3)" id="stepBtn3"
+                    class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border"
+                    aria-label="Ad&#305;m 3">3</button>
             <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Proje</span>
         </div>
+        <!-- Connector 3→4 -->
         <div id="line3" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
-        <!-- Step 4 -->
+
+        <!-- Step 4: TOTP 2FA setup (scan QR code with authenticator app) -->
         <div class="flex flex-col items-center">
-            <button onclick="goToStep(4)" id="stepBtn4" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 4">4</button>
+            <button onclick="goToStep(4)" id="stepBtn4"
+                    class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border"
+                    aria-label="Ad&#305;m 4">4</button>
             <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">TOTP</span>
         </div>
+        <!-- Connector 4→5 -->
         <div id="line4" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
-        <!-- Step 5 -->
+
+        <!-- Step 5: Send a test log to confirm the API key works end-to-end -->
         <div class="flex flex-col items-center">
-            <button onclick="goToStep(5)" id="stepBtn5" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 5">5</button>
+            <button onclick="goToStep(5)" id="stepBtn5"
+                    class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border"
+                    aria-label="Ad&#305;m 5">5</button>
             <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Test</span>
         </div>
+        <!-- Connector 5→6 -->
         <div id="line5" class="w-8 sm:w-12 h-0.5 mt-[18px] bg-border transition-colors duration-300"></div>
-        <!-- Step 6 -->
+
+        <!-- Step 6: Finish — marks setup complete and redirects to login -->
         <div class="flex flex-col items-center">
-            <button onclick="goToStep(6)" id="stepBtn6" class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border" aria-label="Ad&#305;m 6">6</button>
+            <button onclick="goToStep(6)" id="stepBtn6"
+                    class="stepper-circle w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 bg-secondary text-muted-foreground border border-border"
+                    aria-label="Ad&#305;m 6">6</button>
             <span class="text-[10px] sm:text-xs text-muted-foreground font-medium mt-2 transition-colors">Bitir</span>
         </div>
+
     </div>
 </div>

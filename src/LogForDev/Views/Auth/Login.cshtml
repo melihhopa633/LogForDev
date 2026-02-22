@@ -1,4 +1,7 @@
 @{
+    @* This page does NOT use _Layout.cshtml.
+       It is a fully standalone HTML page — the login screen has its own
+       two-column layout, custom styles, and no nav/footer. *@
     Layout = null;
 }
 <!DOCTYPE html>
@@ -7,24 +10,40 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Giriş Yap - LogForDev</title>
+
+    @*
+        ── FONTS ──────────────────────────────────────────────────────────────
+        Same font stack as _Layout.cshtml (Outfit + JetBrains Mono).
+        Loaded here again because this page bypasses the shared layout.
+        ──────────────────────────────────────────────────────────────────────
+    *@
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        /**
+         * Tailwind theme for the login page.
+         * Must be kept in sync with the config in _Layout.cshtml so colours
+         * look identical if the user navigates between pages.
+         */
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        background: '#09090b',
-                        foreground: '#fafafa',
-                        card: { DEFAULT: '#111113', foreground: '#fafafa' },
-                        primary: { DEFAULT: '#3b82f6', foreground: '#fafafa' },
-                        secondary: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
-                        muted: { DEFAULT: '#1c1c1f', foreground: '#71717a' },
-                        accent: { DEFAULT: '#1c1c1f', foreground: '#fafafa' },
-                        destructive: { DEFAULT: '#ef4444', foreground: '#fafafa' },
-                        border: '#27272a',
-                        input: '#1c1c1f',
-                        ring: '#3b82f6',
+                        background:  '#09090b',
+                        foreground:  '#fafafa',
+                        card:        { DEFAULT: '#111113', foreground: '#fafafa' },
+                        primary:     { DEFAULT: '#22d3ee', foreground: '#07070b' }, // cyan
+                        secondary:   { DEFAULT: '#13131e', foreground: '#f0f0ff' },
+                        muted:       { DEFAULT: '#13131e', foreground: '#71717a' },
+                        accent:      { DEFAULT: '#818cf8', foreground: '#07070b' }, // indigo
+                        destructive: { DEFAULT: '#f87171', foreground: '#07070b' }, // soft red
+                        border:      '#1c1c2e',
+                        input:       '#13131e',
+                        ring:        '#22d3ee',
                     },
                     borderRadius: {
                         lg: '0.5rem',
@@ -35,12 +54,27 @@
             }
         }
     </script>
-    <style>
-        body { font-feature-settings: "rlig" 1, "calt" 1; }
 
+    <style>
+        /*
+         * Global body defaults.
+         * Outfit is our UI font; font-feature-settings enables ligatures
+         * and contextual alternates for better readability.
+         */
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-feature-settings: "rlig" 1, "calt" 1;
+        }
+
+        /*
+         * .spinner
+         * Spinning loading indicator shown inside the submit button while
+         * the API call is in-flight. The top border has the accent colour;
+         * the other three borders are dark — this creates the "arc" effect.
+         */
         .spinner {
-            border: 2px solid #27272a;
-            border-top-color: #3b82f6;
+            border: 2px solid #1c1c2e;     /* dark base ring    */
+            border-top-color: #22d3ee;      /* cyan spinning arc */
             border-radius: 50%;
             width: 16px;
             height: 16px;
@@ -50,27 +84,54 @@
         }
         @@keyframes spin { to { transform: rotate(360deg); } }
 
+        /*
+         * .log-entry
+         * Used on the animated "fake log stream" shown on the left branding
+         * panel (_LoginBranding partial). Each log line fades and slides up
+         * with a staggered animation-delay set inline by the partial view.
+         */
         .log-entry {
             opacity: 0;
             animation: fadeSlide 0.4s ease-out forwards;
         }
         @@keyframes fadeSlide {
             from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
+        /*
+         * .animate-fade-up
+         * Generic utility: fades an element up from 16px below.
+         * Applied to the form card and headings in _LoginForm.
+         */
         @@keyframes fadeUp {
             from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-up { animation: fadeUp 0.5s ease-out both; }
 
+        /*
+         * .cursor-blink
+         * Blinking text cursor appended to the last log line in the branding
+         * panel to simulate a live terminal.
+         * step-end keeps the blink sharp (on/off) rather than a smooth fade.
+         */
         @@keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+            50%       { opacity: 0; }
         }
         .cursor-blink { animation: blink 1.1s step-end infinite; }
 
+        /*
+         * Browser autofill override
+         * -------------------------
+         * Chrome overwrites autofilled input backgrounds with a bright colour
+         * that breaks our dark theme.
+         * Fix: an enormous inset box-shadow in our desired background colour
+         * renders on top of Chrome's autofill background, hiding it.
+         * transition: background-color 5000s delays Chrome's colour change so
+         * long it never visually applies during normal use.
+         */
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
         input:-webkit-autofill:focus {
@@ -80,79 +141,137 @@
             transition: background-color 5000s ease-in-out 0s;
         }
 
+        /*
+         * .totp-box:focus
+         * The six individual digit inputs for TOTP 2FA.
+         * On focus, a cyan border + soft glow ring shows which box is active.
+         */
         .totp-box:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
         }
 
+        /*
+         * .btn-glow
+         * Applied to the main submit button.
+         * On hover (when not disabled), a wide cyan glow makes the CTA feel
+         * interactive and premium.
+         */
         .btn-glow:hover:not(:disabled) {
-            box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
         }
 
+        /*
+         * .dot-grid
+         * Subtle dot-grid background pattern on the left branding panel.
+         * radial-gradient draws a 1px dot at each 24px grid intersection.
+         * rgba(255,255,255,0.04) = barely visible white dots on dark bg.
+         */
         .dot-grid {
             background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
             background-size: 24px 24px;
         }
     </style>
 </head>
+
 <body class="bg-background text-foreground min-h-screen antialiased">
 
+    @*
+        Two-column grid:
+          col 1: _LoginBranding – branding panel, hidden on mobile, visible on lg+
+          col 2: _LoginForm     – the actual login form, always visible
+    *@
     <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
         @await Html.PartialAsync("_LoginBranding")
         @await Html.PartialAsync("_LoginForm")
     </div>
 
     <script>
-        // Password toggle
+        /**
+         * togglePassword()
+         * Switches the password input between type="password" (dots) and
+         * type="text" (readable), and swaps the eye icon SVG path to match.
+         */
         function togglePassword() {
-            const pw = document.getElementById('password');
+            const pw   = document.getElementById('password');
             const icon = document.getElementById('eyeIcon');
+
             if (pw.type === 'password') {
+                // Switch to visible — show the "eye with slash" icon
                 pw.type = 'text';
                 icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
             } else {
+                // Switch to hidden — show the normal "open eye" icon
                 pw.type = 'password';
                 icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
             }
         }
 
-        // TOTP 6-box logic
+        // ── TOTP 6-Box Logic ──────────────────────────────────────────────────
+        //
+        // The TOTP input is split into six single-digit <input> boxes (class="totp-box")
+        // for better UX (each digit has its own focused box).
+        // A hidden <input id="totpCode"> collects the full 6-digit string for the API.
+        //
         const totpBoxes = document.querySelectorAll('.totp-box');
         const totpHidden = document.getElementById('totpCode');
 
+        /**
+         * syncTotp()
+         * Reads all six box values and joins them into totpHidden.value.
+         * Called after every change so the hidden field is always current.
+         */
         function syncTotp() {
             totpHidden.value = Array.from(totpBoxes).map(b => b.value).join('');
         }
 
         totpBoxes.forEach((box, i) => {
+
+            // On input: strip non-digits, keep only the last typed character,
+            // then auto-advance focus to the next box.
             box.addEventListener('input', () => {
-                box.value = box.value.replace(/\D/g, '').slice(-1);
-                if (box.value && i < 5) totpBoxes[i + 1].focus();
+                box.value = box.value.replace(/\D/g, '').slice(-1); // digits only, max 1 char
+                if (box.value && i < 5) totpBoxes[i + 1].focus();  // advance to next box
                 syncTotp();
             });
 
             box.addEventListener('keydown', (e) => {
+                // Backspace on an empty box → clear previous box and move focus back
                 if (e.key === 'Backspace' && !box.value && i > 0) {
                     totpBoxes[i - 1].focus();
                     totpBoxes[i - 1].value = '';
                     syncTotp();
                 }
-                if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); totpBoxes[i - 1].focus(); }
+                // Arrow keys for keyboard navigation between boxes
+                if (e.key === 'ArrowLeft'  && i > 0) { e.preventDefault(); totpBoxes[i - 1].focus(); }
                 if (e.key === 'ArrowRight' && i < 5) { e.preventDefault(); totpBoxes[i + 1].focus(); }
             });
 
+            // Paste support: if the user pastes "123456" into any box,
+            // distribute the digits across all six boxes automatically.
             box.addEventListener('paste', (e) => {
                 e.preventDefault();
-                const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                const text = (e.clipboardData || window.clipboardData)
+                    .getData('text')
+                    .replace(/\D/g, '') // strip non-digits
+                    .slice(0, 6);       // take at most 6 digits
                 text.split('').forEach((ch, j) => { if (totpBoxes[j]) totpBoxes[j].value = ch; });
+                // Move focus to the box after the last filled digit (or box 5)
                 if (text.length > 0) totpBoxes[Math.min(text.length, 5)].focus();
                 syncTotp();
             });
 
+            // Select the existing value when a box is focused (easier re-entry)
             box.addEventListener('focus', () => box.select());
         });
 
-        // Test mode pre-fill
+        @*
+            Test Mode Pre-Fill
+            ------------------
+            When the server sets ViewBag.TestMode = true (dev / demo environment),
+            we pre-fill all TOTP boxes with "000000" so testers can log in without
+            a real authenticator app.
+        *@
         @if (ViewBag.TestMode == true)
         {
             <text>
@@ -161,34 +280,46 @@
             </text>
         }
 
-        // Error/loading helpers
+        // ── UI State Helpers ──────────────────────────────────────────────────
+
+        /**
+         * showError(msg) – displays the error banner with the given text.
+         * Called when the API returns a non-success response.
+         */
         function showError(msg) {
             document.getElementById('errorText').textContent = msg;
             document.getElementById('errorMessage').classList.remove('hidden');
         }
 
+        /** hideError() – hides the error banner before each new attempt */
         function hideError() {
             document.getElementById('errorMessage').classList.add('hidden');
         }
 
+        /**
+         * setLoading(on)
+         * on=true  → changes button text, shows spinner, disables button
+         * on=false → restores original text, hides spinner, re-enables button
+         */
         function setLoading(on) {
-            const btn = document.getElementById('submitBtn');
             document.getElementById('submitText').textContent = on ? 'Giriş yapılıyor...' : 'Giriş Yap';
             document.getElementById('submitSpinner').classList.toggle('hidden', !on);
-            btn.disabled = on;
+            document.getElementById('submitBtn').disabled = on;
         }
 
-        // Form submit
+        // ── Login Form Submission ─────────────────────────────────────────────
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // prevent native form POST — we use fetch instead
             hideError();
             setLoading(true);
 
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const totpCode = totpHidden.value.trim();
+            // Collect form values
+            const email      = document.getElementById('email').value.trim();
+            const password   = document.getElementById('password').value;
+            const totpCode   = totpHidden.value.trim();
             const rememberMe = document.getElementById('rememberMe').checked;
 
+            // Validate TOTP locally before hitting the API
             if (!/^\d{6}$/.test(totpCode)) {
                 showError('Doğrulama kodu 6 haneli olmalıdır');
                 setLoading(false);
@@ -196,37 +327,69 @@
             }
 
             try {
+                // POST credentials to the auth API endpoint
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, totpCode, rememberMe })
                 });
                 const data = await res.json();
+
                 if (data.success) {
-                    // Hidden form trick: Chrome'un şifre kaydetme diyaloğunu tetikler
+                    /*
+                     * Chrome Password Manager Trick
+                     * ------------------------------
+                     * Chrome only offers to save a password when a real <form>
+                     * with email + password fields is *submitted* (not via fetch).
+                     * We create a hidden form and submit it so Chrome's credential
+                     * manager picks up the credentials. The form action points to "/"
+                     * so the redirect happens there.
+                     */
                     const f = document.createElement('form');
-                    f.method = 'GET';
-                    f.action = '/';
+                    f.method = 'GET'; f.action = '/';
                     const u = document.createElement('input');
                     u.type = 'email'; u.name = 'email'; u.value = email; u.autocomplete = 'username';
                     const p = document.createElement('input');
                     p.type = 'password'; p.name = 'password'; p.value = password; p.autocomplete = 'current-password';
                     f.appendChild(u); f.appendChild(p);
                     document.body.appendChild(f);
-                    f.submit();
+                    f.submit(); // triggers Chrome's "Save password?" prompt + redirects
                 } else {
+                    // API returned an error (wrong password, locked account, etc.)
                     showError(data.error || 'Giriş başarısız oldu');
                     setLoading(false);
                 }
             } catch (err) {
+                // Network-level error (server unreachable, timeout, etc.)
                 console.error('Login error:', err);
                 showError('Bir hata oluştu. Lütfen tekrar deneyin.');
                 setLoading(false);
             }
         });
 
-        // Auto-focus
+        // Focus the email field on load for faster keyboard entry
         document.getElementById('email').focus();
+    </script>
+
+    @*
+        ── GSAP PAGE ENTRANCE ────────────────────────────────────────────────────
+        Animates the two columns (branding + form) sliding up and fading in.
+        stagger: 0.12 means the form column starts 120ms after the branding column,
+        creating a subtle left-to-right cascade on desktop.
+
+        Selector 'body > div > div' targets the two <div> columns inside the grid
+        container without needing extra classes.
+        ──────────────────────────────────────────────────────────────────────────
+    *@
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script>
+        gsap.from('body > div > div', {
+            opacity: 0,
+            y: 20,          // slide up from 20px below
+            duration: 0.55,
+            stagger: 0.12,  // columns enter one after the other
+            ease: 'power3.out'
+        });
     </script>
 </body>
 </html>

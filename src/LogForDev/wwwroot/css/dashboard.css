@@ -1,157 +1,167 @@
 /**
- * LogForDev - Dashboard Styles
+ * LogForDev – Dashboard Styles
+ *
+ * PHILOSOPHY: Keep this file as thin as possible.
+ * Use Tailwind utility classes (bg-*, text-*, border-*, etc.) for everything
+ * you can do inline. Only add a rule here when:
+ *   1. Tailwind can't express it (e.g. nth-child, ::after pseudo-elements), OR
+ *   2. A JavaScript-toggled class needs a CSS animation (e.g. .expand-row.open).
+ *
+ * Primary accent colour used throughout: #22d3ee  (cyan-400 in Tailwind)
+ * This matches the `primary` colour defined in the Tailwind config in _Layout.cshtml.
  */
 
-/* Time Range Active Button */
+
+/* ─────────────────────────────────────────────────────────────
+   TIME RANGE FILTER BUTTONS  (Dashboard > filter bar)
+   Applied by JavaScript when the user clicks a time range button
+   (e.g. "1h", "6h", "24h").  The !important is needed to override
+   Tailwind's inline border/color utility classes on the same element.
+───────────────────────────────────────────────────────────── */
 .active-time-range {
-    background-color: rgb(37 99 235 / 0.15) !important;
-    border-color: rgb(37 99 235 / 0.5) !important;
-    color: rgb(96 165 250) !important;
+    background-color: rgb(34 211 238 / 0.1) !important;  /* subtle cyan tint */
+    border-color:     rgb(34 211 238 / 0.4) !important;  /* cyan border       */
+    color: #22d3ee !important;                            /* cyan text         */
 }
 
-/* Log Table Rows */
-.log-row {
-    cursor: pointer;
-}
 
+/* ─────────────────────────────────────────────────────────────
+   LOG TABLE ROWS
+   .log-row      – every <tr> in the log table
+   nth-child rule – adds a very faint alternating stripe so long
+                    lists are easier to scan (zebra striping)
+   :hover         – a barely-visible cyan tint on hover to signal
+                    the row is clickable (expands detail on click)
+───────────────────────────────────────────────────────────── */
+.log-row { cursor: pointer; }
+
+/* Every pair of rows gets a slightly lighter background.
+   4n+1 / 4n+2 = rows 1-2, 5-6, 9-10 … (pairs, not singles). */
 .log-row:nth-child(4n+1),
-.log-row:nth-child(4n+2) {
-    background-color: rgba(39, 39, 42, 0.15);
-}
+.log-row:nth-child(4n+2) { background-color: rgba(39,39,42,0.12); }
 
-.log-row:hover {
-    background-color: rgba(39, 39, 42, 0.4) !important;
-}
+/* On hover, a very subtle cyan wash – keeps the dark theme clean */
+.log-row:hover { background-color: rgba(34,211,238,0.04) !important; }
 
-/* Expandable Rows */
-.expand-row {
-    display: none;
-}
 
-.expand-row.open {
-    display: table-row;
-}
+/* ─────────────────────────────────────────────────────────────
+   EXPANDABLE DETAIL ROW
+   Each log row has a hidden <tr class="expand-row"> immediately
+   after it.  JavaScript adds/removes the "open" class to toggle
+   visibility.  We animate with slideDown so the reveal feels smooth.
+───────────────────────────────────────────────────────────── */
+.expand-row          { display: none; }           /* hidden by default */
+.expand-row.open     { display: table-row; }      /* JS adds "open" to show */
+.expand-row td       { padding: 0 !important; }   /* inner .expand-content handles its own padding */
+.expand-content      { animation: slideDown 0.2s ease-out; }
 
-.expand-row td {
-    padding: 0 !important;
-}
-
-.expand-content {
-    animation: slideDown 0.2s ease-out;
-}
-
+/* Slide down + fade in when the row opens */
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        max-height: 0;
-    }
-    to {
-        opacity: 1;
-        max-height: 500px;
-    }
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Pagination */
-.page-btn {
-    min-width: 2rem;
-}
 
+/* ─────────────────────────────────────────────────────────────
+   PAGINATION BUTTONS
+   .page-btn        – every page number button
+   .page-btn.active – the currently selected page (added by JS)
+───────────────────────────────────────────────────────────── */
+.page-btn { min-width: 2rem; }   /* ensures tiny numbers (1,2,3) don't collapse */
+
+/* Active page: solid cyan fill with dark text so it stands out clearly */
 .page-btn.active {
-    background-color: rgb(37 99 235) !important;
-    color: white !important;
-    border-color: rgb(37 99 235) !important;
+    background-color: #22d3ee !important;
+    color:            #07070b !important;  /* near-black – readable on cyan */
+    border-color:     #22d3ee !important;
 }
 
-/* Refresh Animation */
-.refresh-spin {
-    animation: spin 0.7s linear infinite;
+
+/* ─────────────────────────────────────────────────────────────
+   REFRESH BUTTON SPIN
+   Added by JavaScript to the refresh icon SVG while data is loading.
+   Removed once the fetch resolves.
+───────────────────────────────────────────────────────────── */
+.refresh-spin { animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+/* ─────────────────────────────────────────────────────────────
+   LIVE MODE INDICATOR DOT
+   When "live" polling is active, the dot next to the "Live" button
+   uses this class to breathe – drawing the eye without being distracting.
+───────────────────────────────────────────────────────────── */
+.animate-pulse-live { animation: pulseLive 2s ease-in-out infinite; }
+@keyframes pulseLive {
+    0%, 100% { opacity: 1; }    /* fully visible at start/end */
+    50%       { opacity: 0.4; } /* fades to 40% midway        */
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
 
-/* Live Mode Pulse */
-@keyframes pulse-live {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.animate-pulse-live {
-    animation: pulse-live 2s ease-in-out infinite;
-}
-
-/* Pattern Row Hover */
-.pattern-row:hover {
-    background-color: rgba(39, 39, 42, 0.3);
-}
-
-/* Trace Timeline */
+/* ─────────────────────────────────────────────────────────────
+   TRACE TIMELINE  (Trace modal, left-side connecting line)
+   A thin vertical line that visually connects log entries in a trace.
+   Uses a gradient so the line fades at both ends for a softer look.
+───────────────────────────────────────────────────────────── */
 .trace-timeline-line {
     width: 2px;
-    background: linear-gradient(to bottom, transparent, var(--border), transparent);
+    background: linear-gradient(to bottom, transparent, #1e1e2e, transparent);
 }
 
-/* Modal Backdrop */
-.modal-backdrop {
-    backdrop-filter: blur(4px);
-}
+/* Log pattern table rows – very subtle hover, same cyan tint as log rows */
+.pattern-row:hover { background-color: rgba(34,211,238,0.03); }
 
-/* Custom Scrollbar */
-.scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
 
-.scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-}
+/* ─────────────────────────────────────────────────────────────
+   MODAL BACKDROP
+   Applied to the full-screen overlay behind modals.
+   backdrop-filter: blur() frosts the content behind the modal,
+   keeping focus on the dialog without completely hiding context.
+   Note: not supported in Firefox without a flag, but degrades
+   gracefully (overlay just appears without the blur).
+───────────────────────────────────────────────────────────── */
+.modal-backdrop { backdrop-filter: blur(8px); }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #27272a;
-    border-radius: 3px;
-}
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
-}
+/* ─────────────────────────────────────────────────────────────
+   CUSTOM SCROLLBAR  (Webkit only – Chrome, Edge, Safari)
+   Applied to overflow containers that use .scrollbar-thin.
+   Firefox will show its default thin scrollbar; no custom CSS needed.
+───────────────────────────────────────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar       { width: 5px; height: 5px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-/* Tab Active State */
-.tab-active {
-    border-color: rgb(37 99 235);
-    color: var(--foreground);
-}
 
-.tab-inactive {
-    border-color: transparent;
-    color: var(--muted-foreground);
-}
+/* ─────────────────────────────────────────────────────────────
+   TABS  (e.g. Details / Raw JSON / Stack Trace inside expand row)
+   .tab-active   – the selected tab; cyan underline border + bright text
+   .tab-inactive – idle tabs; transparent border + muted text
+   These classes are toggled by JavaScript when the user clicks a tab.
+───────────────────────────────────────────────────────────── */
+.tab-active   { border-color: #22d3ee; color: #f0f0ff; }
+.tab-inactive { border-color: transparent; color: #6b7280; }
 
-/* Keyboard Shortcut Keys */
-kbd {
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-}
 
-/* Line Clamp Utilities */
-.line-clamp-1 {
+/* ─────────────────────────────────────────────────────────────
+   KEYBOARD SHORTCUT KEYS  (<kbd> elements in the shortcuts modal)
+   Forces monospace so key labels like "Ctrl" line up correctly.
+   JetBrains Mono is our chosen code font, loaded in _Layout.cshtml.
+───────────────────────────────────────────────────────────── */
+kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+
+/* ─────────────────────────────────────────────────────────────
+   TEXT TRUNCATION UTILITIES  (Tailwind 3 doesn't ship line-clamp
+   in the CDN play mode, so we define them manually here.)
+   .line-clamp-1 – truncate to 1 line with "…"
+   .line-clamp-2 – truncate to 2 lines with "…"
+───────────────────────────────────────────────────────────── */
+.line-clamp-1, .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
 }
-
-.line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-}
+.line-clamp-1 { -webkit-line-clamp: 1; }
+.line-clamp-2 { -webkit-line-clamp: 2; }

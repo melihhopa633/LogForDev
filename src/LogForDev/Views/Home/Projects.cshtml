@@ -1,21 +1,51 @@
+@*
+    Projects.cshtml
+    ─────────────────────────────────────────────────────────────────────
+    Dashboard page for managing projects and their API keys.
+    Rendered inside _Layout.cshtml (shared nav/footer).
+
+    Page sections:
+      · Header — title + "New Project" button
+      · Projects table — lists all projects with masked API keys,
+                         expiry status, and action buttons (copy/edit/delete)
+      · Create project modal — name + optional expiry days
+      · API Key reveal modal — shows the full key ONCE after creation
+      · Edit project modal   — rename an existing project
+      · Delete confirm modal — confirmation before permanent deletion
+
+    Data flow:
+      · ViewBag.Projects (List<Project>) is loaded by HomeController.Projects()
+      · CRUD operations call the REST API (/api/logs/projects) via fetch()
+      · On create, the API returns the full API key (only time it's visible)
+      · After creation/deletion, window.location.reload() refreshes the table
+
+    API key format: "lfdev_" + Guid.NewGuid().ToString("N")
+    Keys are stored as BCrypt hashes — the full key is never stored in plain text.
+    The table shows only a masked version (first 8 + last 4 chars).
+*@
 @{
     ViewData["Title"] = "Projects";
     var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
 }
 
-<!-- Header -->
+@* ── PAGE HEADER ──────────────────────────────────────────────────────── *@
 <div class="flex items-center justify-between mb-6">
     <div>
         <h1 class="text-2xl font-bold tracking-tight">Projects</h1>
         <p class="text-sm text-muted-foreground mt-1">Manage your projects and API keys</p>
     </div>
+    <!-- openCreateModal() defined in the Scripts section below -->
     <button onclick="openCreateModal()" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         New Project
     </button>
 </div>
 
-<!-- Projects Table -->
+@* ── PROJECTS TABLE ──────────────────────────────────────────────────── *@
+@*
+    scrollbar-thin (dashboard.css) applies a slim custom scrollbar on
+    Webkit browsers for horizontal overflow on narrow screens.
+*@
 <div class="rounded-xl border border-border overflow-hidden">
     <div class="overflow-x-auto scrollbar-thin">
         <table class="w-full text-sm">
@@ -32,6 +62,7 @@
             <tbody id="projectsBody">
                 @if (projects.Count == 0)
                 {
+                    @* Empty state — shown when the user has no projects yet *@
                     <tr id="emptyRow">
                         <td colspan="6" class="h-32 text-center">
                             <div class="flex flex-col items-center gap-2 text-muted-foreground">
@@ -46,9 +77,15 @@
                 {
                     @foreach (var project in projects)
                     {
+                        @*
+                            maskedKey: display first 8 + last 4 chars separated by "..."
+                            The full key is never shown here — only in the reveal modal
+                            immediately after creation (the user must copy it then).
+                        *@
                         var maskedKey = project.ApiKey.Length > 12
                             ? project.ApiKey.Substring(0, 8) + "..." + project.ApiKey.Substring(project.ApiKey.Length - 4)
                             : project.ApiKey;
+                        @* statusClass: red styling for expired keys, green for active *@
                         var statusClass = project.IsExpired
                             ? "bg-red-500/10 text-red-400 border-red-500/20"
                             : "bg-green-500/10 text-green-400 border-green-500/20";
@@ -114,7 +151,12 @@
     </div>
 </div>
 
-<!-- Create Project Modal -->
+@* ── CREATE PROJECT MODAL ────────────────────────────────────────────── *@
+@*
+    Backdrop: bg-black/80 + backdrop-blur-sm frosts the dashboard.
+    The backdrop div has onclick="closeCreateModal()" so clicking outside
+    the card closes the modal (common UX pattern).
+*@
 <div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeCreateModal()"></div>
     <div class="relative z-50 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl mx-4">
@@ -144,6 +186,13 @@
     </div>
 </div>
 
+@* ── API KEY REVEAL MODAL ─────────────────────────────────────────────── *@
+@*
+    Shown immediately after a project is successfully created.
+    Displays the FULL API key once — the backend only stores the BCrypt hash
+    so this is the user's only opportunity to copy the plain-text key.
+    The yellow warning box reinforces urgency.
+*@
 <!-- API Key Reveal Modal -->
 <div id="apiKeyModal" class="fixed inset-0 z-50 hidden items-center justify-center">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
@@ -173,6 +222,8 @@
     </div>
 </div>
 
+@* ── EDIT PROJECT MODAL ───────────────────────────────────────────────── *@
+@* Allows renaming a project.  API key and creation date are immutable. *@
 <!-- Edit Project Modal -->
 <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeEditModal()"></div>
@@ -197,6 +248,12 @@
     </div>
 </div>
 
+@* ── DELETE CONFIRM MODAL ─────────────────────────────────────────────── *@
+@*
+    Two-step confirmation: user must click "Delete" a second time after
+    reading the warning.  confirmDelete() calls DELETE /api/logs/projects/{id}
+    which permanently removes the project and invalidates all its API keys.
+*@
 <!-- Delete Confirm Modal -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
@@ -222,15 +279,23 @@
 
 @section Scripts {
     <script>
+        // Track which project is currently targeted by edit/delete modals
         let deleteProjectId = null;
-        let editProjectId = null;
+        let editProjectId   = null;
 
+        // --- Copy revealed key -------------------------------------------------------
+        // Copies the full API key from the reveal modal.  showToast() is provided
+        // by _Layout.cshtml's global script block.
         function copyRevealedKey() {
             const key = document.getElementById('revealedApiKey').textContent;
             navigator.clipboard.writeText(key).then(() => showToast('API key copied to clipboard', 'success'));
         }
 
-        // --- Event delegation for copy/edit/delete buttons ---
+        // --- Event delegation for row action buttons ---------------------------------
+        // A single listener on the <tbody> handles all copy/edit/delete clicks.
+        // This works for rows added dynamically after page load (createProject
+        // doesn't currently add rows inline — it reloads the page — but using
+        // delegation is still best practice).
         document.getElementById('projectsBody').addEventListener('click', function(e) {
             const copyBtn = e.target.closest('.copy-key-btn');
             const editBtn = e.target.closest('.edit-btn');
