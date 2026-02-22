@@ -17,10 +17,31 @@ public class RequestLoggingMiddleware
         _logger = logger;
     }
 
+    /// <summary>
+    /// Truncates stack traces to first 5 lines to prevent internal path disclosure in logs.
+    /// </summary>
+    private static string TruncateStackTrace(string exception)
+    {
+        var lines = exception.Split('\n');
+        if (lines.Length <= 5)
+            return exception;
+        return string.Join('\n', lines.Take(5)) + "\n... (truncated)";
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
         var sw = Stopwatch.StartNew();
         var path = context.Request.Path.Value ?? "/";
+        var queryString = context.Request.QueryString.Value;
+        // Mask sensitive query parameters (apiKey, token, key, secret) to prevent credential leaks in logs
+        if (!string.IsNullOrEmpty(queryString))
+        {
+            path += System.Text.RegularExpressions.Regex.Replace(
+                queryString,
+                @"(apiKey|token|key|secret)=[^&]*",
+                "$1=***",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
         var method = context.Request.Method;
 
         // Skip logging for static files
@@ -63,7 +84,7 @@ public class RequestLoggingMiddleware
                 Level = level,
                 Category = "HTTP",
                 Message = message,
-                Exception = exception,
+                Exception = exception != null ? TruncateStackTrace(exception) : null,
                 RequestMethod = method,
                 RequestPath = path,
                 StatusCode = statusCode,

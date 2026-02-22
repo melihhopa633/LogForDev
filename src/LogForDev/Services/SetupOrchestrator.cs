@@ -34,6 +34,14 @@ public class SetupOrchestrator : ISetupOrchestrator
 
     public async Task<SetupResult> CompleteAsync(SetupCompleteRequest request, string contentRootPath)
     {
+        // Validate admin password strength before proceeding
+        if (!string.IsNullOrEmpty(request.AdminPassword))
+        {
+            var pwError = ValidatePasswordStrength(request.AdminPassword);
+            if (pwError != null)
+                return new SetupResult(false, pwError);
+        }
+
         await WriteAppSettingsAsync(request, contentRootPath);
         await InitializeDatabaseAsync(request);
 
@@ -134,6 +142,17 @@ public class SetupOrchestrator : ISetupOrchestrator
         {
             _logger.LogWarning(ex, "Failed to create initial project during setup");
         }
+    }
+
+    private static string? ValidatePasswordStrength(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password)) return "Sifre bos olamaz";
+        if (password.Length < 12) return "Sifre en az 12 karakter olmalidir";
+        if (!password.Any(char.IsUpper)) return "Sifre en az 1 buyuk harf icermelidir";
+        if (!password.Any(char.IsLower)) return "Sifre en az 1 kucuk harf icermelidir";
+        if (!password.Any(char.IsDigit)) return "Sifre en az 1 rakam icermelidir";
+        if (!password.Any(c => !char.IsLetterOrDigit(c))) return "Sifre en az 1 ozel karakter icermelidir";
+        return null;
     }
 
     private async Task<(string? QrCodeDataUri, string? TotpSecret)> CreateAdminUserAsync(SetupCompleteRequest request)

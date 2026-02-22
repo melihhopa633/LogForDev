@@ -55,11 +55,13 @@ public class ClickHouseQueryBuilder
 
     public ClickHouseQueryBuilder WhereLike(string column, string value)
     {
+        // Escape % and _ in user input to prevent LIKE wildcard injection
+        var escapedValue = value.Replace("%", "\\%").Replace("_", "\\_");
         _whereClauses.Add(new WhereClause
         {
             Column = column,
             Operator = "ILIKE",
-            Value = $"%{value}%"
+            Value = escapedValue  // % wrapping is done in BuildWhereCondition
         });
         return this;
     }
@@ -174,11 +176,11 @@ public class ClickHouseQueryBuilder
         var escapedValue = clause.Operator.ToUpper() switch
         {
             "IN" when clause.Value is IEnumerable<object> values =>
-                $"('{string.Join("','", values.Select(v => ClickHouseStringHelper.Escape(v?.ToString() ?? "")))}')",
+                $"({string.Join(",", values.Select(v => ClickHouseStringHelper.Quote(v?.ToString() ?? "")))})",
             "ILIKE" =>
                 $"'%{ClickHouseStringHelper.Escape(clause.Value?.ToString() ?? "")}%'",
             _ =>
-                $"'{ClickHouseStringHelper.Escape(clause.Value?.ToString() ?? "")}'",
+                ClickHouseStringHelper.Quote(clause.Value?.ToString() ?? ""),
         };
 
         return clause.Operator.ToUpper() switch

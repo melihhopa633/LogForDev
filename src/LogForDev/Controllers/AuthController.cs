@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using LogForDev.Core;
 using LogForDev.Models;
@@ -39,6 +40,7 @@ public class AuthController : Controller
     }
 
     [HttpPost("/api/auth/login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> LoginPost([FromBody] LoginRequest request)
     {
         try
@@ -78,11 +80,11 @@ public class AuthController : Controller
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = Request.IsHttps, // SameAsRequest: works on localhost HTTP, enforces on HTTPS
                 SameSite = SameSiteMode.Strict,
             };
             if (request.RememberMe)
-                cookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
+                cookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(7);
 
             Response.Cookies.Append(CookieAuthenticationOptions.CookieName, encryptedCookie, cookieOptions);
 
@@ -112,8 +114,9 @@ public class AuthController : Controller
         if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
             return BadRequest(new { success = false, error = "Tüm alanları doldurunuz" });
 
-        if (request.NewPassword.Length < 8)
-            return BadRequest(new { success = false, error = "Yeni şifre en az 8 karakter olmalıdır" });
+        var pwError = ValidatePasswordStrength(request.NewPassword);
+        if (pwError != null)
+            return BadRequest(new { success = false, error = pwError });
 
         var email = User.Identity?.Name;
         if (string.IsNullOrEmpty(email))
@@ -124,5 +127,22 @@ public class AuthController : Controller
             return BadRequest(new { success = false, error = "Mevcut şifre hatalı" });
 
         return Ok(new { success = true, message = "Şifre güncellendi" });
+    }
+
+    private static string? ValidatePasswordStrength(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            return "Şifre boş olamaz";
+        if (password.Length < 12)
+            return "Şifre en az 12 karakter olmalıdır";
+        if (!password.Any(char.IsUpper))
+            return "Şifre en az 1 büyük harf içermelidir";
+        if (!password.Any(char.IsLower))
+            return "Şifre en az 1 küçük harf içermelidir";
+        if (!password.Any(char.IsDigit))
+            return "Şifre en az 1 rakam içermelidir";
+        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+            return "Şifre en az 1 özel karakter içermelidir";
+        return null;
     }
 }

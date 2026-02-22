@@ -4,6 +4,8 @@ using LogForDev.Data;
 using LogForDev.Authentication;
 using LogForDev.Core;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -68,6 +70,33 @@ builder.Services.AddAuthorization(options =>
               .RequireAuthenticatedUser());
 });
 
+// Antiforgery for CSRF protection on cookie-authenticated endpoints
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = ".LogForDev.Antiforgery";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
+
+// Rate limiting for login endpoint
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(15);
+        opt.QueueLimit = 0;
+    });
+    options.AddFixedWindowLimiter("api", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+});
+
 var app = builder.Build();
 
 // Initialize database (skip failure if setup not complete)
@@ -103,6 +132,14 @@ catch (Exception ex)
     logger.LogWarning(ex, "Project cache initialization skipped");
 }
 
+// Security warnings at startup
+{
+    var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    var testMode = builder.Configuration.GetValue<bool>("LogForDev:TestMode");
+    if (testMode)
+        startupLogger.LogWarning("*** UYARI: TestMode AKTIF! TOTP bypass mumkun. Production icin TestMode'u kapatin. ***");
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -110,10 +147,24 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Content-Security-Policy",
+        "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'");
+    await next();
+});
+
 app.UseStaticFiles();
 app.UseSerilogRequestLogging();
 app.UseMiddleware<SetupMiddleware>();
 app.UseRouting();
+app.UseRateLimiter();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<AuthenticationMiddleware>();

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Data;
 using ClickHouse.Client.ADO;
+using LogForDev.Data;
 using LogForDev.Models;
 using Microsoft.Extensions.Options;
 using OtpNet;
@@ -46,7 +47,9 @@ public class UserService : IUserService
     public async Task<User> CreateUserAsync(string email, string password, string? connectionString = null)
     {
         // Validate email
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        if (string.IsNullOrWhiteSpace(email) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$") ||
+            email.Length > 254)
         {
             throw new ArgumentException("Geçerli bir e-posta adresi giriniz");
         }
@@ -78,10 +81,9 @@ public class UserService : IUserService
         await using var connection = GetConnection(connectionString);
         await connection.OpenAsync();
 
-        // ClickHouse doesn't support named parameters in INSERT VALUES, use string formatting
         var sql = $@"
             INSERT INTO users (id, email, password_hash, totp_secret, totp_enabled, created_at, failed_login_attempts)
-            VALUES ('{userId}', '{email.Replace("'", "''")}', '{passwordHash.Replace("'", "''")}', '{totpSecret.Replace("'", "''")}', 1, now(), 0)";
+            VALUES ('{ClickHouseStringHelper.SafeGuid(userId)}', {ClickHouseStringHelper.Quote(email)}, {ClickHouseStringHelper.Quote(passwordHash)}, {ClickHouseStringHelper.Quote(totpSecret)}, 1, now(), 0)";
 
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
@@ -106,7 +108,9 @@ public class UserService : IUserService
         var user = await GetUserByEmailAsync(email);
         if (user == null)
         {
-            _logger.LogWarning("Login attempt for non-existent user: {Email}", email);
+            // Perform dummy hash to prevent timing-based user enumeration
+            BCrypt.Net.BCrypt.Verify("dummy", "$2a$11$K7vMbSOaKLFBCfHQDSYHsOry4mHvsoF2bJQNGq.dGHKhIsXPafRpO");
+            _logger.LogWarning("Login attempt for non-existent user");
             return null;
         }
 
@@ -114,14 +118,14 @@ public class UserService : IUserService
         if (user.LockedUntil.HasValue && user.LockedUntil.Value > DateTime.UtcNow)
         {
             _logger.LogWarning("Login attempt for locked account: {Email}, locked until {LockedUntil}",
-                email, user.LockedUntil.Value);
+                MaskEmail(email), user.LockedUntil.Value);
             return null;
         }
 
         // Verify password
         if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            _logger.LogWarning("Invalid password for user: {Email}", email);
+            _logger.LogWarning("Invalid password for user: {Email}", MaskEmail(email));
             await IncrementFailedLoginAsync(user.Id);
             return null;
         }
@@ -129,7 +133,7 @@ public class UserService : IUserService
         // Verify TOTP code
         if (user.TotpEnabled && !VerifyTotpCode(user.TotpSecret, totpCode))
         {
-            _logger.LogWarning("Invalid TOTP code for user: {Email}", email);
+            _logger.LogWarning("Invalid TOTP code for user: {Email}", MaskEmail(email));
             await IncrementFailedLoginAsync(user.Id);
             return null;
         }
@@ -150,7 +154,7 @@ public class UserService : IUserService
             SELECT id, email, password_hash, totp_secret, totp_enabled,
                    created_at, last_login_at, failed_login_attempts, locked_until
             FROM users
-            WHERE email = '{email.Replace("'", "''")}'
+            WHERE email = {ClickHouseStringHelper.Quote(email)}
             LIMIT 1";
 
         await using var cmd = connection.CreateCommand();
@@ -184,7 +188,7 @@ public class UserService : IUserService
                 last_login_at = now(),
                 failed_login_attempts = 0,
                 locked_until = NULL
-            WHERE id = '{userId}'";
+            WHERE id = '{ClickHouseStringHelper.SafeGuid(userId)}'";
 
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
@@ -202,7 +206,7 @@ public class UserService : IUserService
         int currentAttempts = 0;
         await using (var selectCmd = connection.CreateCommand())
         {
-            selectCmd.CommandText = $"SELECT failed_login_attempts FROM users WHERE id = '{userId}' LIMIT 1";
+            selectCmd.CommandText = $"SELECT failed_login_attempts FROM users WHERE id = '{ClickHouseStringHelper.SafeGuid(userId)}' LIMIT 1";
             var result = await selectCmd.ExecuteScalarAsync();
             if (result != null)
             {
@@ -225,9 +229,9 @@ public class UserService : IUserService
         var sql = $@"
             ALTER TABLE users
             UPDATE
-                failed_login_attempts = {newAttempts},
+                failed_login_attempts = {ClickHouseStringHelper.SafeInt(newAttempts, 0, 100)},
                 locked_until = {lockedUntilValue}
-            WHERE id = '{userId}'";
+            WHERE id = '{ClickHouseStringHelper.SafeGuid(userId)}'";
 
         await using var updateCmd = connection.CreateCommand();
         updateCmd.CommandText = sql;
@@ -241,7 +245,7 @@ public class UserService : IUserService
 
         if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
         {
-            _logger.LogWarning("Change password failed — wrong current password: {Email}", email);
+            _logger.LogWarning("Change password failed — wrong current password: {Email}", MaskEmail(email));
             return false;
         }
 
@@ -251,7 +255,7 @@ public class UserService : IUserService
         await connection.OpenAsync();
 
         await using var cmd = connection.CreateCommand();
-        cmd.CommandText = $"ALTER TABLE users UPDATE password_hash = '{newHash.Replace("'", "''")}' WHERE id = '{user.Id}'";
+        cmd.CommandText = $"ALTER TABLE users UPDATE password_hash = {ClickHouseStringHelper.Quote(newHash)} WHERE id = '{ClickHouseStringHelper.SafeGuid(user.Id)}'";
         await cmd.ExecuteNonQueryAsync();
 
         _logger.LogInformation("Password changed for user: {Email}", email);
@@ -287,21 +291,30 @@ public class UserService : IUserService
         return $"data:image/png;base64,{base64Image}";
     }
 
+    private static string MaskEmail(string email)
+    {
+        var atIndex = email.IndexOf('@');
+        if (atIndex <= 1) return "***@***";
+        return $"{email[0]}***@{email[(atIndex + 1)..]}";
+    }
+
     public bool VerifyTotpCode(string secret, string code)
     {
         try
         {
+#if DEBUG
             if (_options.TestMode && code == "000000")
             {
-                _logger.LogWarning("TOTP test bypass used — TestMode is enabled");
+                _logger.LogWarning("TOTP test bypass used — TestMode is enabled (DEBUG build only)");
                 return true;
             }
+#endif
 
             var secretBytes = Base32Encoding.ToBytes(secret);
             var totp = new Totp(secretBytes);
 
-            // Verify with ±1 time step window (90 seconds total)
-            return totp.VerifyTotp(code, out _, new VerificationWindow(1, 1));
+            // Verify with current + previous time step (60 seconds total)
+            return totp.VerifyTotp(code, out _, new VerificationWindow(1, 0));
         }
         catch (Exception ex)
         {

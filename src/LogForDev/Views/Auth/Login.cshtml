@@ -266,19 +266,12 @@
         });
 
         @*
-            Test Mode Pre-Fill
-            ------------------
-            When the server sets ViewBag.TestMode = true (dev / demo environment),
-            we pre-fill all TOTP boxes with "000000" so testers can log in without
-            a real authenticator app.
+            Test Mode Pre-Fill (REMOVED for security)
+            ------------------------------------------
+            Previously auto-filled TOTP with "000000" when TestMode was enabled.
+            Removed because it bypasses 2FA entirely. TestMode bypass is now
+            restricted to DEBUG builds only (see UserService.cs).
         *@
-        @if (ViewBag.TestMode == true)
-        {
-            <text>
-            '000000'.split('').forEach((c, i) => { totpBoxes[i].value = c; });
-            syncTotp();
-            </text>
-        }
 
         // ── UI State Helpers ──────────────────────────────────────────────────
 

@@ -21,7 +21,7 @@ public class ProjectService : IProjectService
     private readonly ConcurrentDictionary<string, Project> _cache = new();
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private DateTime _lastRefresh = DateTime.MinValue;
-    private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(1);
 
     public ProjectService(IClickHouseService clickHouse, ILogger<ProjectService> logger)
     {
@@ -50,7 +50,7 @@ public class ProjectService : IProjectService
         try
         {
             var projects = await _clickHouse.QueryAsync(
-                $"SELECT id, name, api_key, created_at, expires_at FROM projects WHERE api_key = '{ClickHouseStringHelper.Escape(apiKey)}' LIMIT 1",
+                $"SELECT id, name, api_key, created_at, expires_at FROM projects WHERE api_key = {ClickHouseStringHelper.Quote(apiKey)} LIMIT 1",
                 MapProject);
 
             var project = projects.FirstOrDefault();
@@ -88,7 +88,7 @@ public class ProjectService : IProjectService
             : "NULL";
 
         var sql = $@"INSERT INTO projects (id, name, api_key, created_at, expires_at)
-                     VALUES ('{project.Id}', '{ClickHouseStringHelper.Escape(project.Name)}', '{ClickHouseStringHelper.Escape(project.ApiKey)}', now(), {expiresAtSql})";
+                     VALUES ('{ClickHouseStringHelper.SafeGuid(project.Id)}', {ClickHouseStringHelper.Quote(project.Name)}, {ClickHouseStringHelper.Quote(project.ApiKey)}, now(), {expiresAtSql})";
 
         await _clickHouse.ExecuteAsync(sql);
         _cache[apiKey] = project;
@@ -117,7 +117,7 @@ public class ProjectService : IProjectService
     {
         try
         {
-            var sql = $"ALTER TABLE projects DELETE WHERE id = '{projectId}'";
+            var sql = $"ALTER TABLE projects DELETE WHERE id = '{ClickHouseStringHelper.SafeGuid(projectId)}'";
             await _clickHouse.ExecuteAsync(sql);
 
             // Remove from cache
@@ -141,7 +141,7 @@ public class ProjectService : IProjectService
     {
         try
         {
-            var sql = $"ALTER TABLE projects UPDATE name = '{ClickHouseStringHelper.Escape(name)}' WHERE id = '{projectId}'";
+            var sql = $"ALTER TABLE projects UPDATE name = {ClickHouseStringHelper.Quote(name)} WHERE id = '{ClickHouseStringHelper.SafeGuid(projectId)}'";
             await _clickHouse.ExecuteAsync(sql);
 
             // Update cache

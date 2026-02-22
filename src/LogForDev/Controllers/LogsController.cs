@@ -94,6 +94,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<PagedResult<LogEntry>>> GetLogs([FromQuery] LogQueryParams query, CancellationToken cancellationToken)
     {
         try
@@ -109,6 +110,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<LogStats>> GetStats(CancellationToken cancellationToken)
     {
         try
@@ -124,6 +126,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("apps")]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<List<string>>> GetApps(CancellationToken cancellationToken)
     {
         try
@@ -139,6 +142,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("environments")]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<List<string>>> GetEnvironments(CancellationToken cancellationToken)
     {
         try
@@ -170,6 +174,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("patterns")]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<List<LogPattern>>> GetPatterns([FromQuery] LogPatternQueryParams query, CancellationToken cancellationToken)
     {
         try
@@ -185,6 +190,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("trace/{traceId}")]
+    [Authorize(Policy = AppConstants.Auth.DashboardOnlyPolicy)]
     public async Task<ActionResult<TraceTimeline>> GetTraceTimeline(string traceId, CancellationToken cancellationToken)
     {
         try

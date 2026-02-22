@@ -165,8 +165,20 @@ public class LogQueryParams
     public int? StatusCodeMax { get; set; }
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 50;
+
+    private int _page = 1;
+    public int Page
+    {
+        get => _page;
+        set => _page = Math.Max(value, 1);
+    }
+
+    private int _pageSize = 50;
+    public int PageSize
+    {
+        get => _pageSize;
+        set => _pageSize = Math.Clamp(value, 1, 500);
+    }
 }
 
 public class PagedResult<T>
@@ -223,8 +235,20 @@ public class AppLogQueryParams
     public string? Search { get; set; }
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 50;
+
+    private int _page = 1;
+    public int Page
+    {
+        get => _page;
+        set => _page = Math.Max(value, 1);
+    }
+
+    private int _pageSize = 50;
+    public int PageSize
+    {
+        get => _pageSize;
+        set => _pageSize = Math.Clamp(value, 1, 500);
+    }
 }
 
 public class CreateProjectRequest

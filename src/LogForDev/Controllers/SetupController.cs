@@ -47,6 +47,9 @@ public class SetupController : Controller
     [HttpPost("/api/setup/test-connection")]
     public async Task<IActionResult> TestConnection([FromBody] ConnectionTestRequest request)
     {
+        if (_setupState.IsSetupComplete())
+            return BadRequest(new { success = false, error = "Setup zaten tamamlandi." });
+
         try
         {
             var options = new ClickHouseOptions
@@ -70,13 +73,15 @@ public class SetupController : Controller
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Setup connection test failed");
-            return Ok(new { success = false, message = $"Baglanti hatasi: {ex.Message}" });
+            return Ok(new { success = false, message = "Baglanti hatasi olustu. Ayarlari kontrol edin." });
         }
     }
 
     [HttpPost("/api/setup/generate-key")]
     public IActionResult GenerateKey()
     {
+        if (_setupState.IsSetupComplete())
+            return BadRequest(new { success = false, error = "Setup zaten tamamlandi." });
         var bytes = RandomNumberGenerator.GetBytes(32);
         var key = Convert.ToBase64String(bytes)
             .Replace("+", "")
@@ -84,12 +89,15 @@ public class SetupController : Controller
             .Replace("=", "")
             .Substring(0, 32);
 
-        return Ok(new { key = $"lfd_{key}" });
+        return Ok(new { key = $"lfdev_{key}" });
     }
 
     [HttpPost("/api/setup/send-test-log")]
     public IActionResult SendTestLog([FromBody] TestLogRequest request)
     {
+        if (_setupState.IsSetupComplete())
+            return BadRequest(new { success = false, error = "Setup zaten tamamlandi." });
+
         try
         {
             var logEntry = new LogEntry
@@ -108,13 +116,16 @@ public class SetupController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send test log");
-            return Ok(new { success = false, message = $"Test logu gonderilemedi: {ex.Message}" });
+            return Ok(new { success = false, message = "Test logu gonderilemedi. Loglari kontrol edin." });
         }
     }
 
     [HttpPost("/api/setup/complete")]
     public async Task<IActionResult> Complete([FromBody] SetupCompleteRequest request)
     {
+        if (_setupState.IsSetupComplete())
+            return BadRequest(new { success = false, error = "Setup zaten tamamlandi." });
+
         try
         {
             var result = await _orchestrator.CompleteAsync(request, _env.ContentRootPath);
@@ -132,7 +143,7 @@ public class SetupController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to complete setup");
-            return Ok(new { success = false, message = $"Kurulum tamamlanamadi: {ex.Message}" });
+            return Ok(new { success = false, message = "Kurulum tamamlanamadi. Loglari kontrol edin." });
         }
     }
 }

@@ -29,13 +29,11 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // Extract API key from header or query string
+        // Extract API key from header only (query string removed for security - keys leak into logs)
         string? apiKey = null;
 
         if (Request.Headers.TryGetValue("X-API-Key", out var headerKey))
             apiKey = headerKey.ToString();
-        else if (Request.Query.TryGetValue("apiKey", out var queryKey))
-            apiKey = queryKey.ToString();
 
         if (string.IsNullOrEmpty(apiKey))
             return AuthenticateResult.NoResult();

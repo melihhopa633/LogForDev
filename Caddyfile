@@ -1,0 +1,7 @@
+# LogForDev Production Caddyfile
+# Replace "logs.yourdomain.com" with your actual domain
+# Caddy automatically obtains and renews Let's Encrypt certificates
+
+logs.yourdomain.com {
+    reverse_proxy logfordev:5000
+}

@@ -34,10 +34,13 @@ public class AppLogService : BackgroundService, IAppLogService
         var where = new StringBuilder("WHERE 1=1");
 
         if (!string.IsNullOrEmpty(query.Level))
-            where.AppendLine($" AND level = '{ClickHouseStringHelper.Escape(query.Level)}'");
+            where.AppendLine($" AND level = {ClickHouseStringHelper.Quote(query.Level)}");
 
         if (!string.IsNullOrEmpty(query.Search))
-            where.AppendLine($" AND message ILIKE '%{ClickHouseStringHelper.Escape(query.Search)}%'");
+        {
+            var escaped = query.Search.Replace("%", "\\%").Replace("_", "\\_");
+            where.AppendLine($" AND message ILIKE '%{ClickHouseStringHelper.Escape(escaped)}%'");
+        }
 
         if (query.From.HasValue)
             where.AppendLine($" AND timestamp >= '{query.From.Value:yyyy-MM-dd HH:mm:ss}'");
@@ -84,7 +87,8 @@ public class AppLogService : BackgroundService, IAppLogService
     {
         if (olderThanDays.HasValue)
         {
-            var cutoff = DateTime.UtcNow.AddDays(-olderThanDays.Value).ToString("yyyy-MM-dd HH:mm:ss");
+            var safeDays = ClickHouseStringHelper.SafeInt(olderThanDays.Value, 1, 3650);
+            var cutoff = DateTime.UtcNow.AddDays(-safeDays).ToString("yyyy-MM-dd HH:mm:ss");
             await _clickHouse.ExecuteAsync($"ALTER TABLE app_logs DELETE WHERE timestamp < '{cutoff}'", cancellationToken: cancellationToken);
         }
         else
@@ -119,9 +123,9 @@ public class AppLogService : BackgroundService, IAppLogService
             sb.AppendLine("INSERT INTO app_logs (id, timestamp, level, category, message, exception, request_method, request_path, status_code, duration_ms) VALUES");
 
             var values = batch.Select(log =>
-                $"('{log.Id}', now64(3), '{ClickHouseStringHelper.Escape(log.Level)}', '{ClickHouseStringHelper.Escape(log.Category)}', " +
-                $"'{ClickHouseStringHelper.Escape(log.Message)}', '{ClickHouseStringHelper.Escape(log.Exception ?? "")}', " +
-                $"'{ClickHouseStringHelper.Escape(log.RequestMethod ?? "")}', '{ClickHouseStringHelper.Escape(log.RequestPath ?? "")}', " +
+                $"('{log.Id}', now64(3), {ClickHouseStringHelper.Quote(log.Level)}, {ClickHouseStringHelper.Quote(log.Category)}, " +
+                $"{ClickHouseStringHelper.Quote(log.Message)}, {ClickHouseStringHelper.Quote(log.Exception ?? "")}, " +
+                $"{ClickHouseStringHelper.Quote(log.RequestMethod ?? "")}, {ClickHouseStringHelper.Quote(log.RequestPath ?? "")}, " +
                 $"{log.StatusCode}, {log.DurationMs.ToString("F2", CultureInfo.InvariantCulture)})");
 
             sb.AppendLine(string.Join(",\n", values));

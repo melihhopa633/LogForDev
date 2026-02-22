@@ -27,25 +27,25 @@ public class LogRepository : ILogRepository
             VALUES (
                 '{log.Id}',
                 now64(3),
-                '{log.Level}',
-                '{ClickHouseStringHelper.Escape(log.AppName)}',
-                '{ClickHouseStringHelper.Escape(log.Message)}',
-                '{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}',
-                '{ClickHouseStringHelper.Escape(log.ExceptionType ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.ExceptionMessage ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.ExceptionStacktrace ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.Source ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.RequestMethod ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.RequestPath ?? "")}',
+                {ClickHouseStringHelper.Quote(log.Level.ToString())},
+                {ClickHouseStringHelper.Quote(log.AppName)},
+                {ClickHouseStringHelper.Quote(log.Message)},
+                {ClickHouseStringHelper.Quote(log.Metadata ?? "{}")},
+                {ClickHouseStringHelper.Quote(log.ExceptionType ?? "")},
+                {ClickHouseStringHelper.Quote(log.ExceptionMessage ?? "")},
+                {ClickHouseStringHelper.Quote(log.ExceptionStacktrace ?? "")},
+                {ClickHouseStringHelper.Quote(log.Source ?? "")},
+                {ClickHouseStringHelper.Quote(log.RequestMethod ?? "")},
+                {ClickHouseStringHelper.Quote(log.RequestPath ?? "")},
                 {log.StatusCode},
                 {log.DurationMs.ToString(System.Globalization.CultureInfo.InvariantCulture)},
-                '{ClickHouseStringHelper.Escape(log.UserId ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.TraceId ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.Host ?? "")}',
-                '{ClickHouseStringHelper.Escape(log.Environment)}',
+                {ClickHouseStringHelper.Quote(log.UserId ?? "")},
+                {ClickHouseStringHelper.Quote(log.TraceId ?? "")},
+                {ClickHouseStringHelper.Quote(log.SpanId ?? "")},
+                {ClickHouseStringHelper.Quote(log.Host ?? "")},
+                {ClickHouseStringHelper.Quote(log.Environment)},
                 '{projectId}',
-                '{ClickHouseStringHelper.Escape(log.ProjectName ?? "")}'
+                {ClickHouseStringHelper.Quote(log.ProjectName ?? "")}
             )";
 
         await _clickHouse.ExecuteAsync(sql, cancellationToken: cancellationToken);
@@ -63,14 +63,14 @@ public class LogRepository : ILogRepository
         var values = logList.Select(log =>
         {
             var projectId = log.ProjectId?.ToString() ?? "00000000-0000-0000-0000-000000000000";
-            return $"('{log.Id}', now64(3), '{log.Level}', '{ClickHouseStringHelper.Escape(log.AppName)}', '{ClickHouseStringHelper.Escape(log.Message)}', " +
-                $"'{ClickHouseStringHelper.Escape(log.Metadata ?? "{}")}', " +
-                $"'{ClickHouseStringHelper.Escape(log.ExceptionType ?? "")}', '{ClickHouseStringHelper.Escape(log.ExceptionMessage ?? "")}', '{ClickHouseStringHelper.Escape(log.ExceptionStacktrace ?? "")}', " +
-                $"'{ClickHouseStringHelper.Escape(log.Source ?? "")}', '{ClickHouseStringHelper.Escape(log.RequestMethod ?? "")}', '{ClickHouseStringHelper.Escape(log.RequestPath ?? "")}', " +
-                $"{log.StatusCode}, {log.DurationMs.ToString(System.Globalization.CultureInfo.InvariantCulture)}, '{ClickHouseStringHelper.Escape(log.UserId ?? "")}', " +
-                $"'{ClickHouseStringHelper.Escape(log.TraceId ?? "")}', '{ClickHouseStringHelper.Escape(log.SpanId ?? "")}', " +
-                $"'{ClickHouseStringHelper.Escape(log.Host ?? "")}', '{ClickHouseStringHelper.Escape(log.Environment)}', " +
-                $"'{projectId}', '{ClickHouseStringHelper.Escape(log.ProjectName ?? "")}')";
+            return $"('{log.Id}', now64(3), {ClickHouseStringHelper.Quote(log.Level.ToString())}, {ClickHouseStringHelper.Quote(log.AppName)}, {ClickHouseStringHelper.Quote(log.Message)}, " +
+                $"{ClickHouseStringHelper.Quote(log.Metadata ?? "{}")}, " +
+                $"{ClickHouseStringHelper.Quote(log.ExceptionType ?? "")}, {ClickHouseStringHelper.Quote(log.ExceptionMessage ?? "")}, {ClickHouseStringHelper.Quote(log.ExceptionStacktrace ?? "")}, " +
+                $"{ClickHouseStringHelper.Quote(log.Source ?? "")}, {ClickHouseStringHelper.Quote(log.RequestMethod ?? "")}, {ClickHouseStringHelper.Quote(log.RequestPath ?? "")}, " +
+                $"{log.StatusCode}, {log.DurationMs.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {ClickHouseStringHelper.Quote(log.UserId ?? "")}, " +
+                $"{ClickHouseStringHelper.Quote(log.TraceId ?? "")}, {ClickHouseStringHelper.Quote(log.SpanId ?? "")}, " +
+                $"{ClickHouseStringHelper.Quote(log.Host ?? "")}, {ClickHouseStringHelper.Quote(log.Environment)}, " +
+                $"'{projectId}', {ClickHouseStringHelper.Quote(log.ProjectName ?? "")})";
         });
 
         sql.AppendLine(string.Join(",\n", values));
@@ -163,8 +163,12 @@ public class LogRepository : ILogRepository
         return await _clickHouse.QueryAsync(sql, r => r.GetString(0), cancellationToken);
     }
 
+    private static readonly HashSet<string> AllowedLogLevels = new(StringComparer.OrdinalIgnoreCase)
+        { "Trace", "Debug", "Info", "Warning", "Error", "Fatal" };
+
     public async Task<List<LogPattern>> GetPatternsAsync(LogPatternQueryParams query, CancellationToken cancellationToken = default)
     {
+        var safeHours = ClickHouseStringHelper.SafeInt(query.Hours, 1, 8760);
         var sql = $@"
             SELECT
                 replaceRegexpAll(substring(message, 1, 100), '[0-9]+', '*') as pattern,
@@ -175,30 +179,37 @@ public class LogRepository : ILogRepository
                 max(timestamp) as last_seen,
                 any(message) as sample_message
             FROM {TableName}
-            WHERE timestamp > now() - INTERVAL {query.Hours} HOUR";
+            WHERE timestamp > now() - INTERVAL {safeHours} HOUR";
 
         if (query.Level.HasValue)
         {
-            sql += $" AND level = '{query.Level.Value}'";
+            sql += $" AND level = {ClickHouseStringHelper.Quote(query.Level.Value.ToString())}";
         }
 
         if (!string.IsNullOrEmpty(query.Levels))
         {
-            var levelList = query.Levels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var quotedLevels = string.Join(",", levelList.Select(l => $"'{l}'"));
-            sql += $" AND level IN ({quotedLevels})";
+            var levelList = query.Levels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(l => AllowedLogLevels.Contains(l))
+                .ToList();
+            if (levelList.Any())
+            {
+                var quotedLevels = string.Join(",", levelList.Select(l => ClickHouseStringHelper.Quote(l)));
+                sql += $" AND level IN ({quotedLevels})";
+            }
         }
 
         if (!string.IsNullOrEmpty(query.AppName))
         {
-            sql += $" AND app_name = '{ClickHouseStringHelper.Escape(query.AppName)}'";
+            sql += $" AND app_name = {ClickHouseStringHelper.Quote(query.AppName)}";
         }
 
+        var safeMinCount = ClickHouseStringHelper.SafeInt(query.MinCount, 1, 1000000);
+        var safeLimit = ClickHouseStringHelper.SafeInt(query.Limit, 1, 1000);
         sql += $@"
             GROUP BY pattern, level, app_name
-            HAVING cnt >= {query.MinCount}
+            HAVING cnt >= {safeMinCount}
             ORDER BY cnt DESC
-            LIMIT {query.Limit}";
+            LIMIT {safeLimit}";
 
         return await _clickHouse.QueryAsync(sql, r => new LogPattern
         {
@@ -220,7 +231,7 @@ public class LogRepository : ILogRepository
         var sql = $@"
             SELECT id, timestamp, level, app_name, message, metadata, exception_type, source
             FROM {TableName}
-            WHERE trace_id = '{ClickHouseStringHelper.Escape(traceId)}'
+            WHERE trace_id = {ClickHouseStringHelper.Quote(traceId)}
             ORDER BY timestamp ASC
             LIMIT 500";
 
@@ -262,7 +273,8 @@ public class LogRepository : ILogRepository
         string sql;
         if (olderThanDays.HasValue && olderThanDays.Value > 0)
         {
-            sql = $"ALTER TABLE {TableName} DELETE WHERE timestamp < now() - INTERVAL {olderThanDays.Value} DAY";
+            var safeDays = ClickHouseStringHelper.SafeInt(olderThanDays.Value, 1, 3650);
+            sql = $"ALTER TABLE {TableName} DELETE WHERE timestamp < now() - INTERVAL {safeDays} DAY";
         }
         else
         {
